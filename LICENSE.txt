@@ -23,4 +23,10 @@ THE SOFTWARE.
 #################### Other components ####################
 
 This program uses Emanuel Eichhammer's QCustomPlot class (http://www.qcustomplot.com), 
-which
+which is licensed under the terms and conditions of the GNU
+General Public License (reproduced below).
+
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <http://
