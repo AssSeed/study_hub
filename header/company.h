@@ -15,4 +15,18 @@ public:
 
     void initCompany(double ymax = 100);
 
-    double getPric
+    double getPrice(void);
+    void recalcAvg(void);
+    void buy(int);
+    void sell(int);
+
+    double updatePrice(void);
+
+private:
+    void split(void);
+
+    LocalPriceGen price_generator;
+
+    double current_price;
+    int shares_in_depot;
+    do
