@@ -29,4 +29,13 @@ private:
 
     double current_price;
     int shares_in_depot;
-    do
+    double total_value;
+    double avg_depot_price;
+    int ymax;
+    bool is_bankrupt, splitted;
+
+    friend class StockPriceHistoryPlot;
+    friend class SingleStock;
+};
+
+#endif // COMPANY_H
