@@ -36,4 +36,18 @@ public slots:
     void pauseGame(void);
     void continueGame(void);
     void seed(void);
-    void changeInterval
+    void changeInterval(int);
+
+private slots:
+    void afterGameFinished(void);
+
+private:
+
+   Ui::MainWindow *ui;
+
+   QTimer reseed_timer;
+
+};
+
+
+#endif // MAINWINDOW_H
