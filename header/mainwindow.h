@@ -23,4 +23,17 @@ class MainWindow;
  * state of the game (running/paused)
  */
 
-class MainWindow : public QMainW
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+
+public slots:
+    void startGame(void);
+    void pauseGame(void);
+    void continueGame(void);
+    void seed(void);
+    void changeInterval
