@@ -730,3 +730,246 @@ void QCPScatterStyle::drawShape(QCPPainter *painter, double x, double y) const
   Returns a list of all layerables on this layer. The order corresponds to the rendering order:
   layerables with higher indices are drawn above layerables with lower indices.
 */
+
+/*! \fn int QCPLayer::index() const
+  
+  Returns the index this layer has in the QCustomPlot. The index is the integer number by which this layer can be
+  accessed via \ref QCustomPlot::layer.
+  
+  Layers with higher indices will be drawn above layers with lower indices.
+*/
+
+/* end documentation of inline functions */
+
+/*!
+  Creates a new QCPLayer instance.
+  
+  Normally you shouldn't directly instantiate layers, use \ref QCustomPlot::addLayer instead.
+  
+  \warning It is not checked that \a layerName is actually a unique layer name in \a parentPlot.
+  This check is only performed by \ref QCustomPlot::addLayer.
+*/
+QCPLayer::QCPLayer(QCustomPlot *parentPlot, const QString &layerName) :
+  QObject(parentPlot),
+  mParentPlot(parentPlot),
+  mName(layerName),
+  mIndex(-1) // will be set to a proper value by the QCustomPlot layer creation function
+{
+  // Note: no need to make sure layerName is unique, because layer
+  // management is done with QCustomPlot functions.
+}
+
+QCPLayer::~QCPLayer()
+{
+  // If child layerables are still on this layer, detach them, so they don't try to reach back to this
+  // then invalid layer once they get deleted/moved themselves. This only happens when layers are deleted
+  // directly, like in the QCustomPlot destructor. (The regular layer removal procedure for the user is to
+  // call QCustomPlot::removeLayer, which moves all layerables off this layer before deleting it.)
+  
+  while (!mChildren.isEmpty())
+    mChildren.last()->setLayer(0); // removes itself from mChildren via removeChild()
+  
+  if (mParentPlot->currentLayer() == this)
+    qDebug() << Q_FUNC_INFO << "The parent plot's mCurrentLayer will be a dangling pointer. Should have been set to a valid layer or 0 beforehand.";
+}
+
+/*! \internal
+  
+  Adds the \a layerable to the list of this layer. If \a prepend is set to true, the layerable will
+  be prepended to the list, i.e. be drawn beneath the other layerables already in the list.
+  
+  This function does not change the \a mLayer member of \a layerable to this layer. (Use
+  QCPLayerable::setLayer to change the layer of an object, not this function.)
+  
+  \see removeChild
+*/
+void QCPLayer::addChild(QCPLayerable *layerable, bool prepend)
+{
+  if (!mChildren.contains(layerable))
+  {
+    if (prepend)
+      mChildren.prepend(layerable);
+    else
+      mChildren.append(layerable);
+  } else
+    qDebug() << Q_FUNC_INFO << "layerable is already child of this layer" << reinterpret_cast<quintptr>(layerable);
+}
+
+/*! \internal
+  
+  Removes the \a layerable from the list of this layer.
+  
+  This function does not change the \a mLayer member of \a layerable. (Use QCPLayerable::setLayer
+  to change the layer of an object, not this function.)
+  
+  \see addChild
+*/
+void QCPLayer::removeChild(QCPLayerable *layerable)
+{
+  if (!mChildren.removeOne(layerable))
+    qDebug() << Q_FUNC_INFO << "layerable is not child of this layer" << reinterpret_cast<quintptr>(layerable);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLayerable
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLayerable
+  \brief Base class for all drawable objects
+  
+  This is the abstract base class most visible objects derive from, e.g. plottables, axes, grid
+  etc.
+
+  Every layerable is on a layer (QCPLayer) which allows controlling the rendering order by stacking
+  the layers accordingly.
+  
+  For details about the layering mechanism, see the QCPLayer documentation.
+*/
+
+/* start documentation of inline functions */
+
+/*! \fn QCPLayerable *QCPLayerable::parentLayerable() const
+ 
+  Returns the parent layerable of this layerable. The parent layerable is used to provide
+  visibility hierarchies in conjunction with the method \ref realVisibility. This way, layerables
+  only get drawn if their parent layerables are visible, too.
+  
+  Note that a parent layerable is not necessarily also the QObject parent for memory management.
+  Further, a layerable doesn't always have a parent layerable, so this function may return 0.
+  
+  A parent layerable is set implicitly with when placed inside layout elements and doesn't need to be
+  set manually by the user.
+*/
+
+/* end documentation of inline functions */
+/* start documentation of pure virtual functions */
+
+/*! \fn virtual void QCPLayerable::applyDefaultAntialiasingHint(QCPPainter *painter) const = 0
+  \internal
+  
+  This function applies the default antialiasing setting to the specified \a painter, using the
+  function \ref applyAntialiasingHint. It is the antialiasing state the painter is put in, when
+  \ref draw is called on the layerable. If the layerable has multiple entities whose antialiasing
+  setting may be specified individually, this function should set the antialiasing state of the
+  most prominent entity. In this case however, the \ref draw function usually calls the specialized
+  versions of this function before drawing each entity, effectively overriding the setting of the
+  default antialiasing hint.
+  
+  <b>First example:</b> QCPGraph has multiple entities that have an antialiasing setting: The graph
+  line, fills, scatters and error bars. Those can be configured via QCPGraph::setAntialiased,
+  QCPGraph::setAntialiasedFill, QCPGraph::setAntialiasedScatters etc. Consequently, there isn't
+  only the QCPGraph::applyDefaultAntialiasingHint function (which corresponds to the graph line's
+  antialiasing), but specialized ones like QCPGraph::applyFillAntialiasingHint and
+  QCPGraph::applyScattersAntialiasingHint. So before drawing one of those entities, QCPGraph::draw
+  calls the respective specialized applyAntialiasingHint function.
+  
+  <b>Second example:</b> QCPItemLine consists only of a line so there is only one antialiasing
+  setting which can be controlled with QCPItemLine::setAntialiased. (This function is inherited by
+  all layerables. The specialized functions, as seen on QCPGraph, must be added explicitly to the
+  respective layerable subclass.) Consequently it only has the normal
+  QCPItemLine::applyDefaultAntialiasingHint. The \ref QCPItemLine::draw function doesn't need to
+  care about setting any antialiasing states, because the default antialiasing hint is already set
+  on the painter when the \ref draw function is called, and that's the state it wants to draw the
+  line with.
+*/
+
+/*! \fn virtual void QCPLayerable::draw(QCPPainter *painter) const = 0
+  \internal
+  
+  This function draws the layerable with the specified \a painter. It is only called by
+  QCustomPlot, if the layerable is visible (\ref setVisible).
+  
+  Before this function is called, the painter's antialiasing state is set via \ref
+  applyDefaultAntialiasingHint, see the documentation there. Further, the clipping rectangle was
+  set to \ref clipRect.
+*/
+
+/* end documentation of pure virtual functions */
+
+/*!
+  Creates a new QCPLayerable instance.
+  
+  Since QCPLayerable is an abstract base class, it can't be instantiated directly. Use one of the
+  derived classes.
+  
+  If \a plot is provided, it automatically places itself on the layer named \a targetLayer. If \a
+  targetLayer is an empty string, it places itself on the current layer of the plot (see \ref
+  QCustomPlot::setCurrentLayer).
+  
+  It is possible to provide 0 as \a plot. In that case, you should assign a parent plot at a later
+  time with \ref initializeParentPlot.
+  
+  The layerable's parent layerable is set to \a parentLayerable, if provided. Direct layerable parents
+  are mainly used to control visibility in a hierarchy of layerables. This means a layerable is
+  only drawn, if all its ancestor layerables are also visible. Note that \a parentLayerable does
+  not become the QObject-parent (for memory management) of this layerable, \a plot does.
+*/
+QCPLayerable::QCPLayerable(QCustomPlot *plot, QString targetLayer, QCPLayerable *parentLayerable) :
+  QObject(plot),
+  mVisible(true),
+  mParentPlot(plot),
+  mParentLayerable(parentLayerable),
+  mLayer(0),
+  mAntialiased(true)
+{
+  if (mParentPlot)
+  {
+    if (targetLayer.isEmpty())
+      setLayer(mParentPlot->currentLayer());
+    else if (!setLayer(targetLayer))
+      qDebug() << Q_FUNC_INFO << "setting QCPlayerable initial layer to" << targetLayer << "failed.";
+  }
+}
+
+QCPLayerable::~QCPLayerable()
+{
+  if (mLayer)
+  {
+    mLayer->removeChild(this);
+    mLayer = 0;
+  }
+}
+
+/*!
+  Sets the visibility of this layerable object. If an object is not visible, it will not be drawn
+  on the QCustomPlot surface, and user interaction with it (e.g. click and selection) is not
+  possible.
+*/
+void QCPLayerable::setVisible(bool on)
+{
+  mVisible = on;
+}
+
+/*!
+  Sets the \a layer of this layerable object. The object will be placed on top of the other objects
+  already on \a layer.
+  
+  Returns true on success, i.e. if \a layer is a valid layer.
+*/
+bool QCPLayerable::setLayer(QCPLayer *layer)
+{
+  return moveToLayer(layer, false);
+}
+
+/*! \overload
+  Sets the layer of this layerable object by name
+  
+  Returns true on success, i.e. if \a layerName is a valid layer name.
+*/
+bool QCPLayerable::setLayer(const QString &layerName)
+{
+  if (!mParentPlot)
+  {
+    qDebug() << Q_FUNC_INFO << "no parent QCustomPlot set";
+    return false;
+  }
+  if (QCPLayer *layer = mParentPlot->layer(layerName))
+  {
+    return setLayer(layer);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "there is no layer with name" << layerName;
+    return false;
+  }
+}
