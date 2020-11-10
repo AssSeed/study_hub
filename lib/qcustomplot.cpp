@@ -475,3 +475,258 @@ void QCPScatterStyle::setShape(QCPScatterStyle::ScatterShape shape)
 /*!
   Sets the pen that will be used to draw scatter points to \a pen.
   
+  If the pen was previously undefined (see \ref isPenDefined), the pen is considered defined after
+  a call to this function, even if \a pen is <tt>Qt::NoPen</tt>.
+  
+  \see setBrush
+*/
+void QCPScatterStyle::setPen(const QPen &pen)
+{
+  mPenDefined = true;
+  mPen = pen;
+}
+
+/*!
+  Sets the brush that will be used to fill scatter points to \a brush. Note that not all scatter
+  shapes have fillable areas. For example, \ref ssPlus does not while \ref ssCircle does.
+  
+  \see setPen
+*/
+void QCPScatterStyle::setBrush(const QBrush &brush)
+{
+  mBrush = brush;
+}
+
+/*!
+  Sets the pixmap that will be drawn as scatter point to \a pixmap.
+  
+  Note that \ref setSize does not influence the appearance of the pixmap.
+  
+  The scatter shape is automatically set to \ref ssPixmap.
+*/
+void QCPScatterStyle::setPixmap(const QPixmap &pixmap)
+{
+  setShape(ssPixmap);
+  mPixmap = pixmap;
+}
+
+/*!
+  Sets the custom shape that will be drawn as scatter point to \a customPath.
+  
+  The scatter shape is automatically set to \ref ssCustom.
+*/
+void QCPScatterStyle::setCustomPath(const QPainterPath &customPath)
+{
+  setShape(ssCustom);
+  mCustomPath = customPath;
+}
+
+/*!
+  Applies the pen and the brush of this scatter style to \a painter. If this scatter style has an
+  undefined pen (\ref isPenDefined), sets the pen of \a painter to \a defaultPen instead.
+  
+  This function is used by plottables (or any class that wants to draw scatters) just before a
+  number of scatters with this style shall be drawn with the \a painter.
+  
+  \see drawShape
+*/
+void QCPScatterStyle::applyTo(QCPPainter *painter, const QPen &defaultPen) const
+{
+  painter->setPen(mPenDefined ? mPen : defaultPen);
+  painter->setBrush(mBrush);
+}
+
+/*!
+  Draws the scatter shape with \a painter at position \a pos.
+  
+  This function does not modify the pen or the brush on the painter, as \ref applyTo is meant to be
+  called before scatter points are drawn with \ref drawShape.
+  
+  \see applyTo
+*/
+void QCPScatterStyle::drawShape(QCPPainter *painter, QPointF pos) const
+{
+  drawShape(painter, pos.x(), pos.y());
+}
+
+/*! \overload
+  Draws the scatter shape with \a painter at position \a x and \a y.
+*/
+void QCPScatterStyle::drawShape(QCPPainter *painter, double x, double y) const
+{
+  double w = mSize/2.0;
+  switch (mShape)
+  {
+    case ssNone: break;
+    case ssDot:
+    {
+      painter->drawLine(QPointF(x, y), QPointF(x+0.0001, y));
+      break;
+    }
+    case ssCross:
+    {
+      painter->drawLine(QLineF(x-w, y-w, x+w, y+w));
+      painter->drawLine(QLineF(x-w, y+w, x+w, y-w));
+      break;
+    }
+    case ssPlus:
+    {
+      painter->drawLine(QLineF(x-w,   y, x+w,   y));
+      painter->drawLine(QLineF(  x, y+w,   x, y-w));
+      break;
+    }
+    case ssCircle:
+    {
+      painter->drawEllipse(QPointF(x , y), w, w);
+      break;
+    }
+    case ssDisc:
+    {
+      QBrush b = painter->brush();
+      painter->setBrush(painter->pen().color());
+      painter->drawEllipse(QPointF(x , y), w, w);
+      painter->setBrush(b);
+      break;
+    }
+    case ssSquare:
+    {
+      painter->drawRect(QRectF(x-w, y-w, mSize, mSize));
+      break;
+    }
+    case ssDiamond:
+    {
+      painter->drawLine(QLineF(x-w,   y,   x, y-w));
+      painter->drawLine(QLineF(  x, y-w, x+w,   y));
+      painter->drawLine(QLineF(x+w,   y,   x, y+w));
+      painter->drawLine(QLineF(  x, y+w, x-w,   y));
+      break;
+    }
+    case ssStar:
+    {
+      painter->drawLine(QLineF(x-w,   y, x+w,   y));
+      painter->drawLine(QLineF(  x, y+w,   x, y-w));
+      painter->drawLine(QLineF(x-w*0.707, y-w*0.707, x+w*0.707, y+w*0.707));
+      painter->drawLine(QLineF(x-w*0.707, y+w*0.707, x+w*0.707, y-w*0.707));
+      break;
+    }
+    case ssTriangle:
+    {
+       painter->drawLine(QLineF(x-w, y+0.755*w, x+w, y+0.755*w));
+       painter->drawLine(QLineF(x+w, y+0.755*w,   x, y-0.977*w));
+       painter->drawLine(QLineF(  x, y-0.977*w, x-w, y+0.755*w));
+      break;
+    }
+    case ssTriangleInverted:
+    {
+       painter->drawLine(QLineF(x-w, y-0.755*w, x+w, y-0.755*w));
+       painter->drawLine(QLineF(x+w, y-0.755*w,   x, y+0.977*w));
+       painter->drawLine(QLineF(  x, y+0.977*w, x-w, y-0.755*w));
+      break;
+    }
+    case ssCrossSquare:
+    {
+       painter->drawLine(QLineF(x-w, y-w, x+w*0.95, y+w*0.95));
+       painter->drawLine(QLineF(x-w, y+w*0.95, x+w*0.95, y-w));
+       painter->drawRect(QRectF(x-w, y-w, mSize, mSize));
+      break;
+    }
+    case ssPlusSquare:
+    {
+       painter->drawLine(QLineF(x-w,   y, x+w*0.95,   y));
+       painter->drawLine(QLineF(  x, y+w,        x, y-w));
+       painter->drawRect(QRectF(x-w, y-w, mSize, mSize));
+      break;
+    }
+    case ssCrossCircle:
+    {
+       painter->drawLine(QLineF(x-w*0.707, y-w*0.707, x+w*0.670, y+w*0.670));
+       painter->drawLine(QLineF(x-w*0.707, y+w*0.670, x+w*0.670, y-w*0.707));
+       painter->drawEllipse(QPointF(x, y), w, w);
+      break;
+    }
+    case ssPlusCircle:
+    {
+       painter->drawLine(QLineF(x-w,   y, x+w,   y));
+       painter->drawLine(QLineF(  x, y+w,   x, y-w));
+       painter->drawEllipse(QPointF(x, y), w, w);
+      break;
+    }
+    case ssPeace:
+    {
+       painter->drawLine(QLineF(x, y-w,         x,       y+w));
+       painter->drawLine(QLineF(x,   y, x-w*0.707, y+w*0.707));
+       painter->drawLine(QLineF(x,   y, x+w*0.707, y+w*0.707));
+       painter->drawEllipse(QPointF(x, y), w, w);
+      break;
+    }
+    case ssPixmap:
+    {
+      painter->drawPixmap(x-mPixmap.width()*0.5, y-mPixmap.height()*0.5, mPixmap);
+      break;
+    }
+    case ssCustom:
+    {
+      QTransform oldTransform = painter->transform();
+      painter->translate(x, y);
+      painter->scale(mSize/6.0, mSize/6.0);
+      painter->drawPath(mCustomPath);
+      painter->setTransform(oldTransform);
+      break;
+    }
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLayer
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLayer
+  \brief A layer that may contain objects, to control the rendering order
+  
+  The Layering system of QCustomPlot is the mechanism to control the rendering order of the
+  elements inside the plot.
+  
+  It is based on the two classes QCPLayer and QCPLayerable. QCustomPlot holds an ordered list of
+  one or more instances of QCPLayer (see QCustomPlot::addLayer, QCustomPlot::layer,
+  QCustomPlot::moveLayer, etc.). When replotting, QCustomPlot goes through the list of layers
+  bottom to top and successively draws the layerables of the layers.
+  
+  A QCPLayer contains an ordered list of QCPLayerable instances. QCPLayerable is an abstract base
+  class from which almost all visible objects derive, like axes, grids, graphs, items, etc.
+  
+  Initially, QCustomPlot has five layers: "background", "grid", "main", "axes" and "legend" (in
+  that order). The top two layers "axes" and "legend" contain the default axes and legend, so they
+  will be drawn on top. In the middle, there is the "main" layer. It is initially empty and set as
+  the current layer (see QCustomPlot::setCurrentLayer). This means, all new plottables, items etc.
+  are created on this layer by default. Then comes the "grid" layer which contains the QCPGrid
+  instances (which belong tightly to QCPAxis, see \ref QCPAxis::grid). The Axis rect background
+  shall be drawn behind everything else, thus the default QCPAxisRect instance is placed on the
+  "background" layer. Of course, the layer affiliation of the individual objects can be changed as
+  required (\ref QCPLayerable::setLayer).
+  
+  Controlling the ordering of objects is easy: Create a new layer in the position you want it to
+  be, e.g. above "main", with QCustomPlot::addLayer. Then set the current layer with
+  QCustomPlot::setCurrentLayer to that new layer and finally create the objects normally. They will
+  be placed on the new layer automatically, due to the current layer setting. Alternatively you
+  could have also ignored the current layer setting and just moved the objects with
+  QCPLayerable::setLayer to the desired layer after creating them.
+  
+  It is also possible to move whole layers. For example, If you want the grid to be shown in front
+  of all plottables/items on the "main" layer, just move it above "main" with
+  QCustomPlot::moveLayer.
+  
+  The rendering order within one layer is simply by order of creation or insertion. The item
+  created last (or added last to the layer), is drawn on top of all other objects on that layer.
+  
+  When a layer is deleted, the objects on it are not deleted with it, but fall on the layer below
+  the deleted layer, see QCustomPlot::removeLayer.
+*/
+
+/* start documentation of inline functions */
+
+/*! \fn QList<QCPLayerable*> QCPLayer::children() const
+  
+  Returns a list of all layerables on this layer. The order corresponds to the rendering order:
+  layerables with higher indices are drawn above layerables with lower indices.
+*/
