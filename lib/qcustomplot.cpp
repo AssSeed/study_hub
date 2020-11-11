@@ -973,3 +973,247 @@ bool QCPLayerable::setLayer(const QString &layerName)
     return false;
   }
 }
+
+/*!
+  Sets whether this object will be drawn antialiased or not.
+  
+  Note that antialiasing settings may be overridden by QCustomPlot::setAntialiasedElements and
+  QCustomPlot::setNotAntialiasedElements.
+*/
+void QCPLayerable::setAntialiased(bool enabled)
+{
+  mAntialiased = enabled;
+}
+
+/*!
+  Returns whether this layerable is visible, taking possible direct layerable parent visibility
+  into account. This is the method that is consulted to decide whether a layerable shall be drawn
+  or not.
+  
+  If this layerable has a direct layerable parent (usually set via hierarchies implemented in
+  subclasses, like in the case of QCPLayoutElement), this function returns true only if this
+  layerable has its visibility set to true and the parent layerable's \ref realVisibility returns
+  true.
+  
+  If this layerable doesn't have a direct layerable parent, returns the state of this layerable's
+  visibility.
+*/
+bool QCPLayerable::realVisibility() const
+{
+  return mVisible && (!mParentLayerable || mParentLayerable.data()->realVisibility());
+}
+
+/*!
+  This function is used to decide whether a click hits a layerable object or not.
+
+  \a pos is a point in pixel coordinates on the QCustomPlot surface. This function returns the
+  shortest pixel distance of this point to the object. If the object is either invisible or the
+  distance couldn't be determined, -1.0 is returned. Further, if \a onlySelectable is true and the
+  object is not selectable, -1.0 is returned, too.
+
+  If the item is represented not by single lines but by an area like QCPItemRect or QCPItemText, a
+  click inside the area returns a constant value greater zero (typically the selectionTolerance of
+  the parent QCustomPlot multiplied by 0.99). If the click lies outside the area, this function
+  returns -1.0.
+  
+  Providing a constant value for area objects allows selecting line objects even when they are
+  obscured by such area objects, by clicking close to the lines (i.e. closer than
+  0.99*selectionTolerance).
+  
+  The actual setting of the selection state is not done by this function. This is handled by the
+  parent QCustomPlot when the mouseReleaseEvent occurs, and the finally selected object is notified
+  via the selectEvent/deselectEvent methods.
+  
+  \a details is an optional output parameter. Every layerable subclass may place any information
+  in \a details. This information will be passed to \ref selectEvent when the parent QCustomPlot
+  decides on the basis of this selectTest call, that the object was successfully selected. The
+  subsequent call to \ref selectEvent will carry the \a details. This is useful for multi-part
+  objects (like QCPAxis). This way, a possibly complex calculation to decide which part was clicked
+  is only done once in \ref selectTest. The result (i.e. the actually clicked part) can then be
+  placed in \a details. So in the subsequent \ref selectEvent, the decision which part was
+  selected doesn't have to be done a second time for a single selection operation.
+  
+  You may pass 0 as \a details to indicate that you are not interested in those selection details.
+  
+  \see selectEvent, deselectEvent, QCustomPlot::setInteractions
+*/
+double QCPLayerable::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(pos)
+  Q_UNUSED(onlySelectable)
+  Q_UNUSED(details)
+  return -1.0;
+}
+
+/*! \internal
+  
+  Sets the parent plot of this layerable. Use this function once to set the parent plot if you have
+  passed 0 in the constructor. It can not be used to move a layerable from one QCustomPlot to
+  another one.
+  
+  Note that, unlike when passing a non-null parent plot in the constructor, this function does not
+  make \a parentPlot the QObject-parent of this layerable. If you want this, call
+  QObject::setParent(\a parentPlot) in addition to this function.
+  
+  Further, you will probably want to set a layer (\ref setLayer) after calling this function, to
+  make the layerable appear on the QCustomPlot.
+  
+  The parent plot change will be propagated to subclasses via a call to \ref parentPlotInitialized
+  so they can react accordingly (e.g. also initialize the parent plot of child layerables, like
+  QCPLayout does).
+*/
+void QCPLayerable::initializeParentPlot(QCustomPlot *parentPlot)
+{
+  if (mParentPlot)
+  {
+    qDebug() << Q_FUNC_INFO << "called with mParentPlot already initialized";
+    return;
+  }
+  
+  if (!parentPlot)
+    qDebug() << Q_FUNC_INFO << "called with parentPlot zero";
+  
+  mParentPlot = parentPlot;
+  parentPlotInitialized(mParentPlot);
+}
+
+/*! \internal
+  
+  Sets the parent layerable of this layerable to \a parentLayerable. Note that \a parentLayerable does not
+  become the QObject-parent (for memory management) of this layerable.
+  
+  The parent layerable has influence on the return value of the \ref realVisibility method. Only
+  layerables with a fully visible parent tree will return true for \ref realVisibility, and thus be
+  drawn.
+  
+  \see realVisibility
+*/
+void QCPLayerable::setParentLayerable(QCPLayerable *parentLayerable)
+{
+  mParentLayerable = parentLayerable;
+}
+
+/*! \internal
+  
+  Moves this layerable object to \a layer. If \a prepend is true, this object will be prepended to
+  the new layer's list, i.e. it will be drawn below the objects already on the layer. If it is
+  false, the object will be appended.
+  
+  Returns true on success, i.e. if \a layer is a valid layer.
+*/
+bool QCPLayerable::moveToLayer(QCPLayer *layer, bool prepend)
+{
+  if (layer && !mParentPlot)
+  {
+    qDebug() << Q_FUNC_INFO << "no parent QCustomPlot set";
+    return false;
+  }
+  if (layer && layer->parentPlot() != mParentPlot)
+  {
+    qDebug() << Q_FUNC_INFO << "layer" << layer->name() << "is not in same QCustomPlot as this layerable";
+    return false;
+  }
+  
+  if (mLayer)
+    mLayer->removeChild(this);
+  mLayer = layer;
+  if (mLayer)
+    mLayer->addChild(this, prepend);
+  return true;
+}
+
+/*! \internal
+
+  Sets the QCPainter::setAntialiasing state on the provided \a painter, depending on the \a
+  localAntialiased value as well as the overrides \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements. Which override enum this function takes into account is
+  controlled via \a overrideElement.
+*/
+void QCPLayerable::applyAntialiasingHint(QCPPainter *painter, bool localAntialiased, QCP::AntialiasedElement overrideElement) const
+{
+  if (mParentPlot && mParentPlot->notAntialiasedElements().testFlag(overrideElement))
+    painter->setAntialiasing(false);
+  else if (mParentPlot && mParentPlot->antialiasedElements().testFlag(overrideElement))
+    painter->setAntialiasing(true);
+  else
+    painter->setAntialiasing(localAntialiased);
+}
+
+/*! \internal
+
+  This function is called by \ref initializeParentPlot, to allow subclasses to react on the setting
+  of a parent plot. This is the case when 0 was passed as parent plot in the constructor, and the
+  parent plot is set at a later time.
+  
+  For example, QCPLayoutElement/QCPLayout hierarchies may be created independently of any
+  QCustomPlot at first. When they are then added to a layout inside the QCustomPlot, the top level
+  element of the hierarchy gets its parent plot initialized with \ref initializeParentPlot. To
+  propagate the parent plot to all the children of the hierarchy, the top level element then uses
+  this function to pass the parent plot on to its child elements.
+  
+  The default implementation does nothing.
+  
+  \see initializeParentPlot
+*/
+void QCPLayerable::parentPlotInitialized(QCustomPlot *parentPlot)
+{
+   Q_UNUSED(parentPlot)
+}
+
+/*! \internal
+
+  Returns the selection category this layerable shall belong to. The selection category is used in
+  conjunction with \ref QCustomPlot::setInteractions to control which objects are selectable and
+  which aren't.
+  
+  Subclasses that don't fit any of the normal \ref QCP::Interaction values can use \ref
+  QCP::iSelectOther. This is what the default implementation returns.
+  
+  \see QCustomPlot::setInteractions
+*/
+QCP::Interaction QCPLayerable::selectionCategory() const
+{
+  return QCP::iSelectOther;
+}
+
+/*! \internal
+  
+  Returns the clipping rectangle of this layerable object. By default, this is the viewport of the
+  parent QCustomPlot. Specific subclasses may reimplement this function to provide different
+  clipping rects.
+  
+  The returned clipping rect is set on the painter before the draw function of the respective
+  object is called.
+*/
+QRect QCPLayerable::clipRect() const
+{
+  if (mParentPlot)
+    return mParentPlot->viewport();
+  else
+    return QRect();
+}
+
+/*! \internal
+  
+  This event is called when the layerable shall be selected, as a consequence of a click by the
+  user. Subclasses should react to it by setting their selection state appropriately. The default
+  implementation does nothing.
+  
+  \a event is the mouse event that caused the selection. \a additive indicates, whether the user
+  was holding the multi-select-modifier while performing the selection (see \ref
+  QCustomPlot::setMultiSelectModifier). if \a additive is true, the selection state must be toggled
+  (i.e. become selected when unselected and unselected when selected).
+  
+  Every selectEvent is preceded by a call to \ref selectTest, which has returned positively (i.e.
+  returned a value greater than 0 and less than the selection tolerance of the parent QCustomPlot).
+  The \a details data you output from \ref selectTest is feeded back via \a details here. You may
+  use it to transport any kind of information from the selectTest to the possibly subsequent
+  selectEvent. Usually \a details is used to transfer which part was clicked, if it is a layerable
+  that has multiple individually selectable parts (like QCPAxis). This way selectEvent doesn't need
+  to do the calculation again to find out which part was actually clicked.
+  
+  \a selectionStateChanged is an output parameter. If the pointer is non-null, this function must
+  set the value either to true or false, depending on whether the selection state of this layerable
+  was actually changed. For layerables that only are selectable as a whole and not in parts, this
+  is simple: if \a additive is true, \a selectionStateChanged must also be set to true, because the
+  selection toggles. If \a additive is false, \a selectionStateChanged is only set to true, if the
