@@ -1733,3 +1733,263 @@ void QCPMarginGroup::addChild(QCP::MarginSide side, QCPLayoutElement *element)
   This function does not modify the margin group property of \a element.
 */
 void QCPMarginGroup::removeChild(QCP::MarginSide side, QCPLayoutElement *element)
+{
+  if (!mChildren[side].removeOne(element))
+    qDebug() << Q_FUNC_INFO << "element is not child of this margin group side" << reinterpret_cast<quintptr>(element);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLayoutElement
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLayoutElement
+  \brief The abstract base class for all objects that form \ref thelayoutsystem "the layout system".
+  
+  This is an abstract base class. As such, it can't be instantiated directly, rather use one of its subclasses.
+  
+  A Layout element is a rectangular object which can be placed in layouts. It has an outer rect
+  (QCPLayoutElement::outerRect) and an inner rect (\ref QCPLayoutElement::rect). The difference
+  between outer and inner rect is called its margin. The margin can either be set to automatic or
+  manual (\ref setAutoMargins) on a per-side basis. If a side is set to manual, that margin can be
+  set explicitly with \ref setMargins and will stay fixed at that value. If it's set to automatic,
+  the layout element subclass will control the value itself (via \ref calculateAutoMargin).
+  
+  Layout elements can be placed in layouts (base class QCPLayout) like QCPLayoutGrid. The top level
+  layout is reachable via \ref QCustomPlot::plotLayout, and is a \ref QCPLayoutGrid. Since \ref
+  QCPLayout itself derives from \ref QCPLayoutElement, layouts can be nested.
+  
+  Thus in QCustomPlot one can divide layout elements into two categories: The ones that are
+  invisible by themselves, because they don't draw anything. Their only purpose is to manage the
+  position and size of other layout elements. This category of layout elements usually use
+  QCPLayout as base class. Then there is the category of layout elements which actually draw
+  something. For example, QCPAxisRect, QCPLegend and QCPPlotTitle are of this category. This does
+  not necessarily mean that the latter category can't have child layout elements. QCPLegend for
+  instance, actually derives from QCPLayoutGrid and the individual legend items are child layout
+  elements in the grid layout.
+*/
+
+/* start documentation of inline functions */
+
+/*! \fn QCPLayout *QCPLayoutElement::layout() const
+  
+  Returns the parent layout of this layout element.
+*/
+
+/*! \fn QRect QCPLayoutElement::rect() const
+  
+  Returns the inner rect of this layout element. The inner rect is the outer rect (\ref
+  setOuterRect) shrinked by the margins (\ref setMargins, \ref setAutoMargins).
+  
+  In some cases, the area between outer and inner rect is left blank. In other cases the margin
+  area is used to display peripheral graphics while the main content is in the inner rect. This is
+  where automatic margin calculation becomes interesting because it allows the layout element to
+  adapt the margins to the peripheral graphics it wants to draw. For example, \ref QCPAxisRect
+  draws the axis labels and tick labels in the margin area, thus needs to adjust the margins (if
+  \ref setAutoMargins is enabled) according to the space required by the labels of the axes.
+*/
+
+/*! \fn virtual void QCPLayoutElement::mousePressEvent(QMouseEvent *event)
+  
+  This event is called, if the mouse was pressed while being inside the outer rect of this layout
+  element.
+*/
+
+/*! \fn virtual void QCPLayoutElement::mouseMoveEvent(QMouseEvent *event)
+  
+  This event is called, if the mouse is moved inside the outer rect of this layout element.
+*/
+
+/*! \fn virtual void QCPLayoutElement::mouseReleaseEvent(QMouseEvent *event)
+  
+  This event is called, if the mouse was previously pressed inside the outer rect of this layout
+  element and is now released.
+*/
+
+/*! \fn virtual void QCPLayoutElement::mouseDoubleClickEvent(QMouseEvent *event)
+  
+  This event is called, if the mouse is double-clicked inside the outer rect of this layout
+  element.
+*/
+
+/*! \fn virtual void QCPLayoutElement::wheelEvent(QWheelEvent *event)
+  
+  This event is called, if the mouse wheel is scrolled while the cursor is inside the rect of this
+  layout element.
+*/
+
+/* end documentation of inline functions */
+
+/*!
+  Creates an instance of QCPLayoutElement and sets default values.
+*/
+QCPLayoutElement::QCPLayoutElement(QCustomPlot *parentPlot) :
+  QCPLayerable(parentPlot), // parenthood is changed as soon as layout element gets inserted into a layout (except for top level layout)
+  mParentLayout(0),
+  mMinimumSize(),
+  mMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX),
+  mRect(0, 0, 0, 0),
+  mOuterRect(0, 0, 0, 0),
+  mMargins(0, 0, 0, 0),
+  mMinimumMargins(0, 0, 0, 0),
+  mAutoMargins(QCP::msAll)
+{
+}
+
+QCPLayoutElement::~QCPLayoutElement()
+{
+  setMarginGroup(QCP::msAll, 0); // unregister at margin groups, if there are any
+  // unregister at layout:
+  if (qobject_cast<QCPLayout*>(mParentLayout)) // the qobject_cast is just a safeguard in case the layout forgets to call clear() in its dtor and this dtor is called by QObject dtor
+    mParentLayout->take(this);
+}
+
+/*!
+  Sets the outer rect of this layout element. If the layout element is inside a layout, the layout
+  sets the position and size of this layout element using this function.
+  
+  Calling this function externally has no effect, since the layout will overwrite any changes to
+  the outer rect upon the next replot.
+  
+  The layout element will adapt its inner \ref rect by applying the margins inward to the outer rect.
+  
+  \see rect
+*/
+void QCPLayoutElement::setOuterRect(const QRect &rect)
+{
+  if (mOuterRect != rect)
+  {
+    mOuterRect = rect;
+    mRect = mOuterRect.adjusted(mMargins.left(), mMargins.top(), -mMargins.right(), -mMargins.bottom());
+  }
+}
+
+/*!
+  Sets the margins of this layout element. If \ref setAutoMargins is disabled for some or all
+  sides, this function is used to manually set the margin on those sides. Sides that are still set
+  to be handled automatically are ignored and may have any value in \a margins.
+  
+  The margin is the distance between the outer rect (controlled by the parent layout via \ref
+  setOuterRect) and the inner \ref rect (which usually contains the main content of this layout
+  element).
+  
+  \see setAutoMargins
+*/
+void QCPLayoutElement::setMargins(const QMargins &margins)
+{
+  if (mMargins != margins)
+  {
+    mMargins = margins;
+    mRect = mOuterRect.adjusted(mMargins.left(), mMargins.top(), -mMargins.right(), -mMargins.bottom());
+  }
+}
+
+/*!
+  If \ref setAutoMargins is enabled on some or all margins, this function is used to provide
+  minimum values for those margins.
+  
+  The minimum values are not enforced on margin sides that were set to be under manual control via
+  \ref setAutoMargins.
+  
+  \see setAutoMargins
+*/
+void QCPLayoutElement::setMinimumMargins(const QMargins &margins)
+{
+  if (mMinimumMargins != margins)
+  {
+    mMinimumMargins = margins;
+  }
+}
+
+/*!
+  Sets on which sides the margin shall be calculated automatically. If a side is calculated
+  automatically, a minimum margin value may be provided with \ref setMinimumMargins. If a side is
+  set to be controlled manually, the value may be specified with \ref setMargins.
+  
+  Margin sides that are under automatic control may participate in a \ref QCPMarginGroup (see \ref
+  setMarginGroup), to synchronize (align) it with other layout elements in the plot.
+  
+  \see setMinimumMargins, setMargins
+*/
+void QCPLayoutElement::setAutoMargins(QCP::MarginSides sides)
+{
+  mAutoMargins = sides;
+}
+
+/*!
+  Sets the minimum size for the inner \ref rect of this layout element. A parent layout tries to
+  respect the \a size here by changing row/column sizes in the layout accordingly.
+  
+  If the parent layout size is not sufficient to satisfy all minimum size constraints of its child
+  layout elements, the layout may set a size that is actually smaller than \a size. QCustomPlot
+  propagates the layout's size constraints to the outside by setting its own minimum QWidget size
+  accordingly, so violations of \a size should be exceptions.
+*/
+void QCPLayoutElement::setMinimumSize(const QSize &size)
+{
+  if (mMinimumSize != size)
+  {
+    mMinimumSize = size;
+    if (mParentLayout)
+      mParentLayout->sizeConstraintsChanged();
+  }
+}
+
+/*! \overload
+  
+  Sets the minimum size for the inner \ref rect of this layout element.
+*/
+void QCPLayoutElement::setMinimumSize(int width, int height)
+{
+  setMinimumSize(QSize(width, height));
+}
+
+/*!
+  Sets the maximum size for the inner \ref rect of this layout element. A parent layout tries to
+  respect the \a size here by changing row/column sizes in the layout accordingly.
+*/
+void QCPLayoutElement::setMaximumSize(const QSize &size)
+{
+  if (mMaximumSize != size)
+  {
+    mMaximumSize = size;
+    if (mParentLayout)
+      mParentLayout->sizeConstraintsChanged();
+  }
+}
+
+/*! \overload
+  
+  Sets the maximum size for the inner \ref rect of this layout element.
+*/
+void QCPLayoutElement::setMaximumSize(int width, int height)
+{
+  setMaximumSize(QSize(width, height));
+}
+
+/*!
+  Sets the margin \a group of the specified margin \a sides.
+  
+  Margin groups allow synchronizing specified margins across layout elements, see the documentation
+  of \ref QCPMarginGroup.
+  
+  To unset the margin group of \a sides, set \a group to 0.
+  
+  Note that margin groups only work for margin sides that are set to automatic (\ref
+  setAutoMargins).
+*/
+void QCPLayoutElement::setMarginGroup(QCP::MarginSides sides, QCPMarginGroup *group)
+{
+  QVector<QCP::MarginSide> sideVector;
+  if (sides.testFlag(QCP::msLeft)) sideVector.append(QCP::msLeft);
+  if (sides.testFlag(QCP::msRight)) sideVector.append(QCP::msRight);
+  if (sides.testFlag(QCP::msTop)) sideVector.append(QCP::msTop);
+  if (sides.testFlag(QCP::msBottom)) sideVector.append(QCP::msBottom);
+  
+  for (int i=0; i<sideVector.size(); ++i)
+  {
+    QCP::MarginSide side = sideVector.at(i);
+    if (marginGroup(side) != group)
+    {
+      QCPMarginGroup *oldGroup = marginGroup(side);
+      if (oldGroup) // unregister at old group
