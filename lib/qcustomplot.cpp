@@ -1993,3 +1993,252 @@ void QCPLayoutElement::setMarginGroup(QCP::MarginSides sides, QCPMarginGroup *gr
     {
       QCPMarginGroup *oldGroup = marginGroup(side);
       if (oldGroup) // unregister at old group
+        oldGroup->removeChild(side, this);
+      
+      if (!group) // if setting to 0, remove hash entry. Else set hash entry to new group and register there
+      {
+        mMarginGroups.remove(side);
+      } else // setting to a new group
+      {
+        mMarginGroups[side] = group;
+        group->addChild(side, this);
+      }
+    }
+  }
+}
+
+/*!
+  Updates the layout element and sub-elements. This function is automatically called upon replot by
+  the parent layout element.
+  
+  Layout elements that have child elements should call the \ref update method of their child
+  elements.
+  
+  The default implementation executes the automatic margin mechanism, so subclasses should make
+  sure to call the base class implementation.
+*/
+void QCPLayoutElement::update()
+{
+  if (mAutoMargins != QCP::msNone)
+  {
+    // set the margins of this layout element according to automatic margin calculation, either directly or via a margin group:
+    QMargins newMargins = mMargins;
+    QVector<QCP::MarginSide> marginSides = QVector<QCP::MarginSide>() << QCP::msLeft << QCP::msRight << QCP::msTop << QCP::msBottom;
+    for (int i=0; i<marginSides.size(); ++i)
+    {
+      QCP::MarginSide side = marginSides.at(i);
+      if (mAutoMargins.testFlag(side)) // this side's margin shall be calculated automatically
+      {
+        if (mMarginGroups.contains(side)) 
+          QCP::setMarginValue(newMargins, side, mMarginGroups[side]->commonMargin(side)); // this side is part of a margin group, so get the margin value from that group
+        else 
+          QCP::setMarginValue(newMargins, side, calculateAutoMargin(side)); // this side is not part of a group, so calculate the value directly
+        // apply minimum margin restrictions:
+        if (QCP::getMarginValue(newMargins, side) < QCP::getMarginValue(mMinimumMargins, side))
+          QCP::setMarginValue(newMargins, side, QCP::getMarginValue(mMinimumMargins, side));
+      }
+    }
+    setMargins(newMargins);
+  }
+}
+
+/*!
+  Returns the minimum size this layout element (the inner \ref rect) may be compressed to.
+  
+  if a minimum size (\ref setMinimumSize) was not set manually, parent layouts consult this
+  function to determine the minimum allowed size of this layout element. (A manual minimum size is
+  considered set if it is non-zero.)
+*/
+QSize QCPLayoutElement::minimumSizeHint() const
+{
+  return mMinimumSize;
+}
+
+/*!
+  Returns the maximum size this layout element (the inner \ref rect) may be expanded to.
+  
+  if a maximum size (\ref setMaximumSize) was not set manually, parent layouts consult this
+  function to determine the maximum allowed size of this layout element. (A manual maximum size is
+  considered set if it is smaller than Qt's QWIDGETSIZE_MAX.)
+*/
+QSize QCPLayoutElement::maximumSizeHint() const
+{
+  return mMaximumSize;
+}
+
+/*!
+  Returns a list of all child elements in this layout element. If \a recursive is true, all
+  sub-child elements are included in the list, too.
+  
+  Note that there may be entries with value 0 in the returned list. (For example, QCPLayoutGrid may have
+  empty cells which yield 0 at the respective index.)
+*/
+QList<QCPLayoutElement*> QCPLayoutElement::elements(bool recursive) const
+{
+  Q_UNUSED(recursive)
+  return QList<QCPLayoutElement*>();
+}
+
+/*!
+  Layout elements are sensitive to events inside their outer rect. If \a pos is within the outer
+  rect, this method returns a value corresponding to 0.99 times the parent plot's selection
+  tolerance. However, layout elements are not selectable by default. So if \a onlySelectable is
+  true, -1.0 is returned.
+  
+  See \ref QCPLayerable::selectTest for a general explanation of this virtual method.
+  
+  QCPLayoutElement subclasses may reimplement this method to provide more specific selection test
+  behaviour.
+*/
+double QCPLayoutElement::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  
+  if (onlySelectable)
+    return -1;
+  
+  if (QRectF(mOuterRect).contains(pos))
+  {
+    if (mParentPlot)
+      return mParentPlot->selectionTolerance()*0.99;
+    else
+    {
+      qDebug() << Q_FUNC_INFO << "parent plot not defined";
+      return -1;
+    }
+  } else
+    return -1;
+}
+
+/*! \internal 
+  
+  propagates the parent plot initialization to all child elements, by calling \ref
+  QCPLayerable::initializeParentPlot on them.
+*/
+void QCPLayoutElement::parentPlotInitialized(QCustomPlot *parentPlot)
+{
+  QList<QCPLayoutElement*> els = elements(false);
+  for (int i=0; i<els.size(); ++i)
+  {
+    if (!els.at(i)->parentPlot())
+      els.at(i)->initializeParentPlot(parentPlot);
+  }
+}
+
+/*! \internal 
+  
+  Returns the margin size for this \a side. It is used if automatic margins is enabled for this \a
+  side (see \ref setAutoMargins). If a minimum margin was set with \ref setMinimumMargins, the
+  returned value will not be smaller than the specified minimum margin.
+  
+  The default implementation just returns the respective manual margin (\ref setMargins) or the
+  minimum margin, whichever is larger.
+*/
+int QCPLayoutElement::calculateAutoMargin(QCP::MarginSide side)
+{
+  return qMax(QCP::getMarginValue(mMargins, side), QCP::getMarginValue(mMinimumMargins, side));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLayout
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLayout
+  \brief The abstract base class for layouts
+  
+  This is an abstract base class for layout elements whose main purpose is to define the position
+  and size of other child layout elements. In most cases, layouts don't draw anything themselves
+  (but there are exceptions to this, e.g. QCPLegend).
+  
+  QCPLayout derives from QCPLayoutElement, and thus can itself be nested in other layouts.
+  
+  QCPLayout introduces a common interface for accessing and manipulating the child elements. Those
+  functions are most notably \ref elementCount, \ref elementAt, \ref takeAt, \ref take, \ref
+  simplify, \ref removeAt, \ref remove and \ref clear. Individual subclasses may add more functions
+  to this interface which are more specialized to the form of the layout. For example, \ref
+  QCPLayoutGrid adds functions that take row and column indices to access cells of the layout grid
+  more conveniently.
+  
+  Since this is an abstract base class, you can't instantiate it directly. Rather use one of its
+  subclasses like QCPLayoutGrid or QCPLayoutInset.
+  
+  For a general introduction to the layout system, see the dedicated documentation page \ref
+  thelayoutsystem "The Layout System".
+*/
+
+/* start documentation of pure virtual functions */
+
+/*! \fn virtual int QCPLayout::elementCount() const = 0
+  
+  Returns the number of elements/cells in the layout.
+  
+  \see elements, elementAt
+*/
+
+/*! \fn virtual QCPLayoutElement* QCPLayout::elementAt(int index) const = 0
+  
+  Returns the element in the cell with the given \a index. If \a index is invalid, returns 0.
+  
+  Note that even if \a index is valid, the respective cell may be empty in some layouts (e.g.
+  QCPLayoutGrid), so this function may return 0 in those cases. You may use this function to check
+  whether a cell is empty or not.
+  
+  \see elements, elementCount, takeAt
+*/
+
+/*! \fn virtual QCPLayoutElement* QCPLayout::takeAt(int index) = 0
+  
+  Removes the element with the given \a index from the layout and returns it.
+  
+  If the \a index is invalid or the cell with that index is empty, returns 0.
+  
+  Note that some layouts don't remove the respective cell right away but leave an empty cell after
+  successful removal of the layout element. To collapse empty cells, use \ref simplify.
+  
+  \see elementAt, take
+*/
+
+/*! \fn virtual bool QCPLayout::take(QCPLayoutElement* element) = 0
+  
+  Removes the specified \a element from the layout and returns true on success.
+  
+  If the \a element isn't in this layout, returns false.
+  
+  Note that some layouts don't remove the respective cell right away but leave an empty cell after
+  successful removal of the layout element. To collapse empty cells, use \ref simplify.
+  
+  \see takeAt
+*/
+
+/* end documentation of pure virtual functions */
+
+/*!
+  Creates an instance of QCPLayoutElement and sets default values. Note that since QCPLayoutElement
+  is an abstract base class, it can't be instantiated directly.
+*/
+QCPLayout::QCPLayout()
+{
+}
+
+/*!
+  First calls the QCPLayoutElement::update base class implementation to update the margins on this
+  layout.
+  
+  Then calls \ref updateLayout which subclasses reimplement to reposition and resize their cells.
+  
+  Finally, \ref update is called on all child elements.
+*/
+void QCPLayout::update()
+{
+  QCPLayoutElement::update(); // recalculates (auto-)margins
+  
+  // set child element rects according to layout:
+  updateLayout();
+  
+  // propagate update call to child elements:
+  for (int i=0; i<elementCount(); ++i)
+  {
+    if (QCPLayoutElement *el = elementAt(i))
+      el->update();
+  }
+}
