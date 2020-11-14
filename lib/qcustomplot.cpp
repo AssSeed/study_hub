@@ -2242,3 +2242,259 @@ void QCPLayout::update()
       el->update();
   }
 }
+
+/* inherits documentation from base class */
+QList<QCPLayoutElement*> QCPLayout::elements(bool recursive) const
+{
+  int c = elementCount();
+  QList<QCPLayoutElement*> result;
+#if QT_VERSION >= QT_VERSION_CHECK(4, 7, 0)
+  result.reserve(c);
+#endif
+  for (int i=0; i<c; ++i)
+    result.append(elementAt(i));
+  if (recursive)
+  {
+    for (int i=0; i<c; ++i)
+    {
+      if (result.at(i))
+        result << result.at(i)->elements(recursive);
+    }
+  }
+  return result;
+}
+
+/*!
+  Simplifies the layout by collapsing empty cells. The exact behavior depends on subclasses, the
+  default implementation does nothing.
+  
+  Not all layouts need simplification. For example, QCPLayoutInset doesn't use explicit
+  simplification while QCPLayoutGrid does.
+*/
+void QCPLayout::simplify()
+{
+}
+
+/*!
+  Removes and deletes the element at the provided \a index. Returns true on success. If \a index is
+  invalid or points to an empty cell, returns false.
+  
+  This function internally uses \ref takeAt to remove the element from the layout and then deletes
+  the returned element.
+  
+  \see remove, takeAt
+*/
+bool QCPLayout::removeAt(int index)
+{
+  if (QCPLayoutElement *el = takeAt(index))
+  {
+    delete el;
+    return true;
+  } else
+    return false;
+}
+
+/*!
+  Removes and deletes the provided \a element. Returns true on success. If \a element is not in the
+  layout, returns false.
+  
+  This function internally uses \ref takeAt to remove the element from the layout and then deletes
+  the element.
+  
+  \see removeAt, take
+*/
+bool QCPLayout::remove(QCPLayoutElement *element)
+{
+  if (take(element))
+  {
+    delete element;
+    return true;
+  } else
+    return false;
+}
+
+/*!
+  Removes and deletes all layout elements in this layout.
+  
+  \see remove, removeAt
+*/
+void QCPLayout::clear()
+{
+  for (int i=elementCount()-1; i>=0; --i)
+  {
+    if (elementAt(i))
+      removeAt(i);
+  }
+  simplify();
+}
+
+/*!
+  Subclasses call this method to report changed (minimum/maximum) size constraints.
+  
+  If the parent of this layout is again a QCPLayout, forwards the call to the parent's \ref
+  sizeConstraintsChanged. If the parent is a QWidget (i.e. is the \ref QCustomPlot::plotLayout of
+  QCustomPlot), calls QWidget::updateGeometry, so if the QCustomPlot widget is inside a Qt QLayout,
+  it may update itself and resize cells accordingly.
+*/
+void QCPLayout::sizeConstraintsChanged() const
+{
+  if (QWidget *w = qobject_cast<QWidget*>(parent()))
+    w->updateGeometry();
+  else if (QCPLayout *l = qobject_cast<QCPLayout*>(parent()))
+    l->sizeConstraintsChanged();
+}
+
+/*! \internal
+  
+  Subclasses reimplement this method to update the position and sizes of the child elements/cells
+  via calling their \ref QCPLayoutElement::setOuterRect. The default implementation does nothing.
+  
+  The geometry used as a reference is the inner \ref rect of this layout. Child elements should stay
+  within that rect.
+  
+  \ref getSectionSizes may help with the reimplementation of this function.
+  
+  \see update
+*/
+void QCPLayout::updateLayout()
+{
+}
+
+
+/*! \internal
+  
+  Associates \a el with this layout. This is done by setting the \ref QCPLayoutElement::layout, the
+  \ref QCPLayerable::parentLayerable and the QObject parent to this layout.
+  
+  Further, if \a el didn't previously have a parent plot, calls \ref
+  QCPLayerable::initializeParentPlot on \a el to set the paret plot.
+  
+  This method is used by subclass specific methods that add elements to the layout. Note that this
+  method only changes properties in \a el. The removal from the old layout and the insertion into
+  the new layout must be done additionally.
+*/
+void QCPLayout::adoptElement(QCPLayoutElement *el)
+{
+  if (el)
+  {
+    el->mParentLayout = this;
+    el->setParentLayerable(this);
+    el->setParent(this);
+    if (!el->parentPlot())
+      el->initializeParentPlot(mParentPlot);
+  } else
+    qDebug() << Q_FUNC_INFO << "Null element passed";
+}
+
+/*! \internal
+  
+  Disassociates \a el from this layout. This is done by setting the \ref QCPLayoutElement::layout
+  and the \ref QCPLayerable::parentLayerable to zero. The QObject parent is set to the parent
+  QCustomPlot.
+  
+  This method is used by subclass specific methods that remove elements from the layout (e.g. \ref
+  take or \ref takeAt). Note that this method only changes properties in \a el. The removal from
+  the old layout must be done additionally.
+*/
+void QCPLayout::releaseElement(QCPLayoutElement *el)
+{
+  if (el)
+  {
+    el->mParentLayout = 0;
+    el->setParentLayerable(0);
+    el->setParent(mParentPlot);
+    // Note: Don't initializeParentPlot(0) here, because layout element will stay in same parent plot
+  } else
+    qDebug() << Q_FUNC_INFO << "Null element passed";
+}
+
+/*! \internal
+  
+  This is a helper function for the implementation of \ref updateLayout in subclasses.
+  
+  It calculates the sizes of one-dimensional sections with provided constraints on maximum section
+  sizes, minimum section sizes, relative stretch factors and the final total size of all sections.
+  
+  The QVector entries refer to the sections. Thus all QVectors must have the same size.
+  
+  \a maxSizes gives the maximum allowed size of each section. If there shall be no maximum size
+  imposed, set all vector values to Qt's QWIDGETSIZE_MAX.
+  
+  \a minSizes gives the minimum allowed size of each section. If there shall be no minimum size
+  imposed, set all vector values to zero. If the \a minSizes entries add up to a value greater than
+  \a totalSize, sections will be scaled smaller than the proposed minimum sizes. (In other words,
+  not exceeding the allowed total size is taken to be more important than not going below minimum
+  section sizes.)
+  
+  \a stretchFactors give the relative proportions of the sections to each other. If all sections
+  shall be scaled equally, set all values equal. If the first section shall be double the size of
+  each individual other section, set the first number of \a stretchFactors to double the value of
+  the other individual values (e.g. {2, 1, 1, 1}).
+  
+  \a totalSize is the value that the final section sizes will add up to. Due to rounding, the
+  actual sum may differ slightly. If you want the section sizes to sum up to exactly that value,
+  you could distribute the remaining difference on the sections.
+  
+  The return value is a QVector containing the section sizes.
+*/
+QVector<int> QCPLayout::getSectionSizes(QVector<int> maxSizes, QVector<int> minSizes, QVector<double> stretchFactors, int totalSize) const
+{
+  if (maxSizes.size() != minSizes.size() || minSizes.size() != stretchFactors.size())
+  {
+    qDebug() << Q_FUNC_INFO << "Passed vector sizes aren't equal:" << maxSizes << minSizes << stretchFactors;
+    return QVector<int>();
+  }
+  if (stretchFactors.isEmpty())
+    return QVector<int>();
+  int sectionCount = stretchFactors.size();
+  QVector<double> sectionSizes(sectionCount);
+  // if provided total size is forced smaller than total minimum size, ignore minimum sizes (squeeze sections):
+  int minSizeSum = 0;
+  for (int i=0; i<sectionCount; ++i)
+    minSizeSum += minSizes.at(i);
+  if (totalSize < minSizeSum)
+  {
+    // new stretch factors are minimum sizes and minimum sizes are set to zero:
+    for (int i=0; i<sectionCount; ++i)
+    {
+      stretchFactors[i] = minSizes.at(i);
+      minSizes[i] = 0;
+    }
+  }
+  
+  QList<int> minimumLockedSections;
+  QList<int> unfinishedSections;
+  for (int i=0; i<sectionCount; ++i)
+    unfinishedSections.append(i);
+  double freeSize = totalSize;
+  
+  int outerIterations = 0;
+  while (!unfinishedSections.isEmpty() && outerIterations < sectionCount*2) // the iteration check ist just a failsafe in case something really strange happens
+  {
+    ++outerIterations;
+    int innerIterations = 0;
+    while (!unfinishedSections.isEmpty() && innerIterations < sectionCount*2) // the iteration check ist just a failsafe in case something really strange happens
+    {
+      ++innerIterations;
+      // find section that hits its maximum next:
+      int nextId = -1;
+      double nextMax = 1e12;
+      for (int i=0; i<unfinishedSections.size(); ++i)
+      {
+        int secId = unfinishedSections.at(i);
+        double hitsMaxAt = (maxSizes.at(secId)-sectionSizes.at(secId))/stretchFactors.at(secId);
+        if (hitsMaxAt < nextMax)
+        {
+          nextMax = hitsMaxAt;
+          nextId = secId;
+        }
+      }
+      // check if that maximum is actually within the bounds of the total size (i.e. can we stretch all remaining sections so far that the found section
+      // actually hits its maximum, without exceeding the total size when we add up all sections)
+      double stretchFactorSum = 0;
+      for (int i=0; i<unfinishedSections.size(); ++i)
+        stretchFactorSum += stretchFactors.at(unfinishedSections.at(i));
+      double nextMaxLimit = freeSize/stretchFactorSum;
+      if (nextMax < nextMaxLimit) // next maximum is actually hit, move forward to that point and fix the size of that section
+      {
+        for (int i=0; i<unfinishedSections.size(); ++i)
