@@ -2498,3 +2498,260 @@ QVector<int> QCPLayout::getSectionSizes(QVector<int> maxSizes, QVector<int> minS
       if (nextMax < nextMaxLimit) // next maximum is actually hit, move forward to that point and fix the size of that section
       {
         for (int i=0; i<unfinishedSections.size(); ++i)
+        {
+          sectionSizes[unfinishedSections.at(i)] += nextMax*stretchFactors.at(unfinishedSections.at(i)); // increment all sections
+          freeSize -= nextMax*stretchFactors.at(unfinishedSections.at(i));
+        }
+        unfinishedSections.removeOne(nextId); // exclude the section that is now at maximum from further changes
+      } else // next maximum isn't hit, just distribute rest of free space on remaining sections
+      {
+        for (int i=0; i<unfinishedSections.size(); ++i)
+          sectionSizes[unfinishedSections.at(i)] += nextMaxLimit*stretchFactors.at(unfinishedSections.at(i)); // increment all sections
+        unfinishedSections.clear();
+      }
+    }
+    if (innerIterations == sectionCount*2)
+      qDebug() << Q_FUNC_INFO << "Exceeded maximum expected inner iteration count, layouting aborted. Input was:" << maxSizes << minSizes << stretchFactors << totalSize;
+    
+    // now check whether the resulting section sizes violate minimum restrictions:
+    bool foundMinimumViolation = false;
+    for (int i=0; i<sectionSizes.size(); ++i)
+    {
+      if (minimumLockedSections.contains(i))
+        continue;
+      if (sectionSizes.at(i) < minSizes.at(i)) // section violates minimum
+      {
+        sectionSizes[i] = minSizes.at(i); // set it to minimum
+        foundMinimumViolation = true; // make sure we repeat the whole optimization process
+        minimumLockedSections.append(i);
+      }
+    }
+    if (foundMinimumViolation)
+    {
+      freeSize = totalSize;
+      for (int i=0; i<sectionCount; ++i)
+      {
+        if (!minimumLockedSections.contains(i)) // only put sections that haven't hit their minimum back into the pool
+          unfinishedSections.append(i);
+        else
+          freeSize -= sectionSizes.at(i); // remove size of minimum locked sections from available space in next round
+      }
+      // reset all section sizes to zero that are in unfinished sections (all others have been set to their minimum):
+      for (int i=0; i<unfinishedSections.size(); ++i)
+        sectionSizes[unfinishedSections.at(i)] = 0;
+    }
+  }
+  if (outerIterations == sectionCount*2)
+    qDebug() << Q_FUNC_INFO << "Exceeded maximum expected outer iteration count, layouting aborted. Input was:" << maxSizes << minSizes << stretchFactors << totalSize;
+  
+  QVector<int> result(sectionCount);
+  for (int i=0; i<sectionCount; ++i)
+    result[i] = qRound(sectionSizes.at(i));
+  return result;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLayoutGrid
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLayoutGrid
+  \brief A layout that arranges child elements in a grid
+  
+  Elements are laid out in a grid with configurable stretch factors (\ref setColumnStretchFactor,
+  \ref setRowStretchFactor) and spacing (\ref setColumnSpacing, \ref setRowSpacing).
+  
+  Elements can be added to cells via \ref addElement. The grid is expanded if the specified row or
+  column doesn't exist yet. Whether a cell contains a valid layout element can be checked with \ref
+  hasElement, that element can be retrieved with \ref element. If rows and columns that only have
+  empty cells shall be removed, call \ref simplify. Removal of elements is either done by just
+  adding the element to a different layout or by using the QCPLayout interface \ref take or \ref
+  remove.
+  
+  Row and column insertion can be performed with \ref insertRow and \ref insertColumn.
+*/
+
+/*!
+  Creates an instance of QCPLayoutGrid and sets default values.
+*/
+QCPLayoutGrid::QCPLayoutGrid() :
+  mColumnSpacing(5),
+  mRowSpacing(5)
+{
+}
+
+QCPLayoutGrid::~QCPLayoutGrid()
+{
+  // clear all child layout elements. This is important because only the specific layouts know how
+  // to handle removing elements (clear calls virtual removeAt method to do that).
+  clear();
+}
+
+/*!
+  Returns the element in the cell in \a row and \a column.
+  
+  Returns 0 if either the row/column is invalid or if the cell is empty. In those cases, a qDebug
+  message is printed. To check whether a cell exists and isn't empty, use \ref hasElement.
+  
+  \see addElement, hasElement
+*/
+QCPLayoutElement *QCPLayoutGrid::element(int row, int column) const
+{
+  if (row >= 0 && row < mElements.size())
+  {
+    if (column >= 0 && column < mElements.first().size())
+    {
+      if (QCPLayoutElement *result = mElements.at(row).at(column))
+        return result;
+      else
+        qDebug() << Q_FUNC_INFO << "Requested cell is empty. Row:" << row << "Column:" << column;
+    } else
+      qDebug() << Q_FUNC_INFO << "Invalid column. Row:" << row << "Column:" << column;
+  } else
+    qDebug() << Q_FUNC_INFO << "Invalid row. Row:" << row << "Column:" << column;
+  return 0;
+}
+
+/*!
+  Returns the number of rows in the layout.
+  
+  \see columnCount
+*/
+int QCPLayoutGrid::rowCount() const
+{
+  return mElements.size();
+}
+
+/*!
+  Returns the number of columns in the layout.
+  
+  \see rowCount
+*/
+int QCPLayoutGrid::columnCount() const
+{
+  if (mElements.size() > 0)
+    return mElements.first().size();
+  else
+    return 0;
+}
+
+/*!
+  Adds the \a element to cell with \a row and \a column. If \a element is already in a layout, it
+  is first removed from there. If \a row or \a column don't exist yet, the layout is expanded
+  accordingly.
+  
+  Returns true if the element was added successfully, i.e. if the cell at \a row and \a column
+  didn't already have an element.
+  
+  \see element, hasElement, take, remove
+*/
+bool QCPLayoutGrid::addElement(int row, int column, QCPLayoutElement *element)
+{
+  if (element)
+  {
+    if (!hasElement(row, column))
+    {
+      if (element->layout()) // remove from old layout first
+        element->layout()->take(element);
+      expandTo(row+1, column+1);
+      mElements[row][column] = element;
+      adoptElement(element);
+      return true;
+    } else
+      qDebug() << Q_FUNC_INFO << "There is already an element in the specified row/column:" << row << column; 
+  } else
+    qDebug() << Q_FUNC_INFO << "Can't add null element to row/column:" << row << column;
+  return false;
+}
+
+/*!
+  Returns whether the cell at \a row and \a column exists and contains a valid element, i.e. isn't
+  empty.
+  
+  \see element
+*/
+bool QCPLayoutGrid::hasElement(int row, int column)
+{
+  if (row >= 0 && row < rowCount() && column >= 0 && column < columnCount())
+    return mElements.at(row).at(column);
+  else
+    return false;
+}
+
+/*!
+  Sets the stretch \a factor of \a column.
+  
+  Stretch factors control the relative sizes of rows and columns. Cells will not be resized beyond
+  their minimum and maximum widths/heights (\ref QCPLayoutElement::setMinimumSize, \ref
+  QCPLayoutElement::setMaximumSize), regardless of the stretch factor.
+  
+  The default stretch factor of newly created rows/columns is 1.
+  
+  \see setColumnStretchFactors, setRowStretchFactor
+*/
+void QCPLayoutGrid::setColumnStretchFactor(int column, double factor)
+{
+  if (column >= 0 && column < columnCount())
+  {
+    if (factor > 0)
+      mColumnStretchFactors[column] = factor;
+    else
+      qDebug() << Q_FUNC_INFO << "Invalid stretch factor, must be positive:" << factor;
+  } else
+    qDebug() << Q_FUNC_INFO << "Invalid column:" << column;
+}
+
+/*!
+  Sets the stretch \a factors of all columns. \a factors must have the size \ref columnCount.
+  
+  Stretch factors control the relative sizes of rows and columns. Cells will not be resized beyond
+  their minimum and maximum widths/heights (\ref QCPLayoutElement::setMinimumSize, \ref
+  QCPLayoutElement::setMaximumSize), regardless of the stretch factor.
+  
+  The default stretch factor of newly created rows/columns is 1.
+  
+  \see setColumnStretchFactor, setRowStretchFactors
+*/
+void QCPLayoutGrid::setColumnStretchFactors(const QList<double> &factors)
+{
+  if (factors.size() == mColumnStretchFactors.size())
+  {
+    mColumnStretchFactors = factors;
+    for (int i=0; i<mColumnStretchFactors.size(); ++i)
+    {
+      if (mColumnStretchFactors.at(i) <= 0)
+      {
+        qDebug() << Q_FUNC_INFO << "Invalid stretch factor, must be positive:" << mColumnStretchFactors.at(i);
+        mColumnStretchFactors[i] = 1;
+      }
+    }
+  } else
+    qDebug() << Q_FUNC_INFO << "Column count not equal to passed stretch factor count:" << factors;
+}
+
+/*!
+  Sets the stretch \a factor of \a row.
+  
+  Stretch factors control the relative sizes of rows and columns. Cells will not be resized beyond
+  their minimum and maximum widths/heights (\ref QCPLayoutElement::setMinimumSize, \ref
+  QCPLayoutElement::setMaximumSize), regardless of the stretch factor.
+  
+  The default stretch factor of newly created rows/columns is 1.
+  
+  \see setColumnStretchFactors, setRowStretchFactor
+*/
+void QCPLayoutGrid::setRowStretchFactor(int row, double factor)
+{
+  if (row >= 0 && row < rowCount())
+  {
+    if (factor > 0)
+      mRowStretchFactors[row] = factor;
+    else
+      qDebug() << Q_FUNC_INFO << "Invalid stretch factor, must be positive:" << factor;
+  } else
+    qDebug() << Q_FUNC_INFO << "Invalid row:" << row;
+}
+
+/*!
+  Sets the stretch \a factors of all rows. \a factors must have the size \ref rowCount.
+  
