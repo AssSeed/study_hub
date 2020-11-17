@@ -3019,3 +3019,251 @@ void QCPLayoutGrid::simplify()
   for (int col=columnCount()-1; col>=0; --col)
   {
     bool hasElements = false;
+    for (int row=0; row<rowCount(); ++row)
+    {
+      if (mElements.at(row).at(col))
+      {
+        hasElements = true;
+        break;
+      }
+    }
+    if (!hasElements)
+    {
+      mColumnStretchFactors.removeAt(col);
+      for (int row=0; row<rowCount(); ++row)
+        mElements[row].removeAt(col);
+    }
+  }
+}
+
+/* inherits documentation from base class */
+QSize QCPLayoutGrid::minimumSizeHint() const
+{
+  QVector<int> minColWidths, minRowHeights;
+  getMinimumRowColSizes(&minColWidths, &minRowHeights);
+  QSize result(0, 0);
+  for (int i=0; i<minColWidths.size(); ++i)
+    result.rwidth() += minColWidths.at(i);
+  for (int i=0; i<minRowHeights.size(); ++i)
+    result.rheight() += minRowHeights.at(i);
+  result.rwidth() += qMax(0, columnCount()-1) * mColumnSpacing + mMargins.left() + mMargins.right();
+  result.rheight() += qMax(0, rowCount()-1) * mRowSpacing + mMargins.top() + mMargins.bottom();
+  return result;
+}
+
+/* inherits documentation from base class */
+QSize QCPLayoutGrid::maximumSizeHint() const
+{
+  QVector<int> maxColWidths, maxRowHeights;
+  getMaximumRowColSizes(&maxColWidths, &maxRowHeights);
+  
+  QSize result(0, 0);
+  for (int i=0; i<maxColWidths.size(); ++i)
+    result.setWidth(qMin(result.width()+maxColWidths.at(i), QWIDGETSIZE_MAX));
+  for (int i=0; i<maxRowHeights.size(); ++i)
+    result.setHeight(qMin(result.height()+maxRowHeights.at(i), QWIDGETSIZE_MAX));
+  result.rwidth() += qMax(0, columnCount()-1) * mColumnSpacing + mMargins.left() + mMargins.right();
+  result.rheight() += qMax(0, rowCount()-1) * mRowSpacing + mMargins.top() + mMargins.bottom();
+  return result;
+}
+
+/*! \internal
+  
+  Places the minimum column widths and row heights into \a minColWidths and \a minRowHeights
+  respectively.
+  
+  The minimum height of a row is the largest minimum height of any element in that row. The minimum
+  width of a column is the largest minimum width of any element in that column.
+  
+  This is a helper function for \ref updateLayout.
+  
+  \see getMaximumRowColSizes
+*/
+void QCPLayoutGrid::getMinimumRowColSizes(QVector<int> *minColWidths, QVector<int> *minRowHeights) const
+{
+  *minColWidths = QVector<int>(columnCount(), 0);
+  *minRowHeights = QVector<int>(rowCount(), 0);
+  for (int row=0; row<rowCount(); ++row)
+  {
+    for (int col=0; col<columnCount(); ++col)
+    {
+      if (mElements.at(row).at(col))
+      {
+        QSize minHint = mElements.at(row).at(col)->minimumSizeHint();
+        QSize min = mElements.at(row).at(col)->minimumSize();
+        QSize final(min.width() > 0 ? min.width() : minHint.width(), min.height() > 0 ? min.height() : minHint.height());
+        if (minColWidths->at(col) < final.width())
+          (*minColWidths)[col] = final.width();
+        if (minRowHeights->at(row) < final.height())
+          (*minRowHeights)[row] = final.height();
+      }
+    }
+  }
+}
+
+/*! \internal
+  
+  Places the maximum column widths and row heights into \a maxColWidths and \a maxRowHeights
+  respectively.
+  
+  The maximum height of a row is the smallest maximum height of any element in that row. The
+  maximum width of a column is the smallest maximum width of any element in that column.
+  
+  This is a helper function for \ref updateLayout.
+  
+  \see getMinimumRowColSizes
+*/
+void QCPLayoutGrid::getMaximumRowColSizes(QVector<int> *maxColWidths, QVector<int> *maxRowHeights) const
+{
+  *maxColWidths = QVector<int>(columnCount(), QWIDGETSIZE_MAX);
+  *maxRowHeights = QVector<int>(rowCount(), QWIDGETSIZE_MAX);
+  for (int row=0; row<rowCount(); ++row)
+  {
+    for (int col=0; col<columnCount(); ++col)
+    {
+      if (mElements.at(row).at(col))
+      {
+        QSize maxHint = mElements.at(row).at(col)->maximumSizeHint();
+        QSize max = mElements.at(row).at(col)->maximumSize();
+        QSize final(max.width() < QWIDGETSIZE_MAX ? max.width() : maxHint.width(), max.height() < QWIDGETSIZE_MAX ? max.height() : maxHint.height());
+        if (maxColWidths->at(col) > final.width())
+          (*maxColWidths)[col] = final.width();
+        if (maxRowHeights->at(row) > final.height())
+          (*maxRowHeights)[row] = final.height();
+      }
+    }
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLayoutInset
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/*! \class QCPLayoutInset
+  \brief A layout that places child elements aligned to the border or arbitrarily positioned
+  
+  Elements are placed either aligned to the border or at arbitrary position in the area of the
+  layout. Which placement applies is controlled with the \ref InsetPlacement (\ref
+  setInsetPlacement).
+
+  Elements are added via \ref addElement(QCPLayoutElement *element, Qt::Alignment alignment) or
+  addElement(QCPLayoutElement *element, const QRectF &rect). If the first method is used, the inset
+  placement will default to \ref ipBorderAligned and the element will be aligned according to the
+  \a alignment parameter. The second method defaults to \ref ipFree and allows placing elements at
+  arbitrary position and size, defined by \a rect.
+  
+  The alignment or rect can be set via \ref setInsetAlignment or \ref setInsetRect, respectively.
+  
+  This is the layout that every QCPAxisRect has as \ref QCPAxisRect::insetLayout.
+*/
+
+/* start documentation of inline functions */
+
+/*! \fn virtual void QCPLayoutInset::simplify()
+  
+  The QCPInsetLayout does not need simplification since it can never have empty cells due to its
+  linear index structure. This method does nothing.
+*/
+
+/* end documentation of inline functions */
+
+/*!
+  Creates an instance of QCPLayoutInset and sets default values.
+*/
+QCPLayoutInset::QCPLayoutInset()
+{
+}
+
+QCPLayoutInset::~QCPLayoutInset()
+{
+  // clear all child layout elements. This is important because only the specific layouts know how
+  // to handle removing elements (clear calls virtual removeAt method to do that).
+  clear();
+}
+
+/*!
+  Returns the placement type of the element with the specified \a index.
+*/
+QCPLayoutInset::InsetPlacement QCPLayoutInset::insetPlacement(int index) const
+{
+  if (elementAt(index))
+    return mInsetPlacement.at(index);
+  else
+  {
+    qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
+    return ipFree;
+  }
+}
+
+/*!
+  Returns the alignment of the element with the specified \a index. The alignment only has a
+  meaning, if the inset placement (\ref setInsetPlacement) is \ref ipBorderAligned.
+*/
+Qt::Alignment QCPLayoutInset::insetAlignment(int index) const
+{
+  if (elementAt(index))
+    return mInsetAlignment.at(index);
+  else
+  {
+    qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
+    return 0;
+  }
+}
+
+/*!
+  Returns the rect of the element with the specified \a index. The rect only has a
+  meaning, if the inset placement (\ref setInsetPlacement) is \ref ipFree.
+*/
+QRectF QCPLayoutInset::insetRect(int index) const
+{
+  if (elementAt(index))
+    return mInsetRect.at(index);
+  else
+  {
+    qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
+    return QRectF();
+  }
+}
+
+/*!
+  Sets the inset placement type of the element with the specified \a index to \a placement.
+  
+  \see InsetPlacement
+*/
+void QCPLayoutInset::setInsetPlacement(int index, QCPLayoutInset::InsetPlacement placement)
+{
+  if (elementAt(index))
+    mInsetPlacement[index] = placement;
+  else
+    qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
+}
+
+/*!
+  If the inset placement (\ref setInsetPlacement) is \ref ipBorderAligned, this function
+  is used to set the alignment of the element with the specified \a index to \a alignment.
+  
+  \a alignment is an or combination of the following alignment flags: Qt::AlignLeft,
+  Qt::AlignHCenter, Qt::AlighRight, Qt::AlignTop, Qt::AlignVCenter, Qt::AlignBottom. Any other
+  alignment flags will be ignored.
+*/
+void QCPLayoutInset::setInsetAlignment(int index, Qt::Alignment alignment)
+{
+  if (elementAt(index))
+    mInsetAlignment[index] = alignment;
+  else
+    qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
+}
+
+/*!
+  If the inset placement (\ref setInsetPlacement) is \ref ipFree, this function is used to set the
+  position and size of the element with the specified \a index to \a rect.
+  
+  \a rect is given in fractions of the whole inset layout rect. So an inset with rect (0, 0, 1, 1)
+  will span the entire layout. An inset with rect (0.6, 0.1, 0.35, 0.35) will be in the top right
+  corner of the layout, with 35% width and height of the parent layout.
+  
+  Note that the minimum and maximum sizes of the embedded element (\ref
+  QCPLayoutElement::setMinimumSize, \ref QCPLayoutElement::setMaximumSize) are enforced.
+*/
+void QCPLayoutInset::setInsetRect(int index, const QRectF &rect)
+{
