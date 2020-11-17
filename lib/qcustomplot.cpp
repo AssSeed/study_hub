@@ -2755,3 +2755,267 @@ void QCPLayoutGrid::setRowStretchFactor(int row, double factor)
 /*!
   Sets the stretch \a factors of all rows. \a factors must have the size \ref rowCount.
   
+  Stretch factors control the relative sizes of rows and columns. Cells will not be resized beyond
+  their minimum and maximum widths/heights (\ref QCPLayoutElement::setMinimumSize, \ref
+  QCPLayoutElement::setMaximumSize), regardless of the stretch factor.
+  
+  The default stretch factor of newly created rows/columns is 1.
+  
+  \see setRowStretchFactor, setColumnStretchFactors
+*/
+void QCPLayoutGrid::setRowStretchFactors(const QList<double> &factors)
+{
+  if (factors.size() == mRowStretchFactors.size())
+  {
+    mRowStretchFactors = factors;
+    for (int i=0; i<mRowStretchFactors.size(); ++i)
+    {
+      if (mRowStretchFactors.at(i) <= 0)
+      {
+        qDebug() << Q_FUNC_INFO << "Invalid stretch factor, must be positive:" << mRowStretchFactors.at(i);
+        mRowStretchFactors[i] = 1;
+      }
+    }
+  } else
+    qDebug() << Q_FUNC_INFO << "Row count not equal to passed stretch factor count:" << factors;
+}
+
+/*!
+  Sets the gap that is left blank between columns to \a pixels.
+  
+  \see setRowSpacing
+*/
+void QCPLayoutGrid::setColumnSpacing(int pixels)
+{
+  mColumnSpacing = pixels;
+}
+
+/*!
+  Sets the gap that is left blank between rows to \a pixels.
+  
+  \see setColumnSpacing
+*/
+void QCPLayoutGrid::setRowSpacing(int pixels)
+{
+  mRowSpacing = pixels;
+}
+
+/*!
+  Expands the layout to have \a newRowCount rows and \a newColumnCount columns. So the last valid
+  row index will be \a newRowCount-1, the last valid column index will be \a newColumnCount-1.
+  
+  If the current column/row count is already larger or equal to \a newColumnCount/\a newRowCount,
+  this function does nothing in that dimension.
+  
+  Newly created cells are empty, new rows and columns have the stretch factor 1.
+  
+  Note that upon a call to \ref addElement, the layout is expanded automatically to contain the
+  specified row and column, using this function.
+  
+  \see simplify
+*/
+void QCPLayoutGrid::expandTo(int newRowCount, int newColumnCount)
+{
+  // add rows as necessary:
+  while (rowCount() < newRowCount)
+  {
+    mElements.append(QList<QCPLayoutElement*>());
+    mRowStretchFactors.append(1);
+  }
+  // go through rows and expand columns as necessary:
+  int newColCount = qMax(columnCount(), newColumnCount);
+  for (int i=0; i<rowCount(); ++i)
+  {
+    while (mElements.at(i).size() < newColCount)
+      mElements[i].append(0);
+  }
+  while (mColumnStretchFactors.size() < newColCount)
+    mColumnStretchFactors.append(1);
+}
+
+/*!
+  Inserts a new row with empty cells at the row index \a newIndex. Valid values for \a newIndex
+  range from 0 (inserts a row at the top) to \a rowCount (appends a row at the bottom).
+  
+  \see insertColumn
+*/
+void QCPLayoutGrid::insertRow(int newIndex)
+{
+  if (mElements.isEmpty() || mElements.first().isEmpty()) // if grid is completely empty, add first cell
+  {
+    expandTo(1, 1);
+    return;
+  }
+  
+  if (newIndex < 0)
+    newIndex = 0;
+  if (newIndex > rowCount())
+    newIndex = rowCount();
+  
+  mRowStretchFactors.insert(newIndex, 1);
+  QList<QCPLayoutElement*> newRow;
+  for (int col=0; col<columnCount(); ++col)
+    newRow.append((QCPLayoutElement*)0);
+  mElements.insert(newIndex, newRow);
+}
+
+/*!
+  Inserts a new column with empty cells at the column index \a newIndex. Valid values for \a
+  newIndex range from 0 (inserts a row at the left) to \a rowCount (appends a row at the right).
+  
+  \see insertRow
+*/
+void QCPLayoutGrid::insertColumn(int newIndex)
+{
+  if (mElements.isEmpty() || mElements.first().isEmpty()) // if grid is completely empty, add first cell
+  {
+    expandTo(1, 1);
+    return;
+  }
+  
+  if (newIndex < 0)
+    newIndex = 0;
+  if (newIndex > columnCount())
+    newIndex = columnCount();
+  
+  mColumnStretchFactors.insert(newIndex, 1);
+  for (int row=0; row<rowCount(); ++row)
+    mElements[row].insert(newIndex, (QCPLayoutElement*)0);
+}
+
+/* inherits documentation from base class */
+void QCPLayoutGrid::updateLayout()
+{
+  QVector<int> minColWidths, minRowHeights, maxColWidths, maxRowHeights;
+  getMinimumRowColSizes(&minColWidths, &minRowHeights);
+  getMaximumRowColSizes(&maxColWidths, &maxRowHeights);
+  
+  int totalRowSpacing = (rowCount()-1) * mRowSpacing;
+  int totalColSpacing = (columnCount()-1) * mColumnSpacing;
+  QVector<int> colWidths = getSectionSizes(maxColWidths, minColWidths, mColumnStretchFactors.toVector(), mRect.width()-totalColSpacing);
+  QVector<int> rowHeights = getSectionSizes(maxRowHeights, minRowHeights, mRowStretchFactors.toVector(), mRect.height()-totalRowSpacing);
+  
+  // go through cells and set rects accordingly:
+  int yOffset = mRect.top();
+  for (int row=0; row<rowCount(); ++row)
+  {
+    if (row > 0)
+      yOffset += rowHeights.at(row-1)+mRowSpacing;
+    int xOffset = mRect.left();
+    for (int col=0; col<columnCount(); ++col)
+    {
+      if (col > 0)
+        xOffset += colWidths.at(col-1)+mColumnSpacing;
+      if (mElements.at(row).at(col))
+        mElements.at(row).at(col)->setOuterRect(QRect(xOffset, yOffset, colWidths.at(col), rowHeights.at(row)));
+    }
+  }
+}
+
+/* inherits documentation from base class */
+int QCPLayoutGrid::elementCount() const
+{
+  return rowCount()*columnCount();
+}
+
+/* inherits documentation from base class */
+QCPLayoutElement *QCPLayoutGrid::elementAt(int index) const
+{
+  if (index >= 0 && index < elementCount())
+    return mElements.at(index / columnCount()).at(index % columnCount());
+  else
+    return 0;
+}
+
+/* inherits documentation from base class */
+QCPLayoutElement *QCPLayoutGrid::takeAt(int index)
+{
+  if (QCPLayoutElement *el = elementAt(index))
+  {
+    releaseElement(el);
+    mElements[index / columnCount()][index % columnCount()] = 0;
+    return el;
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "Attempt to take invalid index:" << index;
+    return 0;
+  }
+}
+
+/* inherits documentation from base class */
+bool QCPLayoutGrid::take(QCPLayoutElement *element)
+{
+  if (element)
+  {
+    for (int i=0; i<elementCount(); ++i)
+    {
+      if (elementAt(i) == element)
+      {
+        takeAt(i);
+        return true;
+      }
+    }
+    qDebug() << Q_FUNC_INFO << "Element not in this layout, couldn't take";
+  } else
+    qDebug() << Q_FUNC_INFO << "Can't take null element";
+  return false;
+}
+
+/* inherits documentation from base class */
+QList<QCPLayoutElement*> QCPLayoutGrid::elements(bool recursive) const
+{
+  QList<QCPLayoutElement*> result;
+  int colC = columnCount();
+  int rowC = rowCount();
+#if QT_VERSION >= QT_VERSION_CHECK(4, 7, 0)
+  result.reserve(colC*rowC);
+#endif
+  for (int row=0; row<rowC; ++row)
+  {
+    for (int col=0; col<colC; ++col)
+    {
+      result.append(mElements.at(row).at(col));
+    }
+  }
+  if (recursive)
+  {
+    int c = result.size();
+    for (int i=0; i<c; ++i)
+    {
+      if (result.at(i))
+        result << result.at(i)->elements(recursive);
+    }
+  }
+  return result;
+}
+
+/*!
+  Simplifies the layout by collapsing rows and columns which only contain empty cells.
+*/
+void QCPLayoutGrid::simplify()
+{
+  // remove rows with only empty cells:
+  for (int row=rowCount()-1; row>=0; --row)
+  {
+    bool hasElements = false;
+    for (int col=0; col<columnCount(); ++col)
+    {
+      if (mElements.at(row).at(col))
+      {
+        hasElements = true;
+        break;
+      }
+    }
+    if (!hasElements)
+    {
+      mRowStretchFactors.removeAt(row);
+      mElements.removeAt(row);
+      if (mElements.isEmpty()) // removed last element, also remove stretch factor (wouldn't happen below because also columnCount changed to 0 now)
+        mColumnStretchFactors.clear();
+    }
+  }
+  
+  // remove columns with only empty cells:
+  for (int col=columnCount()-1; col>=0; --col)
+  {
+    bool hasElements = false;
