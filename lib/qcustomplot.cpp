@@ -3267,3 +3267,252 @@ void QCPLayoutInset::setInsetAlignment(int index, Qt::Alignment alignment)
 */
 void QCPLayoutInset::setInsetRect(int index, const QRectF &rect)
 {
+  if (elementAt(index))
+    mInsetRect[index] = rect;
+  else
+    qDebug() << Q_FUNC_INFO << "Invalid element index:" << index;
+}
+
+/* inherits documentation from base class */
+void QCPLayoutInset::updateLayout()
+{
+  for (int i=0; i<mElements.size(); ++i)
+  {
+    QRect insetRect;
+    QSize finalMinSize, finalMaxSize;
+    QSize minSizeHint = mElements.at(i)->minimumSizeHint();
+    QSize maxSizeHint = mElements.at(i)->maximumSizeHint();
+    finalMinSize.setWidth(mElements.at(i)->minimumSize().width() > 0 ? mElements.at(i)->minimumSize().width() : minSizeHint.width());
+    finalMinSize.setHeight(mElements.at(i)->minimumSize().height() > 0 ? mElements.at(i)->minimumSize().height() : minSizeHint.height());
+    finalMaxSize.setWidth(mElements.at(i)->maximumSize().width() < QWIDGETSIZE_MAX ? mElements.at(i)->maximumSize().width() : maxSizeHint.width());
+    finalMaxSize.setHeight(mElements.at(i)->maximumSize().height() < QWIDGETSIZE_MAX ? mElements.at(i)->maximumSize().height() : maxSizeHint.height());
+    if (mInsetPlacement.at(i) == ipFree)
+    {
+      insetRect = QRect(rect().x()+rect().width()*mInsetRect.at(i).x(),
+                        rect().y()+rect().height()*mInsetRect.at(i).y(),
+                        rect().width()*mInsetRect.at(i).width(),
+                        rect().height()*mInsetRect.at(i).height());
+      if (insetRect.size().width() < finalMinSize.width())
+        insetRect.setWidth(finalMinSize.width());
+      if (insetRect.size().height() < finalMinSize.height())
+        insetRect.setHeight(finalMinSize.height());
+      if (insetRect.size().width() > finalMaxSize.width())
+        insetRect.setWidth(finalMaxSize.width());
+      if (insetRect.size().height() > finalMaxSize.height())
+        insetRect.setHeight(finalMaxSize.height());
+    } else if (mInsetPlacement.at(i) == ipBorderAligned)
+    {
+      insetRect.setSize(finalMinSize);
+      Qt::Alignment al = mInsetAlignment.at(i);
+      if (al.testFlag(Qt::AlignLeft)) insetRect.moveLeft(rect().x());
+      else if (al.testFlag(Qt::AlignRight)) insetRect.moveRight(rect().x()+rect().width());
+      else insetRect.moveLeft(rect().x()+rect().width()*0.5-finalMinSize.width()*0.5); // default to Qt::AlignHCenter
+      if (al.testFlag(Qt::AlignTop)) insetRect.moveTop(rect().y());
+      else if (al.testFlag(Qt::AlignBottom)) insetRect.moveBottom(rect().y()+rect().height());
+      else insetRect.moveTop(rect().y()+rect().height()*0.5-finalMinSize.height()*0.5); // default to Qt::AlignVCenter
+    }
+    mElements.at(i)->setOuterRect(insetRect);
+  }
+}
+
+/* inherits documentation from base class */
+int QCPLayoutInset::elementCount() const
+{
+  return mElements.size();
+}
+
+/* inherits documentation from base class */
+QCPLayoutElement *QCPLayoutInset::elementAt(int index) const
+{
+  if (index >= 0 && index < mElements.size())
+    return mElements.at(index);
+  else
+    return 0;
+}
+
+/* inherits documentation from base class */
+QCPLayoutElement *QCPLayoutInset::takeAt(int index)
+{
+  if (QCPLayoutElement *el = elementAt(index))
+  {
+    releaseElement(el);
+    mElements.removeAt(index);
+    mInsetPlacement.removeAt(index);
+    mInsetAlignment.removeAt(index);
+    mInsetRect.removeAt(index);
+    return el;
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "Attempt to take invalid index:" << index;
+    return 0;
+  }
+}
+
+/* inherits documentation from base class */
+bool QCPLayoutInset::take(QCPLayoutElement *element)
+{
+  if (element)
+  {
+    for (int i=0; i<elementCount(); ++i)
+    {
+      if (elementAt(i) == element)
+      {
+        takeAt(i);
+        return true;
+      }
+    }
+    qDebug() << Q_FUNC_INFO << "Element not in this layout, couldn't take";
+  } else
+    qDebug() << Q_FUNC_INFO << "Can't take null element";
+  return false;
+}
+
+/*!
+  The inset layout is sensitive to events only at areas where its child elements are sensitive. If
+  the selectTest method of any of the child elements returns a positive number for \a pos, this
+  method returns a value corresponding to 0.99 times the parent plot's selection tolerance. The
+  inset layout is not selectable itself by default. So if \a onlySelectable is true, -1.0 is
+  returned.
+  
+  See \ref QCPLayerable::selectTest for a general explanation of this virtual method.
+*/
+double QCPLayoutInset::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (onlySelectable)
+    return -1;
+  
+  for (int i=0; i<mElements.size(); ++i)
+  {
+    // inset layout shall only return positive selectTest, if actually an inset object is at pos
+    // else it would block the entire underlying QCPAxisRect with its surface.
+    if (mElements.at(i)->selectTest(pos, onlySelectable) >= 0)
+      return mParentPlot->selectionTolerance()*0.99;
+  }
+  return -1;
+}
+
+/*!
+  Adds the specified \a element to the layout as an inset aligned at the border (\ref
+  setInsetAlignment is initialized with \ref ipBorderAligned). The alignment is set to \a
+  alignment.
+  
+  \a alignment is an or combination of the following alignment flags: Qt::AlignLeft,
+  Qt::AlignHCenter, Qt::AlighRight, Qt::AlignTop, Qt::AlignVCenter, Qt::AlignBottom. Any other
+  alignment flags will be ignored.
+  
+  \see addElement(QCPLayoutElement *element, const QRectF &rect)
+*/
+void QCPLayoutInset::addElement(QCPLayoutElement *element, Qt::Alignment alignment)
+{
+  if (element)
+  {
+    if (element->layout()) // remove from old layout first
+      element->layout()->take(element);
+    mElements.append(element);
+    mInsetPlacement.append(ipBorderAligned);
+    mInsetAlignment.append(alignment);
+    mInsetRect.append(QRectF(0.6, 0.6, 0.4, 0.4));
+    adoptElement(element);
+  } else
+    qDebug() << Q_FUNC_INFO << "Can't add null element";
+}
+
+/*!
+  Adds the specified \a element to the layout as an inset with free positioning/sizing (\ref
+  setInsetAlignment is initialized with \ref ipFree). The position and size is set to \a
+  rect.
+  
+  \a rect is given in fractions of the whole inset layout rect. So an inset with rect (0, 0, 1, 1)
+  will span the entire layout. An inset with rect (0.6, 0.1, 0.35, 0.35) will be in the top right
+  corner of the layout, with 35% width and height of the parent layout.
+  
+  \see addElement(QCPLayoutElement *element, Qt::Alignment alignment)
+*/
+void QCPLayoutInset::addElement(QCPLayoutElement *element, const QRectF &rect)
+{
+  if (element)
+  {
+    if (element->layout()) // remove from old layout first
+      element->layout()->take(element);
+    mElements.append(element);
+    mInsetPlacement.append(ipFree);
+    mInsetAlignment.append(Qt::AlignRight|Qt::AlignTop);
+    mInsetRect.append(rect);
+    adoptElement(element);
+  } else
+    qDebug() << Q_FUNC_INFO << "Can't add null element";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLineEnding
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLineEnding
+  \brief Handles the different ending decorations for line-like items
+  
+  \image html QCPLineEnding.png "The various ending styles currently supported"
+  
+  For every ending a line-like item has, an instance of this class exists. For example, QCPItemLine
+  has two endings which can be set with QCPItemLine::setHead and QCPItemLine::setTail.
+ 
+  The styles themselves are defined via the enum QCPLineEnding::EndingStyle. Most decorations can
+  be modified regarding width and length, see \ref setWidth and \ref setLength. The direction of
+  the ending decoration (e.g. direction an arrow is pointing) is controlled by the line-like item.
+  For example, when both endings of a QCPItemLine are set to be arrows, they will point to opposite
+  directions, e.g. "outward". This can be changed by \ref setInverted, which would make the
+  respective arrow point inward.
+  
+  Note that due to the overloaded QCPLineEnding constructor, you may directly specify a
+  QCPLineEnding::EndingStyle where actually a QCPLineEnding is expected, e.g. \code
+  myItemLine->setHead(QCPLineEnding::esSpikeArrow) \endcode
+*/
+
+/*!
+  Creates a QCPLineEnding instance with default values (style \ref esNone).
+*/
+QCPLineEnding::QCPLineEnding() :
+  mStyle(esNone),
+  mWidth(8),
+  mLength(10),
+  mInverted(false)
+{
+}
+
+/*!
+  Creates a QCPLineEnding instance with the specified values.
+*/
+QCPLineEnding::QCPLineEnding(QCPLineEnding::EndingStyle style, double width, double length, bool inverted) :
+  mStyle(style),
+  mWidth(width),
+  mLength(length),
+  mInverted(inverted)
+{
+}
+
+/*!
+  Sets the style of the ending decoration.
+*/
+void QCPLineEnding::setStyle(QCPLineEnding::EndingStyle style)
+{
+  mStyle = style;
+}
+
+/*!
+  Sets the width of the ending decoration, if the style supports it. On arrows, for example, the
+  width defines the size perpendicular to the arrow's pointing direction.
+  
+  \see setLength
+*/
+void QCPLineEnding::setWidth(double width)
+{
+  mWidth = width;
+}
+
+/*!
+  Sets the length of the ending decoration, if the style supports it. On arrows, for example, the
+  length defines the size in pointing direction.
+  
+  \see setWidth
+*/
