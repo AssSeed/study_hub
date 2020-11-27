@@ -3516,3 +3516,245 @@ void QCPLineEnding::setWidth(double width)
   
   \see setWidth
 */
+void QCPLineEnding::setLength(double length)
+{
+  mLength = length;
+}
+
+/*!
+  Sets whether the ending decoration shall be inverted. For example, an arrow decoration will point
+  inward when \a inverted is set to true.
+
+  Note that also the \a width direction is inverted. For symmetrical ending styles like arrows or
+  discs, this doesn't make a difference. However, asymmetric styles like \ref esHalfBar are
+  affected by it, which can be used to control to which side the half bar points to.
+*/
+void QCPLineEnding::setInverted(bool inverted)
+{
+  mInverted = inverted;
+}
+
+/*! \internal
+  
+  Returns the maximum pixel radius the ending decoration might cover, starting from the position
+  the decoration is drawn at (typically a line ending/\ref QCPItemPosition of an item).
+  
+  This is relevant for clipping. Only omit painting of the decoration when the position where the
+  decoration is supposed to be drawn is farther away from the clipping rect than the returned
+  distance.
+*/
+double QCPLineEnding::boundingDistance() const
+{
+  switch (mStyle)
+  {
+    case esNone:
+      return 0;
+      
+    case esFlatArrow:
+    case esSpikeArrow:
+    case esLineArrow:
+    case esSkewedBar:
+      return qSqrt(mWidth*mWidth+mLength*mLength); // items that have width and length
+      
+    case esDisc:
+    case esSquare:
+    case esDiamond:
+    case esBar:
+    case esHalfBar:
+      return mWidth*1.42; // items that only have a width -> width*sqrt(2)
+
+  }
+  return 0;
+}
+
+/*!
+  Starting from the origin of this line ending (which is style specific), returns the length
+  covered by the line ending symbol, in backward direction.
+  
+  For example, the \ref esSpikeArrow has a shorter real length than a \ref esFlatArrow, even if
+  both have the same \ref setLength value, because the spike arrow has an inward curved back, which
+  reduces the length along its center axis (the drawing origin for arrows is at the tip).
+  
+  This function is used for precise, style specific placement of line endings, for example in
+  QCPAxes.
+*/
+double QCPLineEnding::realLength() const
+{
+  switch (mStyle)
+  {
+    case esNone:
+    case esLineArrow:
+    case esSkewedBar:
+    case esBar:
+    case esHalfBar:
+      return 0;
+      
+    case esFlatArrow:
+      return mLength;
+      
+    case esDisc:
+    case esSquare:
+    case esDiamond:
+      return mWidth*0.5;
+      
+    case esSpikeArrow:
+      return mLength*0.8;
+  }
+  return 0;
+}
+
+/*! \internal
+  
+  Draws the line ending with the specified \a painter at the position \a pos. The direction of the
+  line ending is controlled with \a dir.
+*/
+void QCPLineEnding::draw(QCPPainter *painter, const QVector2D &pos, const QVector2D &dir) const
+{
+  if (mStyle == esNone)
+    return;
+  
+  QVector2D lengthVec(dir.normalized());
+  if (lengthVec.isNull())
+    lengthVec = QVector2D(1, 0);
+  QVector2D widthVec(-lengthVec.y(), lengthVec.x());
+  lengthVec *= mLength*(mInverted ? -1 : 1);
+  widthVec *= mWidth*0.5*(mInverted ? -1 : 1);
+  
+  QPen penBackup = painter->pen();
+  QBrush brushBackup = painter->brush();
+  QPen miterPen = penBackup;
+  miterPen.setJoinStyle(Qt::MiterJoin); // to make arrow heads spikey
+  QBrush brush(painter->pen().color(), Qt::SolidPattern);
+  switch (mStyle)
+  {
+    case esNone: break;
+    case esFlatArrow:
+    {
+      QPointF points[3] = {pos.toPointF(),
+                           (pos-lengthVec+widthVec).toPointF(),
+                           (pos-lengthVec-widthVec).toPointF()
+                          };
+      painter->setPen(miterPen);
+      painter->setBrush(brush);
+      painter->drawConvexPolygon(points, 3);
+      painter->setBrush(brushBackup);
+      painter->setPen(penBackup);
+      break;
+    }
+    case esSpikeArrow:
+    {
+      QPointF points[4] = {pos.toPointF(),
+                           (pos-lengthVec+widthVec).toPointF(),
+                           (pos-lengthVec*0.8).toPointF(),
+                           (pos-lengthVec-widthVec).toPointF()
+                          };
+      painter->setPen(miterPen);
+      painter->setBrush(brush);
+      painter->drawConvexPolygon(points, 4);
+      painter->setBrush(brushBackup);
+      painter->setPen(penBackup);
+      break;
+    }
+    case esLineArrow:
+    {
+      QPointF points[3] = {(pos-lengthVec+widthVec).toPointF(),
+                           pos.toPointF(),
+                           (pos-lengthVec-widthVec).toPointF()
+                          };
+      painter->setPen(miterPen);
+      painter->drawPolyline(points, 3);
+      painter->setPen(penBackup);
+      break;
+    }
+    case esDisc:
+    {
+      painter->setBrush(brush);
+      painter->drawEllipse(pos.toPointF(),  mWidth*0.5, mWidth*0.5);
+      painter->setBrush(brushBackup);
+      break;
+    }
+    case esSquare:
+    {
+      QVector2D widthVecPerp(-widthVec.y(), widthVec.x());
+      QPointF points[4] = {(pos-widthVecPerp+widthVec).toPointF(),
+                           (pos-widthVecPerp-widthVec).toPointF(),
+                           (pos+widthVecPerp-widthVec).toPointF(),
+                           (pos+widthVecPerp+widthVec).toPointF()
+                          };
+      painter->setPen(miterPen);
+      painter->setBrush(brush);
+      painter->drawConvexPolygon(points, 4);
+      painter->setBrush(brushBackup);
+      painter->setPen(penBackup);
+      break;
+    }
+    case esDiamond:
+    {
+      QVector2D widthVecPerp(-widthVec.y(), widthVec.x());
+      QPointF points[4] = {(pos-widthVecPerp).toPointF(),
+                           (pos-widthVec).toPointF(),
+                           (pos+widthVecPerp).toPointF(),
+                           (pos+widthVec).toPointF()
+                          };
+      painter->setPen(miterPen);
+      painter->setBrush(brush);
+      painter->drawConvexPolygon(points, 4);
+      painter->setBrush(brushBackup);
+      painter->setPen(penBackup);
+      break;
+    }
+    case esBar:
+    {
+      painter->drawLine((pos+widthVec).toPointF(), (pos-widthVec).toPointF());
+      break;
+    }
+    case esHalfBar:
+    {
+      painter->drawLine((pos+widthVec).toPointF(), pos.toPointF());
+      break;
+    }
+    case esSkewedBar:
+    {
+      if (qFuzzyIsNull(painter->pen().widthF()) && !painter->modes().testFlag(QCPPainter::pmNonCosmetic))
+      {
+        // if drawing with cosmetic pen (perfectly thin stroke, happens only in vector exports), draw bar exactly on tip of line
+        painter->drawLine((pos+widthVec+lengthVec*0.2*(mInverted?-1:1)).toPointF(),
+                          (pos-widthVec-lengthVec*0.2*(mInverted?-1:1)).toPointF());
+      } else
+      {
+        // if drawing with thick (non-cosmetic) pen, shift bar a little in line direction to prevent line from sticking through bar slightly
+        painter->drawLine((pos+widthVec+lengthVec*0.2*(mInverted?-1:1)+dir.normalized()*qMax(1.0, (double)painter->pen().widthF())*0.5).toPointF(),
+                          (pos-widthVec-lengthVec*0.2*(mInverted?-1:1)+dir.normalized()*qMax(1.0, (double)painter->pen().widthF())*0.5).toPointF());
+      }
+      break;
+    }
+  }
+}
+
+/*! \internal
+  \overload
+  
+  Draws the line ending. The direction is controlled with the \a angle parameter in radians.
+*/
+void QCPLineEnding::draw(QCPPainter *painter, const QVector2D &pos, double angle) const
+{
+  draw(painter, pos, QVector2D(qCos(angle), qSin(angle)));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPGrid
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPGrid
+  \brief Responsible for drawing the grid of a QCPAxis.
+  
+  This class is tightly bound to QCPAxis. Every axis owns a grid instance and uses it to draw the
+  grid lines, sub grid lines and zero-line. You can interact with the grid of an axis via \ref
+  QCPAxis::grid. Normally, you don't need to create an instance of QCPGrid yourself.
+  
+  The axis and grid drawing was split into two classes to allow them to be placed on different
+  layers (both QCPAxis and QCPGrid inherit from QCPLayerable). Thus it is possible to have the grid
+  in the background and the axes in the foreground, and any plottables/items in between. This
+  described situation is the default setup, see the QCPLayer documentation.
+*/
