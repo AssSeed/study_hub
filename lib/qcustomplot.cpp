@@ -3998,3 +3998,230 @@ void QCPGrid::drawSubGridLines(QCPPainter *painter) const
   Returns the orientation of the axis. The axis orientation (horizontal or vertical) is deduced
   from the axis type (left, top, right or bottom).
 */
+
+/*! \fn QCPGrid *QCPAxis::grid() const
+  
+  Returns the \ref QCPGrid instance belonging to this axis. Access it to set details about the way the
+  grid is displayed.
+*/
+
+/* end of documentation of inline functions */
+/* start of documentation of signals */
+
+/*! \fn void QCPAxis::ticksRequest()
+  
+  This signal is emitted when \ref setAutoTicks is false and the axis is about to generate tick
+  labels for a replot.
+  
+  Modifying the tick positions can be done with \ref setTickVector. If you also want to control the
+  tick labels, set \ref setAutoTickLabels to false and also provide the labels with \ref
+  setTickVectorLabels.
+  
+  If you only want static ticks you probably don't need this signal, since you can just set the
+  tick vector (and possibly tick label vector) once. However, if you want to provide ticks (and
+  maybe labels) dynamically, e.g. depending on the current axis range, connect a slot to this
+  signal and set the vector/vectors there.
+*/
+
+/*! \fn void QCPAxis::rangeChanged(const QCPRange &newRange)
+
+  This signal is emitted when the range of this axis has changed. You can connect it to the \ref
+  setRange slot of another axis to communicate the new range to the other axis, in order for it to
+  be synchronized.
+*/
+
+/*! \fn void QCPAxis::rangeChanged(const QCPRange &newRange, const QCPRange &oldRange)
+  \overload
+  
+  Additionally to the new range, this signal also provides the previous range held by the axis as
+  \a oldRange.
+*/
+
+/*! \fn void QCPAxis::selectionChanged(QCPAxis::SelectableParts selection)
+  
+  This signal is emitted when the selection state of this axis has changed, either by user interaction
+  or by a direct call to \ref setSelectedParts.
+*/
+
+/* end of documentation of signals */
+
+/*!
+  Constructs an Axis instance of Type \a type for the axis rect \a parent.
+  You shouldn't instantiate axes directly, rather use \ref QCPAxisRect::addAxis.
+*/
+QCPAxis::QCPAxis(QCPAxisRect *parent, AxisType type) :
+  QCPLayerable(parent->parentPlot(), "", parent),
+  // axis base:
+  mAxisType(type),
+  mAxisRect(parent),
+  mOffset(0),
+  mPadding(5),
+  mOrientation((type == atBottom || type == atTop) ? Qt::Horizontal : Qt::Vertical),
+  mSelectableParts(spAxis | spTickLabels | spAxisLabel),
+  mSelectedParts(spNone),
+  mBasePen(QPen(Qt::black, 0, Qt::SolidLine, Qt::SquareCap)),
+  mSelectedBasePen(QPen(Qt::blue, 2)),
+  mLowerEnding(QCPLineEnding::esNone),
+  mUpperEnding(QCPLineEnding::esNone),
+  // axis label:
+  mLabelPadding(0),
+  mLabel(""),
+  mLabelFont(mParentPlot->font()),
+  mSelectedLabelFont(QFont(mLabelFont.family(), mLabelFont.pointSize(), QFont::Bold)),
+  mLabelColor(Qt::black),
+  mSelectedLabelColor(Qt::blue),
+  // tick labels:
+  mTickLabelPadding(0),
+  mTickLabels(true),
+  mAutoTickLabels(true),
+  mTickLabelRotation(0),
+  mTickLabelType(ltNumber),
+  mTickLabelFont(mParentPlot->font()),
+  mSelectedTickLabelFont(QFont(mTickLabelFont.family(), mTickLabelFont.pointSize(), QFont::Bold)),
+  mTickLabelColor(Qt::black),
+  mSelectedTickLabelColor(Qt::blue),
+  mDateTimeFormat("hh:mm:ss\ndd.MM.yy"),
+  mDateTimeSpec(Qt::LocalTime),
+  mNumberPrecision(6),
+  mNumberFormatChar('g'),
+  mNumberBeautifulPowers(true),
+  mNumberMultiplyCross(false),
+  // ticks and subticks:
+  mTicks(true),
+  mTickStep(1),
+  mSubTickCount(4),
+  mAutoTickCount(6),
+  mAutoTicks(true),
+  mAutoTickStep(true),
+  mAutoSubTicks(true),
+  mTickLengthIn(5),
+  mTickLengthOut(0),
+  mSubTickLengthIn(2),
+  mSubTickLengthOut(0),
+  mTickPen(QPen(Qt::black, 0, Qt::SolidLine, Qt::SquareCap)),
+  mSelectedTickPen(QPen(Qt::blue, 2)),
+  mSubTickPen(QPen(Qt::black, 0, Qt::SolidLine, Qt::SquareCap)),
+  mSelectedSubTickPen(QPen(Qt::blue, 2)),
+  // scale and range:
+  mRange(0, 5),
+  mRangeReversed(false),
+  mScaleType(stLinear),
+  mScaleLogBase(10),
+  mScaleLogBaseLogInv(1.0/qLn(mScaleLogBase)),
+  // internal members:
+  mGrid(new QCPGrid(this)),
+  mLabelCache(16), // cache at most 16 (tick) labels
+  mLowestVisibleTick(0),
+  mHighestVisibleTick(-1),
+  mExponentialChar('e'), // will be updated with locale sensitive values in setupTickVector
+  mPositiveSignChar('+'), // will be updated with locale sensitive values in setupTickVector
+  mCachedMarginValid(false),
+  mCachedMargin(0)
+{
+  mGrid->setVisible(false);
+  setAntialiased(false);
+  setLayer(mParentPlot->currentLayer()); // it's actually on that layer already, but we want it in front of the grid, so we place it on there again
+  
+  if (type == atTop)
+  {
+    setTickLabelPadding(3);
+    setLabelPadding(6);
+  } else if (type == atRight)
+  {
+    setTickLabelPadding(7);
+    setLabelPadding(12);
+  } else if (type == atBottom)
+  {
+    setTickLabelPadding(3);
+    setLabelPadding(3);
+  } else if (type == atLeft)
+  {
+    setTickLabelPadding(5);
+    setLabelPadding(10);
+  }
+}
+
+/* No documentation as it is a property getter */
+QString QCPAxis::numberFormat() const
+{
+  QString result;
+  result.append(mNumberFormatChar);
+  if (mNumberBeautifulPowers)
+  {
+    result.append("b");
+    if (mNumberMultiplyCross)
+      result.append("c");
+  }
+  return result;
+}
+
+/*!
+  Sets whether the axis uses a linear scale or a logarithmic scale. If \a type is set to \ref
+  stLogarithmic, the logarithm base can be set with \ref setScaleLogBase. In logarithmic axis
+  scaling, major tick marks appear at all powers of the logarithm base. Properties like tick step
+  (\ref setTickStep) don't apply in logarithmic scaling. If you wish a decimal base but less major
+  ticks, consider choosing a logarithm base of 100, 1000 or even higher.
+  
+  If \a type is \ref stLogarithmic and the number format (\ref setNumberFormat) uses the 'b' option
+  (beautifully typeset decimal powers), the display usually is "1 [multiplication sign] 10
+  [superscript] n", which looks unnatural for logarithmic scaling (the "1 [multiplication sign]"
+  part). To only display the decimal power, set the number precision to zero with
+  \ref setNumberPrecision.
+*/
+void QCPAxis::setScaleType(ScaleType type)
+{
+  if (mScaleType != type)
+  {
+    mScaleType = type;
+    if (mScaleType == stLogarithmic)
+      mRange = mRange.sanitizedForLogScale();
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  If \ref setScaleType is set to \ref stLogarithmic, \a base will be the logarithm base of the
+  scaling. In logarithmic axis scaling, major tick marks appear at all powers of \a base.
+  
+  Properties like tick step (\ref setTickStep) don't apply in logarithmic scaling. If you wish a decimal base but
+  less major ticks, consider choosing \a base 100, 1000 or even higher.
+*/
+void QCPAxis::setScaleLogBase(double base)
+{
+  if (base > 1)
+  {
+    mScaleLogBase = base;
+    mScaleLogBaseLogInv = 1.0/qLn(mScaleLogBase); // buffer for faster baseLog() calculation
+    mCachedMarginValid = false;
+  } else
+    qDebug() << Q_FUNC_INFO << "Invalid logarithmic scale base (must be greater 1):" << base;
+}
+
+/*!
+  Sets the range of the axis.
+  
+  This slot may be connected with the \ref rangeChanged signal of another axis so this axis
+  is always synchronized with the other axis range, when it changes.
+  
+  To invert the direction of an axis, use \ref setRangeReversed.
+*/
+void QCPAxis::setRange(const QCPRange &range)
+{
+  if (range.lower == mRange.lower && range.upper == mRange.upper)
+    return;
+  
+  if (!QCPRange::validRange(range)) return;
+  QCPRange oldRange = mRange;
+  if (mScaleType == stLogarithmic)
+  {
+    mRange = range.sanitizedForLogScale();
+  } else
+  {
+    mRange = range.sanitizedForLinScale();
+  }
+  mCachedMarginValid = false;
+  emit rangeChanged(mRange);
+  emit rangeChanged(mRange, oldRange);
+}
+
+/*!
