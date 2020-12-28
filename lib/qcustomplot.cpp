@@ -4695,3 +4695,264 @@ void QCPAxis::setNumberFormat(const QString &formatCode)
     mNumberMultiplyCross = false;
     return;
   }
+  
+  // interpret second char as indicator for beautiful decimal powers:
+  if (formatCode.at(1) == 'b' && (mNumberFormatChar == 'e' || mNumberFormatChar == 'g'))
+  {
+    mNumberBeautifulPowers = true;
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "Invalid number format code (second char not 'b' or first char neither 'e' nor 'g'):" << formatCode;
+    return;
+  }
+  if (formatCode.length() < 3)
+  {
+    mNumberMultiplyCross = false;
+    return;
+  }
+  
+  // interpret third char as indicator for dot or cross multiplication symbol:
+  if (formatCode.at(2) == 'c')
+  {
+    mNumberMultiplyCross = true;
+  } else if (formatCode.at(2) == 'd')
+  {
+    mNumberMultiplyCross = false;
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "Invalid number format code (third char neither 'c' nor 'd'):" << formatCode;
+    return;
+  }
+}
+
+/*!
+  Sets the precision of the tick label numbers. See QLocale::toString(double i, char f, int prec)
+  for details. The effect of precisions are most notably for number Formats starting with 'e', see
+  \ref setNumberFormat
+
+  If the scale type (\ref setScaleType) is \ref stLogarithmic and the number format (\ref
+  setNumberFormat) uses the 'b' format code (beautifully typeset decimal powers), the display
+  usually is "1 [multiplication sign] 10 [superscript] n", which looks unnatural for logarithmic
+  scaling (the redundant "1 [multiplication sign]" part). To only display the decimal power "10
+  [superscript] n", set \a precision to zero.
+*/
+void QCPAxis::setNumberPrecision(int precision)
+{
+  if (mNumberPrecision != precision)
+  {
+    mNumberPrecision = precision;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  If \ref setAutoTickStep is set to false, use this function to set the tick step manually.
+  The tick step is the interval between (major) ticks, in plot coordinates.
+  \see setSubTickCount
+*/
+void QCPAxis::setTickStep(double step)
+{
+  if (mTickStep != step)
+  {
+    mTickStep = step;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  If you want full control over what ticks (and possibly labels) the axes show, this function is
+  used to set the coordinates at which ticks will appear.\ref setAutoTicks must be disabled, else
+  the provided tick vector will be overwritten with automatically generated tick coordinates upon
+  replot. The labels of the ticks can be generated automatically when \ref setAutoTickLabels is
+  left enabled. If it is disabled, you can set the labels manually with \ref setTickVectorLabels.
+  
+  \a vec is a vector containing the positions of the ticks, in plot coordinates.
+  
+  \warning \a vec must be sorted in ascending order, no additional checks are made to ensure this.
+
+  \see setTickVectorLabels
+*/
+void QCPAxis::setTickVector(const QVector<double> &vec)
+{
+  // don't check whether mTickVector != vec here, because it takes longer than we would save
+  mTickVector = vec;
+  mCachedMarginValid = false;
+}
+
+/*!
+  If you want full control over what ticks and labels the axes show, this function is used to set a
+  number of QStrings that will be displayed at the tick positions which you need to provide with
+  \ref setTickVector. These two vectors should have the same size. (Note that you need to disable
+  \ref setAutoTicks and \ref setAutoTickLabels first.)
+  
+  \a vec is a vector containing the labels of the ticks. The entries correspond to the respective
+  indices in the tick vector, passed via \ref setTickVector.
+  
+  \see setTickVector
+*/
+void QCPAxis::setTickVectorLabels(const QVector<QString> &vec)
+{
+  // don't check whether mTickVectorLabels != vec here, because it takes longer than we would save
+  mTickVectorLabels = vec;
+  mCachedMarginValid = false;
+}
+
+/*!
+  Sets the length of the ticks in pixels. \a inside is the length the ticks will reach inside the
+  plot and \a outside is the length they will reach outside the plot. If \a outside is greater than
+  zero, the tick labels and axis label will increase their distance to the axis accordingly, so
+  they won't collide with the ticks.
+  
+  \see setSubTickLength
+*/
+void QCPAxis::setTickLength(int inside, int outside)
+{
+  if (mTickLengthIn != inside)
+  {
+    mTickLengthIn = inside;
+  }
+  if (mTickLengthOut != outside)
+  {
+    mTickLengthOut = outside;
+    mCachedMarginValid = false; // only outside tick length can change margin
+  }
+}
+
+/*!
+  Sets the length of the inward ticks in pixels. \a inside is the length the ticks will reach
+  inside the plot.
+  
+  \see setTickLengthOut, setSubTickLength
+*/
+void QCPAxis::setTickLengthIn(int inside)
+{
+  if (mTickLengthIn != inside)
+  {
+    mTickLengthIn = inside;
+  }
+}
+
+/*!
+  Sets the length of the outward ticks in pixels. \a outside is the length the ticks will reach
+  outside the plot. If \a outside is greater than zero, the tick labels and axis label will
+  increase their distance to the axis accordingly, so they won't collide with the ticks.
+  
+  \see setTickLengthIn, setSubTickLength
+*/
+void QCPAxis::setTickLengthOut(int outside)
+{
+  if (mTickLengthOut != outside)
+  {
+    mTickLengthOut = outside;
+    mCachedMarginValid = false; // only outside tick length can change margin
+  }
+}
+
+/*!
+  Sets the number of sub ticks in one (major) tick step. A sub tick count of three for example,
+  divides the tick intervals in four sub intervals.
+  
+  By default, the number of sub ticks is chosen automatically in a reasonable manner as long as the
+  mantissa of the tick step is a multiple of 0.5. When \ref setAutoTickStep is enabled, this is
+  always the case.
+
+  If you want to disable automatic sub tick count and use this function to set the count manually,
+  see \ref setAutoSubTicks.
+*/
+void QCPAxis::setSubTickCount(int count)
+{
+  mSubTickCount = count;
+}
+
+/*!
+  Sets the length of the subticks in pixels. \a inside is the length the subticks will reach inside
+  the plot and \a outside is the length they will reach outside the plot. If \a outside is greater
+  than zero, the tick labels and axis label will increase their distance to the axis accordingly,
+  so they won't collide with the ticks.
+*/
+void QCPAxis::setSubTickLength(int inside, int outside)
+{
+  if (mSubTickLengthIn != inside)
+  {
+    mSubTickLengthIn = inside;
+  }
+  if (mSubTickLengthOut != outside)
+  {
+    mSubTickLengthOut = outside;
+    mCachedMarginValid = false; // only outside tick length can change margin
+  }
+}
+
+/*!
+  Sets the length of the inward subticks in pixels. \a inside is the length the subticks will reach inside
+  the plot.
+  
+  \see setSubTickLengthOut, setTickLength
+*/
+void QCPAxis::setSubTickLengthIn(int inside)
+{
+  if (mSubTickLengthIn != inside)
+  {
+    mSubTickLengthIn = inside;
+  }
+}
+
+/*!
+  Sets the length of the outward subticks in pixels. \a outside is the length the subticks will reach
+  outside the plot. If \a outside is greater than zero, the tick labels will increase their
+  distance to the axis accordingly, so they won't collide with the ticks.
+  
+  \see setSubTickLengthIn, setTickLength
+*/
+void QCPAxis::setSubTickLengthOut(int outside)
+{
+  if (mSubTickLengthOut != outside)
+  {
+    mSubTickLengthOut = outside;
+    mCachedMarginValid = false; // only outside tick length can change margin
+  }
+}
+
+/*!
+  Sets the pen, the axis base line is drawn with.
+  
+  \see setTickPen, setSubTickPen
+*/
+void QCPAxis::setBasePen(const QPen &pen)
+{
+  mBasePen = pen;
+}
+
+/*!
+  Sets the pen, tick marks will be drawn with.
+  
+  \see setTickLength, setBasePen
+*/
+void QCPAxis::setTickPen(const QPen &pen)
+{
+  mTickPen = pen;
+}
+
+/*!
+  Sets the pen, subtick marks will be drawn with.
+  
+  \see setSubTickCount, setSubTickLength, setBasePen
+*/
+void QCPAxis::setSubTickPen(const QPen &pen)
+{
+  mSubTickPen = pen;
+}
+
+/*!
+  Sets the font of the axis label.
+  
+  \see setLabelColor
+*/
+void QCPAxis::setLabelFont(const QFont &font)
+{
+  if (mLabelFont != font)
+  {
+    mLabelFont = font;
+    mCachedMarginValid = false;
+  }
+}
