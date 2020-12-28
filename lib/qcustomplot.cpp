@@ -4225,3 +4225,241 @@ void QCPAxis::setRange(const QCPRange &range)
 }
 
 /*!
+  Sets whether the user can (de-)select the parts in \a selectable by clicking on the QCustomPlot surface.
+  (When \ref QCustomPlot::setInteractions contains iSelectAxes.)
+  
+  However, even when \a selectable is set to a value not allowing the selection of a specific part,
+  it is still possible to set the selection of this part manually, by calling \ref setSelectedParts
+  directly.
+  
+  \see SelectablePart, setSelectedParts
+*/
+void QCPAxis::setSelectableParts(const SelectableParts &selectable)
+{
+  mSelectableParts = selectable;
+}
+
+/*!
+  Sets the selected state of the respective axis parts described by \ref SelectablePart. When a part
+  is selected, it uses a different pen/font.
+  
+  The entire selection mechanism for axes is handled automatically when \ref
+  QCustomPlot::setInteractions contains iSelectAxes. You only need to call this function when you
+  wish to change the selection state manually.
+  
+  This function can change the selection state of a part, independent of the \ref setSelectableParts setting.
+  
+  emits the \ref selectionChanged signal when \a selected is different from the previous selection state.
+  
+  \see SelectablePart, setSelectableParts, selectTest, setSelectedBasePen, setSelectedTickPen, setSelectedSubTickPen,
+  setSelectedTickLabelFont, setSelectedLabelFont, setSelectedTickLabelColor, setSelectedLabelColor
+*/
+void QCPAxis::setSelectedParts(const SelectableParts &selected)
+{
+  if (mSelectedParts != selected)
+  {
+    if (mSelectedParts.testFlag(spTickLabels) != selected.testFlag(spTickLabels))
+      mLabelCache.clear();
+    mSelectedParts = selected;
+    emit selectionChanged(mSelectedParts);
+  }
+}
+
+/*!
+  \overload
+  
+  Sets the lower and upper bound of the axis range.
+  
+  To invert the direction of an axis, use \ref setRangeReversed.
+  
+  There is also a slot to set a range, see \ref setRange(const QCPRange &range).
+*/
+void QCPAxis::setRange(double lower, double upper)
+{
+  if (lower == mRange.lower && upper == mRange.upper)
+    return;
+  
+  if (!QCPRange::validRange(lower, upper)) return;
+  QCPRange oldRange = mRange;
+  mRange.lower = lower;
+  mRange.upper = upper;
+  if (mScaleType == stLogarithmic)
+  {
+    mRange = mRange.sanitizedForLogScale();
+  } else
+  {
+    mRange = mRange.sanitizedForLinScale();
+  }
+  mCachedMarginValid = false;
+  emit rangeChanged(mRange);
+  emit rangeChanged(mRange, oldRange);
+}
+
+/*!
+  \overload
+  
+  Sets the range of the axis.
+  
+  The \a position coordinate indicates together with the \a alignment parameter, where the new
+  range will be positioned. \a size defines the size of the new axis range. \a alignment may be
+  Qt::AlignLeft, Qt::AlignRight or Qt::AlignCenter. This will cause the left border, right border,
+  or center of the range to be aligned with \a position. Any other values of \a alignment will
+  default to Qt::AlignCenter.
+*/
+void QCPAxis::setRange(double position, double size, Qt::AlignmentFlag alignment)
+{
+  if (alignment == Qt::AlignLeft)
+    setRange(position, position+size);
+  else if (alignment == Qt::AlignRight)
+    setRange(position-size, position);
+  else // alignment == Qt::AlignCenter
+    setRange(position-size/2.0, position+size/2.0);
+}
+
+/*!
+  Sets the lower bound of the axis range. The upper bound is not changed.
+  \see setRange
+*/
+void QCPAxis::setRangeLower(double lower)
+{
+  if (mRange.lower == lower)
+    return;
+  
+  QCPRange oldRange = mRange;
+  mRange.lower = lower;
+  if (mScaleType == stLogarithmic)
+  {
+    mRange = mRange.sanitizedForLogScale();
+  } else
+  {
+    mRange = mRange.sanitizedForLinScale();
+  }
+  mCachedMarginValid = false;
+  emit rangeChanged(mRange);
+  emit rangeChanged(mRange, oldRange);
+}
+
+/*!
+  Sets the upper bound of the axis range. The lower bound is not changed.
+  \see setRange
+*/
+void QCPAxis::setRangeUpper(double upper)
+{
+  if (mRange.upper == upper)
+    return;
+  
+  QCPRange oldRange = mRange;
+  mRange.upper = upper;
+  if (mScaleType == stLogarithmic)
+  {
+    mRange = mRange.sanitizedForLogScale();
+  } else
+  {
+    mRange = mRange.sanitizedForLinScale();
+  }
+  mCachedMarginValid = false;
+  emit rangeChanged(mRange);
+  emit rangeChanged(mRange, oldRange);
+}
+
+/*!
+  Sets whether the axis range (direction) is displayed reversed. Normally, the values on horizontal
+  axes increase left to right, on vertical axes bottom to top. When \a reversed is set to true, the
+  direction of increasing values is inverted.
+
+  Note that the range and data interface stays the same for reversed axes, e.g. the \a lower part
+  of the \ref setRange interface will still reference the mathematically smaller number than the \a
+  upper part.
+*/
+void QCPAxis::setRangeReversed(bool reversed)
+{
+  if (mRangeReversed != reversed)
+  {
+    mRangeReversed = reversed;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets whether the tick positions should be calculated automatically (either from an automatically
+  generated tick step or a tick step provided manually via \ref setTickStep, see \ref setAutoTickStep).
+  
+  If \a on is set to false, you must provide the tick positions manually via \ref setTickVector.
+  For these manual ticks you may let QCPAxis generate the appropriate labels automatically by
+  leaving \ref setAutoTickLabels set to true. If you also wish to control the displayed labels
+  manually, set \ref setAutoTickLabels to false and provide the label strings with \ref
+  setTickVectorLabels.
+  
+  If you need dynamically calculated tick vectors (and possibly tick label vectors), set the
+  vectors in a slot connected to the \ref ticksRequest signal.
+*/
+void QCPAxis::setAutoTicks(bool on)
+{
+  if (mAutoTicks != on)
+  {
+    mAutoTicks = on;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  When \ref setAutoTickStep is true, \a approximateCount determines how many ticks should be
+  generated in the visible range, approximately.
+  
+  It's not guaranteed that this number of ticks is met exactly, but approximately within a
+  tolerance of about two.
+  
+  Only values greater than zero are accepted as \a approximateCount.
+*/
+void QCPAxis::setAutoTickCount(int approximateCount)
+{
+  if (mAutoTickCount != approximateCount)
+  {
+    if (approximateCount > 0)
+    {
+      mAutoTickCount = approximateCount;
+      mCachedMarginValid = false;
+    } else
+      qDebug() << Q_FUNC_INFO << "approximateCount must be greater than zero:" << approximateCount;
+  }
+}
+
+/*!
+  Sets whether the tick labels are generated automatically. Depending on the tick label type (\ref
+  ltNumber or \ref ltDateTime), the labels will either show the coordinate as floating point
+  number (\ref setNumberFormat), or a date/time formatted according to \ref setDateTimeFormat.
+  
+  If \a on is set to false, you should provide the tick labels via \ref setTickVectorLabels. This
+  is usually used in a combination with \ref setAutoTicks set to false for complete control over
+  tick positions and labels, e.g. when the ticks should be at multiples of pi and show "2pi", "3pi"
+  etc. as tick labels.
+  
+  If you need dynamically calculated tick vectors (and possibly tick label vectors), set the
+  vectors in a slot connected to the \ref ticksRequest signal.
+*/
+void QCPAxis::setAutoTickLabels(bool on)
+{
+  if (mAutoTickLabels != on)
+  {
+    mAutoTickLabels = on;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets whether the tick step, i.e. the interval between two (major) ticks, is calculated
+  automatically. If \a on is set to true, the axis finds a tick step that is reasonable for human
+  readable plots. 
+
+  The number of ticks the algorithm aims for within the visible range can be set with \ref
+  setAutoTickCount.
+  
+  If \a on is set to false, you may set the tick step manually with \ref setTickStep.
+*/
+void QCPAxis::setAutoTickStep(bool on)
+{
+  if (mAutoTickStep != on)
+  {
+    mAutoTickStep = on;
+    mCachedMarginValid = false;
+  }
