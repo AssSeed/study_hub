@@ -4463,3 +4463,235 @@ void QCPAxis::setAutoTickStep(bool on)
     mAutoTickStep = on;
     mCachedMarginValid = false;
   }
+}
+
+/*!
+  Sets whether the number of sub ticks in one tick interval is determined automatically. This
+  works, as long as the tick step mantissa is a multiple of 0.5. When \ref setAutoTickStep is
+  enabled, this is always the case.
+  
+  When \a on is set to false, you may set the sub tick count with \ref setSubTickCount manually.
+*/
+void QCPAxis::setAutoSubTicks(bool on)
+{
+  if (mAutoSubTicks != on)
+  {
+    mAutoSubTicks = on;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets whether tick marks are displayed.
+
+  Note that setting \a show to false does not imply that tick labels are invisible, too. To achieve
+  that, see \ref setTickLabels.
+*/
+void QCPAxis::setTicks(bool show)
+{
+  if (mTicks != show)
+  {
+    mTicks = show;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets whether tick labels are displayed. Tick labels are the numbers drawn next to tick marks.
+*/
+void QCPAxis::setTickLabels(bool show)
+{
+  if (mTickLabels != show)
+  {
+    mTickLabels = show;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets the distance between the axis base line (including any outward ticks) and the tick labels.
+  \see setLabelPadding, setPadding
+*/
+void QCPAxis::setTickLabelPadding(int padding)
+{
+  if (mTickLabelPadding != padding)
+  {
+    mTickLabelPadding = padding;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets whether the tick labels display numbers or dates/times.
+  
+  If \a type is set to \ref ltNumber, the format specifications of \ref setNumberFormat apply.
+  
+  If \a type is set to \ref ltDateTime, the format specifications of \ref setDateTimeFormat apply.
+  
+  In QCustomPlot, date/time coordinates are <tt>double</tt> numbers representing the seconds since
+  1970-01-01T00:00:00 UTC. This format can be retrieved from QDateTime objects with the
+  QDateTime::toTime_t() function. Since this only gives a resolution of one second, there is also
+  the QDateTime::toMSecsSinceEpoch() function which returns the timespan described above in
+  milliseconds. Divide its return value by 1000.0 to get a value with the format needed for
+  date/time plotting, with a resolution of one millisecond.
+  
+  Using the toMSecsSinceEpoch function allows dates that go back to 2nd January 4713 B.C.
+  (represented by a negative number), unlike the toTime_t function, which works with unsigned
+  integers and thus only goes back to 1st January 1970. So both for range and accuracy, use of
+  toMSecsSinceEpoch()/1000.0 should be preferred as key coordinate for date/time axes.
+  
+  \see setTickLabels
+*/
+void QCPAxis::setTickLabelType(LabelType type)
+{
+  if (mTickLabelType != type)
+  {
+    mTickLabelType = type;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets the font of the tick labels.
+  
+  \see setTickLabels, setTickLabelColor
+*/
+void QCPAxis::setTickLabelFont(const QFont &font)
+{
+  if (font != mTickLabelFont)
+  {
+    mTickLabelFont = font;
+    mCachedMarginValid = false;
+    mLabelCache.clear();
+  }
+}
+
+/*!
+  Sets the color of the tick labels.
+  
+  \see setTickLabels, setTickLabelFont
+*/
+void QCPAxis::setTickLabelColor(const QColor &color)
+{
+  if (color != mTickLabelColor)
+  {
+    mTickLabelColor = color;
+    mCachedMarginValid = false;
+    mLabelCache.clear();
+  }
+}
+
+/*!
+  Sets the rotation of the tick labels. If \a degrees is zero, the labels are drawn normally. Else,
+  the tick labels are drawn rotated by \a degrees clockwise. The specified angle is bound to values
+  from -90 to 90 degrees.
+  
+  If \a degrees is exactly -90, 0 or 90, the tick labels are centered on the tick coordinate. For
+  other angles, the label is drawn with an offset such that it seems to point toward or away from
+  the tick mark.
+*/
+void QCPAxis::setTickLabelRotation(double degrees)
+{
+  if (!qFuzzyIsNull(degrees-mTickLabelRotation))
+  {
+    mTickLabelRotation = qBound(-90.0, degrees, 90.0);
+    mCachedMarginValid = false;
+    mLabelCache.clear();
+  }
+}
+
+/*!
+  Sets the format in which dates and times are displayed as tick labels, if \ref setTickLabelType is \ref ltDateTime.
+  for details about the \a format string, see the documentation of QDateTime::toString().
+  
+  Newlines can be inserted with "\n".
+  
+  \see setDateTimeSpec
+*/
+void QCPAxis::setDateTimeFormat(const QString &format)
+{
+  if (mDateTimeFormat != format)
+  {
+    mDateTimeFormat = format;
+    mCachedMarginValid = false;
+    mLabelCache.clear();
+  }
+}
+
+/*!
+  Sets the time spec that is used for the date time values when \ref setTickLabelType is \ref
+  ltDateTime.
+
+  The default value of QDateTime objects (and also QCustomPlot) is <tt>Qt::LocalTime</tt>. However,
+  if the date time values passed to QCustomPlot are given in the UTC spec, set \a
+  timeSpec to <tt>Qt::UTC</tt> to get the correct axis labels.
+  
+  \see setDateTimeFormat
+*/
+void QCPAxis::setDateTimeSpec(const Qt::TimeSpec &timeSpec)
+{
+  mDateTimeSpec = timeSpec;
+}
+
+/*!
+  Sets the number format for the numbers drawn as tick labels (if tick label type is \ref
+  ltNumber). This \a formatCode is an extended version of the format code used e.g. by
+  QString::number() and QLocale::toString(). For reference about that, see the "Argument Formats"
+  section in the detailed description of the QString class. \a formatCode is a string of one, two
+  or three characters. The first character is identical to the normal format code used by Qt. In
+  short, this means: 'e'/'E' scientific format, 'f' fixed format, 'g'/'G' scientific or fixed,
+  whichever is shorter.
+  
+  The second and third characters are optional and specific to QCustomPlot:\n
+  If the first char was 'e' or 'g', numbers are/might be displayed in the scientific format, e.g.
+  "5.5e9", which is ugly in a plot. So when the second char of \a formatCode is set to 'b' (for
+  "beautiful"), those exponential numbers are formatted in a more natural way, i.e. "5.5
+  [multiplication sign] 10 [superscript] 9". By default, the multiplication sign is a centered dot.
+  If instead a cross should be shown (as is usual in the USA), the third char of \a formatCode can
+  be set to 'c'. The inserted multiplication signs are the UTF-8 characters 215 (0xD7) for the
+  cross and 183 (0xB7) for the dot.
+  
+  If the scale type (\ref setScaleType) is \ref stLogarithmic and the \a formatCode uses the 'b'
+  option (beautifully typeset decimal powers), the display usually is "1 [multiplication sign] 10
+  [superscript] n", which looks unnatural for logarithmic scaling (the "1 [multiplication sign]"
+  part). To only display the decimal power, set the number precision to zero with \ref
+  setNumberPrecision.
+  
+  Examples for \a formatCode:
+  \li \c g normal format code behaviour. If number is small, fixed format is used, if number is large,
+  normal scientific format is used
+  \li \c gb If number is small, fixed format is used, if number is large, scientific format is used with
+  beautifully typeset decimal powers and a dot as multiplication sign
+  \li \c ebc All numbers are in scientific format with beautifully typeset decimal power and a cross as
+  multiplication sign
+  \li \c fb illegal format code, since fixed format doesn't support (or need) beautifully typeset decimal
+  powers. Format code will be reduced to 'f'.
+  \li \c hello illegal format code, since first char is not 'e', 'E', 'f', 'g' or 'G'. Current format
+  code will not be changed.
+*/
+void QCPAxis::setNumberFormat(const QString &formatCode)
+{
+  if (formatCode.isEmpty())
+  {
+    qDebug() << Q_FUNC_INFO << "Passed formatCode is empty";
+    return;
+  }
+  mLabelCache.clear();
+  mCachedMarginValid = false;
+  
+  // interpret first char as number format char:
+  QString allowedFormatChars = "eEfgG";
+  if (allowedFormatChars.contains(formatCode.at(0)))
+  {
+    mNumberFormatChar = formatCode.at(0).toLatin1();
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "Invalid number format code (first char not in 'eEfgG'):" << formatCode;
+    return;
+  }
+  if (formatCode.length() < 2)
+  {
+    mNumberBeautifulPowers = false;
+    mNumberMultiplyCross = false;
+    return;
+  }
