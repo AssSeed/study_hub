@@ -4956,3 +4956,263 @@ void QCPAxis::setLabelFont(const QFont &font)
     mCachedMarginValid = false;
   }
 }
+
+/*!
+  Sets the color of the axis label.
+  
+  \see setLabelFont
+*/
+void QCPAxis::setLabelColor(const QColor &color)
+{
+  mLabelColor = color;
+}
+
+/*!
+  Sets the text of the axis label that will be shown below/above or next to the axis, depending on
+  its orientation. To disable axis labels, pass an empty string as \a str.
+*/
+void QCPAxis::setLabel(const QString &str)
+{
+  if (mLabel != str)
+  {
+    mLabel = str;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets the distance between the tick labels and the axis label.
+  
+  \see setTickLabelPadding, setPadding
+*/
+void QCPAxis::setLabelPadding(int padding)
+{
+  if (mLabelPadding != padding)
+  {
+    mLabelPadding = padding;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets the padding of the axis.
+
+  When \ref QCPAxisRect::setAutoMargins is enabled, the padding is the additional outer most space,
+  that is left blank.
+  
+  The axis padding has no meaning if \ref QCPAxisRect::setAutoMargins is disabled.
+  
+  \see setLabelPadding, setTickLabelPadding
+*/
+void QCPAxis::setPadding(int padding)
+{
+  if (mPadding != padding)
+  {
+    mPadding = padding;
+    mCachedMarginValid = false;
+  }
+}
+
+/*!
+  Sets the offset the axis has to its axis rect side.
+  
+  If an axis rect side has multiple axes, only the offset of the inner most axis has meaning. The offset of the other axes
+  is controlled automatically, to place the axes at appropriate positions to prevent them from overlapping.
+*/
+void QCPAxis::setOffset(int offset)
+{
+  mOffset = offset;
+}
+
+/*!
+  Sets the font that is used for tick labels when they are selected.
+  
+  \see setTickLabelFont, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedTickLabelFont(const QFont &font)
+{
+  if (font != mSelectedTickLabelFont)
+  {
+    mSelectedTickLabelFont = font;
+    mLabelCache.clear();
+    // don't set mCachedMarginValid to false here because margin calculation is always done with non-selected fonts
+  }
+}
+
+/*!
+  Sets the font that is used for the axis label when it is selected.
+  
+  \see setLabelFont, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedLabelFont(const QFont &font)
+{
+  mSelectedLabelFont = font;
+  // don't set mCachedMarginValid to false here because margin calculation is always done with non-selected fonts
+}
+
+/*!
+  Sets the color that is used for tick labels when they are selected.
+  
+  \see setTickLabelColor, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedTickLabelColor(const QColor &color)
+{
+  if (color != mSelectedTickLabelColor)
+  {
+    mSelectedTickLabelColor = color;
+    mLabelCache.clear();
+  }
+}
+
+/*!
+  Sets the color that is used for the axis label when it is selected.
+  
+  \see setLabelColor, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedLabelColor(const QColor &color)
+{
+  mSelectedLabelColor = color;
+}
+
+/*!
+  Sets the pen that is used to draw the axis base line when selected.
+  
+  \see setBasePen, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedBasePen(const QPen &pen)
+{
+  mSelectedBasePen = pen;
+}
+
+/*!
+  Sets the pen that is used to draw the (major) ticks when selected.
+  
+  \see setTickPen, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedTickPen(const QPen &pen)
+{
+  mSelectedTickPen = pen;
+}
+
+/*!
+  Sets the pen that is used to draw the subticks when selected.
+  
+  \see setSubTickPen, setSelectableParts, setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAxis::setSelectedSubTickPen(const QPen &pen)
+{
+  mSelectedSubTickPen = pen;
+}
+
+/*!
+  Sets the style for the lower axis ending. See the documentation of QCPLineEnding for available
+  styles.
+  
+  For horizontal axes, this method refers to the left ending, for vertical axes the bottom ending.
+  Note that this meaning does not change when the axis range is reversed with \ref
+  setRangeReversed.
+  
+  \see setUpperEnding
+*/
+void QCPAxis::setLowerEnding(const QCPLineEnding &ending)
+{
+  mLowerEnding = ending;
+}
+
+/*!
+  Sets the style for the upper axis ending. See the documentation of QCPLineEnding for available
+  styles.
+  
+  For horizontal axes, this method refers to the right ending, for vertical axes the top ending.
+  Note that this meaning does not change when the axis range is reversed with \ref
+  setRangeReversed.
+  
+  \see setLowerEnding
+*/
+void QCPAxis::setUpperEnding(const QCPLineEnding &ending)
+{
+  mUpperEnding = ending;
+}
+
+/*!
+  If the scale type (\ref setScaleType) is \ref stLinear, \a diff is added to the lower and upper
+  bounds of the range. The range is simply moved by \a diff.
+  
+  If the scale type is \ref stLogarithmic, the range bounds are multiplied by \a diff. This
+  corresponds to an apparent "linear" move in logarithmic scaling by a distance of log(diff).
+*/
+void QCPAxis::moveRange(double diff)
+{
+  QCPRange oldRange = mRange;
+  if (mScaleType == stLinear)
+  {
+    mRange.lower += diff;
+    mRange.upper += diff;
+  } else // mScaleType == stLogarithmic
+  {
+    mRange.lower *= diff;
+    mRange.upper *= diff;
+  }
+  mCachedMarginValid = false;
+  emit rangeChanged(mRange);
+  emit rangeChanged(mRange, oldRange);
+}
+
+/*!
+  Scales the range of this axis by \a factor around the coordinate \a center. For example, if \a
+  factor is 2.0, \a center is 1.0, then the axis range will double its size, and the point at
+  coordinate 1.0 won't have changed its position in the QCustomPlot widget (i.e. coordinates
+  around 1.0 will have moved symmetrically closer to 1.0).
+*/
+void QCPAxis::scaleRange(double factor, double center)
+{
+  QCPRange oldRange = mRange;
+  if (mScaleType == stLinear)
+  {
+    QCPRange newRange;
+    newRange.lower = (mRange.lower-center)*factor + center;
+    newRange.upper = (mRange.upper-center)*factor + center;
+    if (QCPRange::validRange(newRange))
+      mRange = newRange.sanitizedForLinScale();
+  } else // mScaleType == stLogarithmic
+  {
+    if ((mRange.upper < 0 && center < 0) || (mRange.upper > 0 && center > 0)) // make sure center has same sign as range
+    {
+      QCPRange newRange;
+      newRange.lower = pow(mRange.lower/center, factor)*center;
+      newRange.upper = pow(mRange.upper/center, factor)*center;
+      if (QCPRange::validRange(newRange))
+        mRange = newRange.sanitizedForLogScale();
+    } else
+      qDebug() << Q_FUNC_INFO << "Center of scaling operation doesn't lie in same logarithmic sign domain as range:" << center;
+  }
+  mCachedMarginValid = false;
+  emit rangeChanged(mRange);
+  emit rangeChanged(mRange, oldRange);
+}
+
+/*!
+  Scales the range of this axis to have a certain scale \a ratio to \a otherAxis. The scaling will
+  be done around the center of the current axis range.
+
+  For example, if \a ratio is 1, this axis is the \a yAxis and \a otherAxis is \a xAxis, graphs
+  plotted with those axes will appear in a 1:1 aspect ratio, independent of the aspect ratio the
+  axis rect has.
+
+  This is an operation that changes the range of this axis once, it doesn't fix the scale ratio
+  indefinitely. Note that calling this function in the constructor of the QCustomPlot's parent
+  won't have the desired effect, since the widget dimensions aren't defined yet, and a resizeEvent
+  will follow.
+*/
+void QCPAxis::setScaleRatio(const QCPAxis *otherAxis, double ratio)
+{
+  int otherPixelSize, ownPixelSize;
+  
+  if (otherAxis->orientation() == Qt::Horizontal)
+    otherPixelSize = otherAxis->axisRect()->width();
+  else
+    otherPixelSize = otherAxis->axisRect()->height();
+  
+  if (orientation() == Qt::Horizontal)
+    ownPixelSize = axisRect()->width();
+  else
