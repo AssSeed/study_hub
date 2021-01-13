@@ -5216,3 +5216,225 @@ void QCPAxis::setScaleRatio(const QCPAxis *otherAxis, double ratio)
   if (orientation() == Qt::Horizontal)
     ownPixelSize = axisRect()->width();
   else
+    ownPixelSize = axisRect()->height();
+  
+  double newRangeSize = ratio*otherAxis->range().size()*ownPixelSize/(double)otherPixelSize;
+  setRange(range().center(), newRangeSize, Qt::AlignCenter);
+}
+
+/*!
+  Changes the axis range such that all plottables associated with this axis are fully visible in
+  that dimension.
+  
+  \see QCPAbstractPlottable::rescaleAxes, QCustomPlot::rescaleAxes
+*/
+void QCPAxis::rescale(bool onlyVisiblePlottables)
+{
+  QList<QCPAbstractPlottable*> p = plottables();
+  QCPRange newRange;
+  bool haveRange = false;
+  for (int i=0; i<p.size(); ++i)
+  {
+    if (!p.at(i)->realVisibility() && onlyVisiblePlottables)
+      continue;
+    QCPRange plottableRange;
+    bool validRange;
+    QCPAbstractPlottable::SignDomain signDomain = QCPAbstractPlottable::sdBoth;
+    if (mScaleType == stLogarithmic)
+      signDomain = (mRange.upper < 0 ? QCPAbstractPlottable::sdNegative : QCPAbstractPlottable::sdPositive);
+    if (p.at(i)->keyAxis() == this)
+      plottableRange = p.at(i)->getKeyRange(validRange, signDomain);
+    else
+      plottableRange = p.at(i)->getValueRange(validRange, signDomain);
+    if (validRange)
+    {
+      if (!haveRange)
+        newRange = plottableRange;
+      else
+        newRange.expand(plottableRange);
+      haveRange = true;
+    }
+  }
+  if (haveRange)
+    setRange(newRange);
+}
+
+/*!
+  Transforms \a value, in pixel coordinates of the QCustomPlot widget, to axis coordinates.
+*/
+double QCPAxis::pixelToCoord(double value) const
+{
+  if (orientation() == Qt::Horizontal)
+  {
+    if (mScaleType == stLinear)
+    {
+      if (!mRangeReversed)
+        return (value-mAxisRect->left())/(double)mAxisRect->width()*mRange.size()+mRange.lower;
+      else
+        return -(value-mAxisRect->left())/(double)mAxisRect->width()*mRange.size()+mRange.upper;
+    } else // mScaleType == stLogarithmic
+    {
+      if (!mRangeReversed)
+        return pow(mRange.upper/mRange.lower, (value-mAxisRect->left())/(double)mAxisRect->width())*mRange.lower;
+      else
+        return pow(mRange.upper/mRange.lower, (mAxisRect->left()-value)/(double)mAxisRect->width())*mRange.upper;
+    }
+  } else // orientation() == Qt::Vertical
+  {
+    if (mScaleType == stLinear)
+    {
+      if (!mRangeReversed)
+        return (mAxisRect->bottom()-value)/(double)mAxisRect->height()*mRange.size()+mRange.lower;
+      else
+        return -(mAxisRect->bottom()-value)/(double)mAxisRect->height()*mRange.size()+mRange.upper;
+    } else // mScaleType == stLogarithmic
+    {
+      if (!mRangeReversed)
+        return pow(mRange.upper/mRange.lower, (mAxisRect->bottom()-value)/(double)mAxisRect->height())*mRange.lower;
+      else
+        return pow(mRange.upper/mRange.lower, (value-mAxisRect->bottom())/(double)mAxisRect->height())*mRange.upper;
+    }
+  }
+}
+
+/*!
+  Transforms \a value, in coordinates of the axis, to pixel coordinates of the QCustomPlot widget.
+*/
+double QCPAxis::coordToPixel(double value) const
+{
+  if (orientation() == Qt::Horizontal)
+  {
+    if (mScaleType == stLinear)
+    {
+      if (!mRangeReversed)
+        return (value-mRange.lower)/mRange.size()*mAxisRect->width()+mAxisRect->left();
+      else
+        return (mRange.upper-value)/mRange.size()*mAxisRect->width()+mAxisRect->left();
+    } else // mScaleType == stLogarithmic
+    {
+      if (value >= 0 && mRange.upper < 0) // invalid value for logarithmic scale, just draw it outside visible range
+        return !mRangeReversed ? mAxisRect->right()+200 : mAxisRect->left()-200;
+      else if (value <= 0 && mRange.upper > 0) // invalid value for logarithmic scale, just draw it outside visible range
+        return !mRangeReversed ? mAxisRect->left()-200 : mAxisRect->right()+200;
+      else
+      {
+        if (!mRangeReversed)
+          return baseLog(value/mRange.lower)/baseLog(mRange.upper/mRange.lower)*mAxisRect->width()+mAxisRect->left();
+        else
+          return baseLog(mRange.upper/value)/baseLog(mRange.upper/mRange.lower)*mAxisRect->width()+mAxisRect->left();
+      }
+    }
+  } else // orientation() == Qt::Vertical
+  {
+    if (mScaleType == stLinear)
+    {
+      if (!mRangeReversed)
+        return mAxisRect->bottom()-(value-mRange.lower)/mRange.size()*mAxisRect->height();
+      else
+        return mAxisRect->bottom()-(mRange.upper-value)/mRange.size()*mAxisRect->height();
+    } else // mScaleType == stLogarithmic
+    {     
+      if (value >= 0 && mRange.upper < 0) // invalid value for logarithmic scale, just draw it outside visible range
+        return !mRangeReversed ? mAxisRect->top()-200 : mAxisRect->bottom()+200;
+      else if (value <= 0 && mRange.upper > 0) // invalid value for logarithmic scale, just draw it outside visible range
+        return !mRangeReversed ? mAxisRect->bottom()+200 : mAxisRect->top()-200;
+      else
+      {
+        if (!mRangeReversed)
+          return mAxisRect->bottom()-baseLog(value/mRange.lower)/baseLog(mRange.upper/mRange.lower)*mAxisRect->height();
+        else
+          return mAxisRect->bottom()-baseLog(mRange.upper/value)/baseLog(mRange.upper/mRange.lower)*mAxisRect->height();
+      }
+    }
+  }
+}
+
+/*!
+  Returns the part of the axis that is hit by \a pos (in pixels). The return value of this function
+  is independent of the user-selectable parts defined with \ref setSelectableParts. Further, this
+  function does not change the current selection state of the axis.
+  
+  If the axis is not visible (\ref setVisible), this function always returns \ref spNone.
+  
+  \see setSelectedParts, setSelectableParts, QCustomPlot::setInteractions
+*/
+QCPAxis::SelectablePart QCPAxis::getPartAt(const QPointF &pos) const
+{
+  if (!mVisible)
+    return spNone;
+  
+  if (mAxisSelectionBox.contains(pos.toPoint()))
+    return spAxis;
+  else if (mTickLabelsSelectionBox.contains(pos.toPoint()))
+    return spTickLabels;
+  else if (mLabelSelectionBox.contains(pos.toPoint()))
+    return spAxisLabel;
+  else
+    return spNone;
+}
+
+/* inherits documentation from base class */
+double QCPAxis::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  if (!mParentPlot) return -1;
+  SelectablePart part = getPartAt(pos);
+  if ((onlySelectable && !mSelectableParts.testFlag(part)) || part == spNone)
+    return -1;
+  
+  if (details)
+    details->setValue(part);
+  return mParentPlot->selectionTolerance()*0.99;
+}
+
+/*!
+  Returns a list of all the plottables that have this axis as key or value axis.
+  
+  If you are only interested in plottables of type QCPGraph, see \ref graphs.
+  
+  \see graphs, items
+*/
+QList<QCPAbstractPlottable*> QCPAxis::plottables() const
+{
+  QList<QCPAbstractPlottable*> result;
+  if (!mParentPlot) return result;
+  
+  for (int i=0; i<mParentPlot->mPlottables.size(); ++i)
+  {
+    if (mParentPlot->mPlottables.at(i)->keyAxis() == this ||mParentPlot->mPlottables.at(i)->valueAxis() == this)
+      result.append(mParentPlot->mPlottables.at(i));
+  }
+  return result;
+}
+
+/*!
+  Returns a list of all the graphs that have this axis as key or value axis.
+  
+  \see plottables, items
+*/
+QList<QCPGraph*> QCPAxis::graphs() const
+{
+  QList<QCPGraph*> result;
+  if (!mParentPlot) return result;
+  
+  for (int i=0; i<mParentPlot->mGraphs.size(); ++i)
+  {
+    if (mParentPlot->mGraphs.at(i)->keyAxis() == this || mParentPlot->mGraphs.at(i)->valueAxis() == this)
+      result.append(mParentPlot->mGraphs.at(i));
+  }
+  return result;
+}
+
+/*!
+  Returns a list of all the items that are associated with this axis. An item is considered
+  associated with an axis if at least one of its positions uses the axis as key or value axis.
+  
+  \see plottables, graphs
+*/
+QList<QCPAbstractItem*> QCPAxis::items() const
+{
+  QList<QCPAbstractItem*> result;
+  if (!mParentPlot) return result;
+  
+  for (int itemId=0; itemId<mParentPlot->mItems.size(); ++itemId)
+  {
+    QList<QCPItemPosition*> positions = mParentPlot->mItems.at(itemId)->positions();
