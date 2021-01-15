@@ -5884,3 +5884,240 @@ void QCPAxis::draw(QCPPainter *painter)
   //painter->setBrush(Qt::NoBrush);
   //painter->drawRects(QVector<QRect>() << mAxisSelectionBox << mTickLabelsSelectionBox << mLabelSelectionBox);
 }
+
+/*! \internal
+  
+  Draws a single tick label with the provided \a painter, utilizing the internal label cache to
+  significantly speed up drawing of labels that were drawn in previous calls. The tick label is
+  always bound to an axis, the distance to the axis is controllable via \a distanceToAxis in
+  pixels. The pixel position in the axis direction is passed in the \a position parameter. Hence
+  for the bottom axis, \a position would indicate the horizontal pixel position (not coordinate),
+  at which the label should be drawn.
+  
+  In order to later draw the axis label in a place that doesn't overlap with the tick labels, the
+  largest tick label size is needed. This is acquired by passing a \a tickLabelsSize to the \ref
+  drawTickLabel calls during the process of drawing all tick labels of one axis. In every call, \a
+  tickLabelsSize is expanded, if the drawn label exceeds the value \a tickLabelsSize currently
+  holds.
+  
+  The label is drawn with the font and pen that are currently set on the \a painter. To draw
+  superscripted powers, the font is temporarily made smaller by a fixed factor (see \ref
+  getTickLabelData).
+*/
+void QCPAxis::placeTickLabel(QCPPainter *painter, double position, int distanceToAxis, const QString &text, QSize *tickLabelsSize)
+{
+  // warning: if you change anything here, also adapt getMaxTickLabelSize() accordingly!
+  if (!mParentPlot) return;
+  if (text.isEmpty()) return;
+  QSize finalSize;
+  QPointF labelAnchor;
+  switch (mAxisType)
+  {
+    case atLeft:   labelAnchor = QPointF(mAxisRect->left()-distanceToAxis-mOffset, position); break;
+    case atRight:  labelAnchor = QPointF(mAxisRect->right()+distanceToAxis+mOffset, position); break;
+    case atTop:    labelAnchor = QPointF(position, mAxisRect->top()-distanceToAxis-mOffset); break;
+    case atBottom: labelAnchor = QPointF(position, mAxisRect->bottom()+distanceToAxis+mOffset); break;
+  }
+  if (parentPlot()->plottingHints().testFlag(QCP::phCacheLabels) && !painter->modes().testFlag(QCPPainter::pmNoCaching)) // label caching enabled
+  {
+    if (!mLabelCache.contains(text))  // no cached label exists, create it
+    {
+      CachedLabel *newCachedLabel = new CachedLabel;
+      TickLabelData labelData = getTickLabelData(painter->font(), text);
+      QPointF drawOffset = getTickLabelDrawOffset(labelData);
+      newCachedLabel->offset = drawOffset+labelData.rotatedTotalBounds.topLeft();
+      newCachedLabel->pixmap = QPixmap(labelData.rotatedTotalBounds.size());
+      newCachedLabel->pixmap.fill(Qt::transparent);
+      QCPPainter cachePainter(&newCachedLabel->pixmap);
+      cachePainter.setPen(painter->pen());
+      drawTickLabel(&cachePainter, -labelData.rotatedTotalBounds.topLeft().x(), -labelData.rotatedTotalBounds.topLeft().y(), labelData);
+      mLabelCache.insert(text, newCachedLabel, 1);
+    }
+    // draw cached label:
+    const CachedLabel *cachedLabel = mLabelCache.object(text);
+    // if label would be partly clipped by widget border on sides, don't draw it:
+    if (orientation() == Qt::Horizontal)
+    {
+      if (labelAnchor.x()+cachedLabel->offset.x()+cachedLabel->pixmap.width() > mParentPlot->viewport().right() ||
+          labelAnchor.x()+cachedLabel->offset.x() < mParentPlot->viewport().left())
+        return;
+    } else
+    {
+      if (labelAnchor.y()+cachedLabel->offset.y()+cachedLabel->pixmap.height() > mParentPlot->viewport().bottom() ||
+          labelAnchor.y()+cachedLabel->offset.y() < mParentPlot->viewport().top())
+        return;
+    }
+    painter->drawPixmap(labelAnchor+cachedLabel->offset, cachedLabel->pixmap);
+    finalSize = cachedLabel->pixmap.size();
+  } else // label caching disabled, draw text directly on surface:
+  {
+    TickLabelData labelData = getTickLabelData(painter->font(), text);
+    QPointF finalPosition = labelAnchor + getTickLabelDrawOffset(labelData);
+    // if label would be partly clipped by widget border on sides, don't draw it:
+    if (orientation() == Qt::Horizontal)
+    {
+      if (finalPosition.x()+(labelData.rotatedTotalBounds.width()+labelData.rotatedTotalBounds.left()) > mParentPlot->viewport().right() ||
+          finalPosition.x()+labelData.rotatedTotalBounds.left() < mParentPlot->viewport().left())
+        return;
+    } else
+    {
+      if (finalPosition.y()+(labelData.rotatedTotalBounds.height()+labelData.rotatedTotalBounds.top()) > mParentPlot->viewport().bottom() ||
+          finalPosition.y()+labelData.rotatedTotalBounds.top() < mParentPlot->viewport().top())
+        return;
+    }
+    drawTickLabel(painter, finalPosition.x(), finalPosition.y(), labelData);
+    finalSize = labelData.rotatedTotalBounds.size();
+  }
+  
+  // expand passed tickLabelsSize if current tick label is larger:
+  if (finalSize.width() > tickLabelsSize->width()) 
+    tickLabelsSize->setWidth(finalSize.width());
+  if (finalSize.height() > tickLabelsSize->height())
+    tickLabelsSize->setHeight(finalSize.height());
+}
+
+/*! \internal
+  
+  This is a \ref placeTickLabel helper function.
+  
+  Draws the tick label specified in \a labelData with \a painter at the pixel positions \a x and \a
+  y. This function is used by \ref placeTickLabel to create new tick labels for the cache, or to
+  directly draw the labels on the QCustomPlot surface when label caching is disabled, i.e. when
+  QCP::phCacheLabels plotting hint is not set.
+*/
+void QCPAxis::drawTickLabel(QCPPainter *painter, double x, double y, const QCPAxis::TickLabelData &labelData) const
+{
+  // backup painter settings that we're about to change:
+  QTransform oldTransform = painter->transform();
+  QFont oldFont = painter->font();
+  
+  // transform painter to position/rotation:
+  painter->translate(x, y);
+  if (!qFuzzyIsNull(mTickLabelRotation))
+    painter->rotate(mTickLabelRotation);
+  
+  // draw text:
+  if (!labelData.expPart.isEmpty()) // indicator that beautiful powers must be used
+  {
+    painter->setFont(labelData.baseFont);
+    painter->drawText(0, 0, 0, 0, Qt::TextDontClip, labelData.basePart);
+    painter->setFont(labelData.expFont);
+    painter->drawText(labelData.baseBounds.width()+1, 0, labelData.expBounds.width(), labelData.expBounds.height(), Qt::TextDontClip,  labelData.expPart);
+  } else
+  {
+    painter->setFont(labelData.baseFont);
+    painter->drawText(0, 0, labelData.totalBounds.width(), labelData.totalBounds.height(), Qt::TextDontClip | Qt::AlignHCenter, labelData.basePart);
+  }
+  
+  // reset painter settings to what it was before:
+  painter->setTransform(oldTransform);
+  painter->setFont(oldFont);
+}
+
+/*! \internal
+  
+  This is a \ref placeTickLabel helper function.
+  
+  Transforms the passed \a text and \a font to a tickLabelData structure that can then be further
+  processed by \ref getTickLabelDrawOffset and \ref drawTickLabel. It splits the text into base and
+  exponent if necessary (see \ref setNumberFormat) and calculates appropriate bounding boxes.
+*/
+QCPAxis::TickLabelData QCPAxis::getTickLabelData(const QFont &font, const QString &text) const
+{
+  TickLabelData result;
+  
+  // determine whether beautiful decimal powers should be used
+  bool useBeautifulPowers = false;
+  int ePos = -1;
+  if (mAutoTickLabels && mNumberBeautifulPowers && mTickLabelType == ltNumber)
+  {
+    ePos = text.indexOf('e');
+    if (ePos > -1)
+      useBeautifulPowers = true;
+  }
+  
+  // calculate text bounding rects and do string preparation for beautiful decimal powers:
+  result.baseFont = font;
+  result.baseFont.setPointSizeF(result.baseFont.pointSizeF()+0.05); // QFontMetrics.boundingRect has a bug for exact point sizes that make the results oscillate due to internal rounding 
+  if (useBeautifulPowers)
+  {
+    // split text into parts of number/symbol that will be drawn normally and part that will be drawn as exponent:
+    result.basePart = text.left(ePos);
+    // in log scaling, we want to turn "1*10^n" into "10^n", else add multiplication sign and decimal base:
+    if (mScaleType == stLogarithmic && result.basePart == "1")
+      result.basePart = "10";
+    else
+      result.basePart += (mNumberMultiplyCross ? QString(QChar(215)) : QString(QChar(183))) + "10";
+    result.expPart = text.mid(ePos+1);
+    // clip "+" and leading zeros off expPart:
+    while (result.expPart.at(1) == '0' && result.expPart.length() > 2) // length > 2 so we leave one zero when numberFormatChar is 'e'
+      result.expPart.remove(1, 1);
+    if (result.expPart.at(0) == mPositiveSignChar)
+      result.expPart.remove(0, 1);
+    // prepare smaller font for exponent:
+    result.expFont = font;
+    result.expFont.setPointSize(result.expFont.pointSize()*0.75);
+    // calculate bounding rects of base part, exponent part and total one:
+    result.baseBounds = QFontMetrics(result.baseFont).boundingRect(0, 0, 0, 0, Qt::TextDontClip, result.basePart);
+    result.expBounds = QFontMetrics(result.expFont).boundingRect(0, 0, 0, 0, Qt::TextDontClip, result.expPart);
+    result.totalBounds = result.baseBounds.adjusted(0, 0, result.expBounds.width()+2, 0); // +2 consists of the 1 pixel spacing between base and exponent (see drawTickLabel) and an extra pixel to include AA
+  } else // useBeautifulPowers == false
+  {
+    result.basePart = text;
+    result.totalBounds = QFontMetrics(result.baseFont).boundingRect(0, 0, 0, 0, Qt::TextDontClip | Qt::AlignHCenter, result.basePart);
+  }
+  result.totalBounds.moveTopLeft(QPoint(0, 0)); // want bounding box aligned top left at origin, independent of how it was created, to make further processing simpler
+  
+  // calculate possibly different bounding rect after rotation:
+  result.rotatedTotalBounds = result.totalBounds;
+  if (!qFuzzyIsNull(mTickLabelRotation))
+  {
+    QTransform transform;
+    transform.rotate(mTickLabelRotation);
+    result.rotatedTotalBounds = transform.mapRect(result.rotatedTotalBounds);
+  }
+  
+  return result;
+}
+
+/*! \internal
+  
+  This is a \ref placeTickLabel helper function.
+  
+  Calculates the offset at which the top left corner of the specified tick label shall be drawn.
+  The offset is relative to a point right next to the tick the label belongs to.
+  
+  This function is thus responsible for e.g. centering tick labels under ticks and positioning them
+  appropriately when they are rotated.
+*/
+QPointF QCPAxis::getTickLabelDrawOffset(const QCPAxis::TickLabelData &labelData) const
+{
+  /*
+    calculate label offset from base point at tick (non-trivial, for best visual appearance): short
+    explanation for bottom axis: The anchor, i.e. the point in the label that is placed
+    horizontally under the corresponding tick is always on the label side that is closer to the
+    axis (e.g. the left side of the text when we're rotating clockwise). On that side, the height
+    is halved and the resulting point is defined the anchor. This way, a 90 degree rotated text
+    will be centered under the tick (i.e. displaced horizontally by half its height). At the same
+    time, a 45 degree rotated text will "point toward" its tick, as is typical for rotated tick
+    labels.
+  */
+  bool doRotation = !qFuzzyIsNull(mTickLabelRotation);
+  bool flip = qFuzzyCompare(qAbs(mTickLabelRotation), 90.0); // perfect +/-90 degree flip. Indicates vertical label centering on vertical axes.
+  double radians = mTickLabelRotation/180.0*M_PI;
+  int x=0, y=0;
+  if (mAxisType == atLeft)
+  {
+    if (doRotation)
+    {
+      if (mTickLabelRotation > 0)
+      {
+        x = -qCos(radians)*labelData.totalBounds.width();
+        y = flip ? -labelData.totalBounds.width()/2.0 : -qSin(radians)*labelData.totalBounds.width()-qCos(radians)*labelData.totalBounds.height()/2.0;
+      } else
+      {
+        x = -qCos(-radians)*labelData.totalBounds.width()-qSin(-radians)*labelData.totalBounds.height();
+        y = flip ? +labelData.totalBounds.width()/2.0 : +qSin(-radians)*labelData.totalBounds.width()-qCos(-radians)*labelData.totalBounds.height()/2.0;
+      }
+    } else
+    {
