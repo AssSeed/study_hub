@@ -5667,3 +5667,220 @@ int QCPAxis::calculateAutoSubTickCount(double tickStep) const
     if (1.0-fracPart < epsilon)
       ++intPart;
     switch (intPart)
+    {
+      case 1: result = 4; break; // 1.0 -> 0.2 substep
+      case 2: result = 3; break; // 2.0 -> 0.5 substep
+      case 3: result = 2; break; // 3.0 -> 1.0 substep
+      case 4: result = 3; break; // 4.0 -> 1.0 substep
+      case 5: result = 4; break; // 5.0 -> 1.0 substep
+      case 6: result = 2; break; // 6.0 -> 2.0 substep
+      case 7: result = 6; break; // 7.0 -> 1.0 substep
+      case 8: result = 3; break; // 8.0 -> 2.0 substep
+      case 9: result = 2; break; // 9.0 -> 3.0 substep
+    }
+  } else
+  {
+    // handle cases with significantly fractional mantissa:
+    if (qAbs(fracPart-0.5) < epsilon) // *.5 mantissa
+    {
+      switch (intPart)
+      {
+        case 1: result = 2; break; // 1.5 -> 0.5 substep
+        case 2: result = 4; break; // 2.5 -> 0.5 substep
+        case 3: result = 4; break; // 3.5 -> 0.7 substep
+        case 4: result = 2; break; // 4.5 -> 1.5 substep
+        case 5: result = 4; break; // 5.5 -> 1.1 substep (won't occur with autoTickStep from here on)
+        case 6: result = 4; break; // 6.5 -> 1.3 substep
+        case 7: result = 2; break; // 7.5 -> 2.5 substep
+        case 8: result = 4; break; // 8.5 -> 1.7 substep
+        case 9: result = 4; break; // 9.5 -> 1.9 substep
+      }
+    }
+    // if mantissa fraction isnt 0.0 or 0.5, don't bother finding good sub tick marks, leave default
+  }
+  
+  return result;
+}
+
+/*! \internal
+  
+  Draws the axis with the specified \a painter.
+  
+  The selection boxes (mAxisSelectionBox, mTickLabelsSelectionBox, mLabelSelectionBox) are set
+  here, too.
+*/
+void QCPAxis::draw(QCPPainter *painter)
+{
+  if (!mParentPlot) return;
+  QPoint origin;
+  if (mAxisType == atLeft)
+    origin = mAxisRect->bottomLeft()+QPoint(-mOffset, 0);
+  else if (mAxisType == atRight)
+    origin = mAxisRect->bottomRight()+QPoint(+mOffset, 0);
+  else if (mAxisType == atTop)
+    origin = mAxisRect->topLeft()+QPoint(0, -mOffset);
+  else if (mAxisType == atBottom)
+    origin = mAxisRect->bottomLeft()+QPoint(0, +mOffset);
+  
+  double xCor = 0, yCor = 0; // paint system correction, for pixel exact matches (affects baselines and ticks of top/right axes)
+  switch (mAxisType)
+  {
+    case atTop: yCor = -1; break;
+    case atRight: xCor = 1; break;
+    default: break;
+  }
+  
+  int margin = 0;
+  int lowTick = mLowestVisibleTick;
+  int highTick = mHighestVisibleTick;
+  double t; // helper variable, result of coordinate-to-pixel transforms
+
+  // draw baseline:
+  QLineF baseLine;
+  painter->setPen(getBasePen());
+  if (orientation() == Qt::Horizontal)
+    baseLine.setPoints(origin+QPointF(xCor, yCor), origin+QPointF(mAxisRect->width()+xCor, yCor));
+  else
+    baseLine.setPoints(origin+QPointF(xCor, yCor), origin+QPointF(xCor, -mAxisRect->height()+yCor));
+  if (mRangeReversed)
+    baseLine = QLineF(baseLine.p2(), baseLine.p1()); // won't make a difference for line itself, but for line endings later
+  painter->drawLine(baseLine);
+  
+  // draw ticks:
+  if (mTicks)
+  {
+    painter->setPen(getTickPen());
+    // direction of ticks ("inward" is right for left axis and left for right axis)
+    int tickDir = (mAxisType == atBottom || mAxisType == atRight) ? -1 : 1;
+    if (orientation() == Qt::Horizontal)
+    {
+      for (int i=lowTick; i <= highTick; ++i)
+      {
+        t = coordToPixel(mTickVector.at(i)); // x
+        painter->drawLine(QLineF(t+xCor, origin.y()-mTickLengthOut*tickDir+yCor, t+xCor, origin.y()+mTickLengthIn*tickDir+yCor));
+      }
+    } else
+    {
+      for (int i=lowTick; i <= highTick; ++i)
+      {
+        t = coordToPixel(mTickVector.at(i)); // y
+        painter->drawLine(QLineF(origin.x()-mTickLengthOut*tickDir+xCor, t+yCor, origin.x()+mTickLengthIn*tickDir+xCor, t+yCor));
+      }
+    }
+  }
+  
+  // draw subticks:
+  if (mTicks && mSubTickCount > 0)
+  {
+    painter->setPen(getSubTickPen());
+    // direction of ticks ("inward" is right for left axis and left for right axis)
+    int tickDir = (mAxisType == atBottom || mAxisType == atRight) ? -1 : 1;
+    if (orientation() == Qt::Horizontal)
+    {
+      for (int i=0; i<mSubTickVector.size(); ++i) // no need to check bounds because subticks are always only created inside current mRange
+      {
+        t = coordToPixel(mSubTickVector.at(i));
+        painter->drawLine(QLineF(t+xCor, origin.y()-mSubTickLengthOut*tickDir+yCor, t+xCor, origin.y()+mSubTickLengthIn*tickDir+yCor));
+      }
+    } else
+    {
+      for (int i=0; i<mSubTickVector.size(); ++i)
+      {
+        t = coordToPixel(mSubTickVector.at(i));
+        painter->drawLine(QLineF(origin.x()-mSubTickLengthOut*tickDir+xCor, t+yCor, origin.x()+mSubTickLengthIn*tickDir+xCor, t+yCor));
+      }
+    }
+  }
+  margin += qMax(0, qMax(mTickLengthOut, mSubTickLengthOut));
+  
+  // draw axis base endings:
+  bool antialiasingBackup = painter->antialiasing();
+  painter->setAntialiasing(true); // always want endings to be antialiased, even if base and ticks themselves aren't
+  painter->setBrush(QBrush(basePen().color()));
+  QVector2D baseLineVector(baseLine.dx(), baseLine.dy());
+  if (mLowerEnding.style() != QCPLineEnding::esNone)
+    mLowerEnding.draw(painter, QVector2D(baseLine.p1())-baseLineVector.normalized()*mLowerEnding.realLength()*(mLowerEnding.inverted()?-1:1), -baseLineVector);
+  if (mUpperEnding.style() != QCPLineEnding::esNone)
+    mUpperEnding.draw(painter, QVector2D(baseLine.p2())+baseLineVector.normalized()*mUpperEnding.realLength()*(mUpperEnding.inverted()?-1:1), baseLineVector);
+  painter->setAntialiasing(antialiasingBackup);
+  
+  // tick labels:
+  QSize tickLabelsSize(0, 0); // size of largest tick label, for offset calculation of axis label
+  if (mTickLabels)
+  {
+    margin += mTickLabelPadding;
+    painter->setFont(getTickLabelFont());
+    painter->setPen(QPen(getTickLabelColor()));
+    for (int i=lowTick; i <= highTick; ++i)
+    {
+      t = coordToPixel(mTickVector.at(i));
+      placeTickLabel(painter, t, margin, mTickVectorLabels.at(i), &tickLabelsSize);
+    }
+  }
+  if (orientation() == Qt::Horizontal)
+    margin += tickLabelsSize.height();
+  else
+    margin += tickLabelsSize.width();
+
+  // axis label:
+  QRect labelBounds;
+  if (!mLabel.isEmpty())
+  {
+    margin += mLabelPadding;
+    painter->setFont(getLabelFont());
+    painter->setPen(QPen(getLabelColor()));
+    labelBounds = painter->fontMetrics().boundingRect(0, 0, 0, 0, Qt::TextDontClip, mLabel);
+    if (mAxisType == atLeft)
+    {
+      QTransform oldTransform = painter->transform();
+      painter->translate((origin.x()-margin-labelBounds.height()), origin.y());
+      painter->rotate(-90);
+      painter->drawText(0, 0, mAxisRect->height(), labelBounds.height(), Qt::TextDontClip | Qt::AlignCenter, mLabel);
+      painter->setTransform(oldTransform);
+    }
+    else if (mAxisType == atRight)
+    {
+      QTransform oldTransform = painter->transform();
+      painter->translate((origin.x()+margin+labelBounds.height()), origin.y()-mAxisRect->height());
+      painter->rotate(90);
+      painter->drawText(0, 0, mAxisRect->height(), labelBounds.height(), Qt::TextDontClip | Qt::AlignCenter, mLabel);
+      painter->setTransform(oldTransform);
+    }
+    else if (mAxisType == atTop)
+      painter->drawText(origin.x(), origin.y()-margin-labelBounds.height(), mAxisRect->width(), labelBounds.height(), Qt::TextDontClip | Qt::AlignCenter, mLabel);
+    else if (mAxisType == atBottom)
+      painter->drawText(origin.x(), origin.y()+margin, mAxisRect->width(), labelBounds.height(), Qt::TextDontClip | Qt::AlignCenter, mLabel);
+  }
+  
+  // set selection boxes:
+  int selAxisOutSize = qMax(qMax(mTickLengthOut, mSubTickLengthOut), mParentPlot->selectionTolerance());
+  int selAxisInSize = mParentPlot->selectionTolerance();
+  int selTickLabelSize = (orientation()==Qt::Horizontal ? tickLabelsSize.height() : tickLabelsSize.width());
+  int selTickLabelOffset = qMax(mTickLengthOut, mSubTickLengthOut)+mTickLabelPadding;
+  int selLabelSize = labelBounds.height();
+  int selLabelOffset = selTickLabelOffset+selTickLabelSize+mLabelPadding;
+  if (mAxisType == atLeft)
+  {
+    mAxisSelectionBox.setCoords(origin.x()-selAxisOutSize, mAxisRect->top(), origin.x()+selAxisInSize, mAxisRect->bottom());
+    mTickLabelsSelectionBox.setCoords(origin.x()-selTickLabelOffset-selTickLabelSize, mAxisRect->top(), origin.x()-selTickLabelOffset, mAxisRect->bottom());
+    mLabelSelectionBox.setCoords(origin.x()-selLabelOffset-selLabelSize, mAxisRect->top(), origin.x()-selLabelOffset, mAxisRect->bottom());
+  } else if (mAxisType == atRight)
+  {
+    mAxisSelectionBox.setCoords(origin.x()-selAxisInSize, mAxisRect->top(), origin.x()+selAxisOutSize, mAxisRect->bottom());
+    mTickLabelsSelectionBox.setCoords(origin.x()+selTickLabelOffset+selTickLabelSize, mAxisRect->top(), origin.x()+selTickLabelOffset, mAxisRect->bottom());
+    mLabelSelectionBox.setCoords(origin.x()+selLabelOffset+selLabelSize, mAxisRect->top(), origin.x()+selLabelOffset, mAxisRect->bottom());
+  } else if (mAxisType == atTop)
+  {
+    mAxisSelectionBox.setCoords(mAxisRect->left(), origin.y()-selAxisOutSize, mAxisRect->right(), origin.y()+selAxisInSize);
+    mTickLabelsSelectionBox.setCoords(mAxisRect->left(), origin.y()-selTickLabelOffset-selTickLabelSize, mAxisRect->right(), origin.y()-selTickLabelOffset);
+    mLabelSelectionBox.setCoords(mAxisRect->left(), origin.y()-selLabelOffset-selLabelSize, mAxisRect->right(), origin.y()-selLabelOffset);
+  } else if (mAxisType == atBottom)
+  {
+    mAxisSelectionBox.setCoords(mAxisRect->left(), origin.y()-selAxisInSize, mAxisRect->right(), origin.y()+selAxisOutSize);
+    mTickLabelsSelectionBox.setCoords(mAxisRect->left(), origin.y()+selTickLabelOffset+selTickLabelSize, mAxisRect->right(), origin.y()+selTickLabelOffset);
+    mLabelSelectionBox.setCoords(mAxisRect->left(), origin.y()+selLabelOffset+selLabelSize, mAxisRect->right(), origin.y()+selLabelOffset);
+  }
+  // draw hitboxes for debug purposes:
+  //painter->setBrush(Qt::NoBrush);
+  //painter->drawRects(QVector<QRect>() << mAxisSelectionBox << mTickLabelsSelectionBox << mLabelSelectionBox);
+}
