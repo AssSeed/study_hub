@@ -5438,3 +5438,232 @@ QList<QCPAbstractItem*> QCPAxis::items() const
   for (int itemId=0; itemId<mParentPlot->mItems.size(); ++itemId)
   {
     QList<QCPItemPosition*> positions = mParentPlot->mItems.at(itemId)->positions();
+    for (int posId=0; posId<positions.size(); ++posId)
+    {
+      if (positions.at(posId)->keyAxis() == this || positions.at(posId)->valueAxis() == this)
+      {
+        result.append(mParentPlot->mItems.at(itemId));
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+/*!
+  Transforms a margin side to the logically corresponding axis type. (QCP::msLeft to
+  QCPAxis::atLeft, QCP::msRight to QCPAxis::atRight, etc.)
+*/
+QCPAxis::AxisType QCPAxis::marginSideToAxisType(QCP::MarginSide side)
+{
+  switch (side)
+  {
+    case QCP::msLeft: return atLeft;
+    case QCP::msRight: return atRight;
+    case QCP::msTop: return atTop;
+    case QCP::msBottom: return atBottom;
+    default: break;
+  }
+  qDebug() << Q_FUNC_INFO << "Invalid margin side passed:" << (int)side;
+  return atLeft;
+}
+
+/*! \internal
+  
+  This function is called to prepare the tick vector, sub tick vector and tick label vector. If
+  \ref setAutoTicks is set to true, appropriate tick values are determined automatically via \ref
+  generateAutoTicks. If it's set to false, the signal ticksRequest is emitted, which can be used to
+  provide external tick positions. Then the sub tick vectors and tick label vectors are created.
+*/
+void QCPAxis::setupTickVectors()
+{
+  if (!mParentPlot) return;
+  if ((!mTicks && !mTickLabels && !mGrid->visible()) || mRange.size() <= 0) return;
+  
+  // fill tick vectors, either by auto generating or by notifying user to fill the vectors himself
+  if (mAutoTicks)
+  {
+    generateAutoTicks();
+  } else
+  {
+    emit ticksRequest();
+  }
+  
+  visibleTickBounds(mLowestVisibleTick, mHighestVisibleTick);
+  if (mTickVector.isEmpty())
+  {
+    mSubTickVector.clear();
+    return;
+  }
+  
+  // generate subticks between ticks:
+  mSubTickVector.resize((mTickVector.size()-1)*mSubTickCount);
+  if (mSubTickCount > 0)
+  {
+    double subTickStep = 0;
+    double subTickPosition = 0;
+    int subTickIndex = 0;
+    bool done = false;
+    int lowTick = mLowestVisibleTick > 0 ? mLowestVisibleTick-1 : mLowestVisibleTick;
+    int highTick = mHighestVisibleTick < mTickVector.size()-1 ? mHighestVisibleTick+1 : mHighestVisibleTick;
+    for (int i=lowTick+1; i<=highTick; ++i)
+    {
+      subTickStep = (mTickVector.at(i)-mTickVector.at(i-1))/(double)(mSubTickCount+1);
+      for (int k=1; k<=mSubTickCount; ++k)
+      {
+        subTickPosition = mTickVector.at(i-1) + k*subTickStep;
+        if (subTickPosition < mRange.lower)
+          continue;
+        if (subTickPosition > mRange.upper)
+        {
+          done = true;
+          break;
+        }
+        mSubTickVector[subTickIndex] = subTickPosition;
+        subTickIndex++;
+      }
+      if (done) break;
+    }
+    mSubTickVector.resize(subTickIndex);
+  }
+
+  // generate tick labels according to tick positions:
+  mExponentialChar = mParentPlot->locale().exponential();   // will be needed when drawing the numbers generated here, in getTickLabelData()
+  mPositiveSignChar = mParentPlot->locale().positiveSign(); // will be needed when drawing the numbers generated here, in getTickLabelData()
+  if (mAutoTickLabels)
+  {
+    int vecsize = mTickVector.size();
+    mTickVectorLabels.resize(vecsize);
+    if (mTickLabelType == ltNumber)
+    {
+      for (int i=mLowestVisibleTick; i<=mHighestVisibleTick; ++i)
+        mTickVectorLabels[i] = mParentPlot->locale().toString(mTickVector.at(i), mNumberFormatChar, mNumberPrecision);
+    } else if (mTickLabelType == ltDateTime)
+    {
+      for (int i=mLowestVisibleTick; i<=mHighestVisibleTick; ++i)
+      {
+#if QT_VERSION < QT_VERSION_CHECK(4, 7, 0) // use fromMSecsSinceEpoch function if available, to gain sub-second accuracy on tick labels (e.g. for format "hh:mm:ss:zzz")
+        mTickVectorLabels[i] = mParentPlot->locale().toString(QDateTime::fromTime_t(mTickVector.at(i)).toTimeSpec(mDateTimeSpec), mDateTimeFormat);
+#else
+        mTickVectorLabels[i] = mParentPlot->locale().toString(QDateTime::fromMSecsSinceEpoch(mTickVector.at(i)*1000).toTimeSpec(mDateTimeSpec), mDateTimeFormat);
+#endif
+      }
+    }
+  } else // mAutoTickLabels == false
+  {
+    if (mAutoTicks) // ticks generated automatically, but not ticklabels, so emit ticksRequest here for labels
+    {
+      emit ticksRequest();
+    }
+    // make sure provided tick label vector has correct (minimal) length:
+    if (mTickVectorLabels.size() < mTickVector.size())
+      mTickVectorLabels.resize(mTickVector.size());
+  }
+}
+
+/*! \internal
+  
+  If \ref setAutoTicks is set to true, this function is called by \ref setupTickVectors to
+  generate reasonable tick positions (and subtick count). The algorithm tries to create
+  approximately <tt>mAutoTickCount</tt> ticks (set via \ref setAutoTickCount).
+ 
+  If the scale is logarithmic, \ref setAutoTickCount is ignored, and one tick is generated at every
+  power of the current logarithm base, set via \ref setScaleLogBase.
+*/
+void QCPAxis::generateAutoTicks()
+{
+  if (mScaleType == stLinear)
+  {
+    if (mAutoTickStep)
+    {
+      // Generate tick positions according to linear scaling:
+      mTickStep = mRange.size()/(double)(mAutoTickCount+1e-10); // mAutoTickCount ticks on average, the small addition is to prevent jitter on exact integers
+      double magnitudeFactor = qPow(10.0, qFloor(qLn(mTickStep)/qLn(10.0))); // get magnitude factor e.g. 0.01, 1, 10, 1000 etc.
+      double tickStepMantissa = mTickStep/magnitudeFactor;
+      if (tickStepMantissa < 5)
+      {
+        // round digit after decimal point to 0.5
+        mTickStep = (int)(tickStepMantissa*2)/2.0*magnitudeFactor;
+      } else
+      {
+        // round to first digit in multiples of 2
+        mTickStep = (int)(tickStepMantissa/2.0)*2.0*magnitudeFactor;
+      }
+    }
+    if (mAutoSubTicks)
+      mSubTickCount = calculateAutoSubTickCount(mTickStep);
+    // Generate tick positions according to mTickStep:
+    qint64 firstStep = floor(mRange.lower/mTickStep);
+    qint64 lastStep = ceil(mRange.upper/mTickStep);
+    int tickcount = lastStep-firstStep+1;
+    if (tickcount < 0) tickcount = 0;
+    mTickVector.resize(tickcount);
+    for (int i=0; i<tickcount; ++i)
+      mTickVector[i] = (firstStep+i)*mTickStep;
+  } else // mScaleType == stLogarithmic
+  {
+    // Generate tick positions according to logbase scaling:
+    if (mRange.lower > 0 && mRange.upper > 0) // positive range
+    {
+      double lowerMag = basePow((int)floor(baseLog(mRange.lower)));
+      double currentMag = lowerMag;
+      mTickVector.clear();
+      mTickVector.append(currentMag);
+      while (currentMag < mRange.upper && currentMag > 0) // currentMag might be zero for ranges ~1e-300, just cancel in that case
+      {
+        currentMag *= mScaleLogBase;
+        mTickVector.append(currentMag);
+      }
+    } else if (mRange.lower < 0 && mRange.upper < 0) // negative range
+    {
+      double lowerMag = -basePow((int)ceil(baseLog(-mRange.lower)));
+      double currentMag = lowerMag;
+      mTickVector.clear();
+      mTickVector.append(currentMag);
+      while (currentMag < mRange.upper && currentMag < 0) // currentMag might be zero for ranges ~1e-300, just cancel in that case
+      {
+        currentMag /= mScaleLogBase;
+        mTickVector.append(currentMag);
+      }
+    } else // invalid range for logarithmic scale, because lower and upper have different sign
+    {
+      mTickVector.clear();
+      qDebug() << Q_FUNC_INFO << "Invalid range for logarithmic plot: " << mRange.lower << "-" << mRange.upper;
+    }
+  }
+}
+
+/*! \internal
+  
+  Called by generateAutoTicks when \ref setAutoSubTicks is set to true. Depending on the \a
+  tickStep between two major ticks on the axis, a different number of sub ticks is appropriate. For
+  Example taking 4 sub ticks for a \a tickStep of 1 makes more sense than taking 5 sub ticks,
+  because this corresponds to a sub tick step of 0.2, instead of the less intuitive 0.16667. Note
+  that a subtick count of 4 means dividing the major tick step into 5 sections.
+  
+  This is implemented by a hand made lookup for integer tick steps as well as fractional tick steps
+  with a fractional part of (approximately) 0.5. If a tick step is different (i.e. has no
+  fractional part close to 0.5), the currently set sub tick count (\ref setSubTickCount) is
+  returned.
+*/
+int QCPAxis::calculateAutoSubTickCount(double tickStep) const
+{
+  int result = mSubTickCount; // default to current setting, if no proper value can be found
+  
+  // get mantissa of tickstep:
+  double magnitudeFactor = qPow(10.0, qFloor(qLn(tickStep)/qLn(10.0))); // get magnitude factor e.g. 0.01, 1, 10, 1000 etc.
+  double tickStepMantissa = tickStep/magnitudeFactor;
+  
+  // separate integer and fractional part of mantissa:
+  double epsilon = 0.01;
+  double intPartf;
+  int intPart;
+  double fracPart = modf(tickStepMantissa, &intPartf);
+  intPart = intPartf;
+  
+  // handle cases with (almost) integer mantissa:
+  if (fracPart < epsilon || 1.0-fracPart < epsilon)
+  {
+    if (1.0-fracPart < epsilon)
+      ++intPart;
+    switch (intPart)
