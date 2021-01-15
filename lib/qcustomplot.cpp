@@ -6121,3 +6121,268 @@ QPointF QCPAxis::getTickLabelDrawOffset(const QCPAxis::TickLabelData &labelData)
       }
     } else
     {
+      x = -labelData.totalBounds.width();
+      y = -labelData.totalBounds.height()/2.0;
+    }
+  } else if (mAxisType == atRight)
+  {
+    if (doRotation)
+    {
+      if (mTickLabelRotation > 0)
+      {
+        x = +qSin(radians)*labelData.totalBounds.height();
+        y = flip ? -labelData.totalBounds.width()/2.0 : -qCos(radians)*labelData.totalBounds.height()/2.0;
+      } else
+      {
+        x = 0;
+        y = flip ? +labelData.totalBounds.width()/2.0 : -qCos(-radians)*labelData.totalBounds.height()/2.0;
+      }
+    } else
+    {
+      x = 0;
+      y = -labelData.totalBounds.height()/2.0;
+    }
+  } else if (mAxisType == atTop)
+  {
+    if (doRotation)
+    {
+      if (mTickLabelRotation > 0)
+      {
+        x = -qCos(radians)*labelData.totalBounds.width()+qSin(radians)*labelData.totalBounds.height()/2.0;
+        y = -qSin(radians)*labelData.totalBounds.width()-qCos(radians)*labelData.totalBounds.height();
+      } else
+      {
+        x = -qSin(-radians)*labelData.totalBounds.height()/2.0;
+        y = -qCos(-radians)*labelData.totalBounds.height();
+      }
+    } else
+    {
+      x = -labelData.totalBounds.width()/2.0;
+      y = -labelData.totalBounds.height();
+    }
+  } else if (mAxisType == atBottom)
+  {
+    if (doRotation)
+    {
+      if (mTickLabelRotation > 0)
+      {
+        x = +qSin(radians)*labelData.totalBounds.height()/2.0;
+        y = 0;
+      } else
+      {
+        x = -qCos(-radians)*labelData.totalBounds.width()-qSin(-radians)*labelData.totalBounds.height()/2.0;
+        y = +qSin(-radians)*labelData.totalBounds.width();
+      }
+    } else
+    {
+      x = -labelData.totalBounds.width()/2.0;
+      y = 0;
+    }
+  }
+  
+  return QPointF(x, y);
+}
+
+/*! \internal
+  
+  Simulates the steps done by \ref placeTickLabel by calculating bounding boxes of the text label
+  to be drawn, depending on number format etc. Since only the largest tick label is wanted for the
+  margin calculation, the passed \a tickLabelsSize is only expanded, if it's currently set to a
+  smaller width/height.
+*/
+void QCPAxis::getMaxTickLabelSize(const QFont &font, const QString &text,  QSize *tickLabelsSize) const
+{
+  // note: this function must return the same tick label sizes as the placeTickLabel function.
+  QSize finalSize;
+  if (parentPlot()->plottingHints().testFlag(QCP::phCacheLabels) && mLabelCache.contains(text)) // label caching enabled and have cached label
+  {
+    const CachedLabel *cachedLabel = mLabelCache.object(text);
+    finalSize = cachedLabel->pixmap.size();
+  } else // label caching disabled or no label with this text cached:
+  {
+    TickLabelData labelData = getTickLabelData(font, text);
+    finalSize = labelData.rotatedTotalBounds.size();
+  }
+  
+  // expand passed tickLabelsSize if current tick label is larger:
+  if (finalSize.width() > tickLabelsSize->width()) 
+    tickLabelsSize->setWidth(finalSize.width());
+  if (finalSize.height() > tickLabelsSize->height())
+    tickLabelsSize->setHeight(finalSize.height());
+}
+
+/* inherits documentation from base class */
+void QCPAxis::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
+{
+  Q_UNUSED(event)
+  SelectablePart part = details.value<SelectablePart>();
+  if (mSelectableParts.testFlag(part))
+  {
+    SelectableParts selBefore = mSelectedParts;
+    setSelectedParts(additive ? mSelectedParts^part : part);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelectedParts != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+void QCPAxis::deselectEvent(bool *selectionStateChanged)
+{
+  SelectableParts selBefore = mSelectedParts;
+  setSelectedParts(mSelectedParts & ~mSelectableParts);
+  if (selectionStateChanged)
+    *selectionStateChanged = mSelectedParts != selBefore;
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing axis lines.
+
+  This is the antialiasing state the painter passed to the \ref draw method is in by default.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased
+*/
+void QCPAxis::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiased, QCP::aeAxes);
+}
+
+/*! \internal
+  
+  Returns via \a lowIndex and \a highIndex, which ticks in the current tick vector are visible in
+  the current range. The return values are indices of the tick vector, not the positions of the
+  ticks themselves.
+  
+  The actual use of this function is when an external tick vector is provided, since it might
+  exceed far beyond the currently displayed range, and would cause unnecessary calculations e.g. of
+  subticks.
+  
+  If all ticks are outside the axis range, an inverted range is returned, i.e. highIndex will be
+  smaller than lowIndex. There is one case, where this function returns indices that are not really
+  visible in the current axis range: When the tick spacing is larger than the axis range size and
+  one tick is below the axis range and the next tick is already above the axis range. Because in
+  such cases it is usually desirable to know the tick pair, to draw proper subticks.
+*/
+void QCPAxis::visibleTickBounds(int &lowIndex, int &highIndex) const
+{
+  bool lowFound = false;
+  bool highFound = false;
+  lowIndex = 0;
+  highIndex = -1;
+  
+  for (int i=0; i < mTickVector.size(); ++i)
+  {
+    if (mTickVector.at(i) >= mRange.lower)
+    {
+      lowFound = true;
+      lowIndex = i;
+      break;
+    }
+  }
+  for (int i=mTickVector.size()-1; i >= 0; --i)
+  {
+    if (mTickVector.at(i) <= mRange.upper)
+    {
+      highFound = true;
+      highIndex = i;
+      break;
+    }
+  }
+  
+  if (!lowFound && highFound)
+    lowIndex = highIndex+1;
+  else if (lowFound && !highFound)
+    highIndex = lowIndex-1;
+}
+
+/*! \internal
+  
+  A log function with the base mScaleLogBase, used mostly for coordinate transforms in logarithmic
+  scales with arbitrary log base. Uses the buffered mScaleLogBaseLogInv for faster calculation.
+  This is set to <tt>1.0/qLn(mScaleLogBase)</tt> in \ref setScaleLogBase.
+  
+  \see basePow, setScaleLogBase, setScaleType
+*/
+double QCPAxis::baseLog(double value) const
+{
+  return qLn(value)*mScaleLogBaseLogInv;
+}
+
+/*! \internal
+  
+  A power function with the base mScaleLogBase, used mostly for coordinate transforms in
+  logarithmic scales with arbitrary log base.
+  
+  \see baseLog, setScaleLogBase, setScaleType
+*/
+double QCPAxis::basePow(double value) const
+{
+  return qPow(mScaleLogBase, value);
+}
+
+/*! \internal
+  
+  Returns the pen that is used to draw the axis base line. Depending on the selection state, this
+  is either mSelectedBasePen or mBasePen.
+*/
+QPen QCPAxis::getBasePen() const
+{
+  return mSelectedParts.testFlag(spAxis) ? mSelectedBasePen : mBasePen;
+}
+
+/*! \internal
+  
+  Returns the pen that is used to draw the (major) ticks. Depending on the selection state, this
+  is either mSelectedTickPen or mTickPen.
+*/
+QPen QCPAxis::getTickPen() const
+{
+  return mSelectedParts.testFlag(spAxis) ? mSelectedTickPen : mTickPen;
+}
+
+/*! \internal
+  
+  Returns the pen that is used to draw the subticks. Depending on the selection state, this
+  is either mSelectedSubTickPen or mSubTickPen.
+*/
+QPen QCPAxis::getSubTickPen() const
+{
+  return mSelectedParts.testFlag(spAxis) ? mSelectedSubTickPen : mSubTickPen;
+}
+
+/*! \internal
+  
+  Returns the font that is used to draw the tick labels. Depending on the selection state, this
+  is either mSelectedTickLabelFont or mTickLabelFont.
+*/
+QFont QCPAxis::getTickLabelFont() const
+{
+  return mSelectedParts.testFlag(spTickLabels) ? mSelectedTickLabelFont : mTickLabelFont;
+}
+
+/*! \internal
+  
+  Returns the font that is used to draw the axis label. Depending on the selection state, this
+  is either mSelectedLabelFont or mLabelFont.
+*/
+QFont QCPAxis::getLabelFont() const
+{
+  return mSelectedParts.testFlag(spAxisLabel) ? mSelectedLabelFont : mLabelFont;
+}
+
+/*! \internal
+  
+  Returns the color that is used to draw the tick labels. Depending on the selection state, this
+  is either mSelectedTickLabelColor or mTickLabelColor.
+*/
+QColor QCPAxis::getTickLabelColor() const
+{
+  return mSelectedParts.testFlag(spTickLabels) ? mSelectedTickLabelColor : mTickLabelColor;
+}
+
+/*! \internal
