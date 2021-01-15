@@ -6386,3 +6386,251 @@ QColor QCPAxis::getTickLabelColor() const
 }
 
 /*! \internal
+  
+  Returns the color that is used to draw the axis label. Depending on the selection state, this
+  is either mSelectedLabelColor or mLabelColor.
+*/
+QColor QCPAxis::getLabelColor() const
+{
+  return mSelectedParts.testFlag(spAxisLabel) ? mSelectedLabelColor : mLabelColor;
+}
+
+/*! \internal
+  
+  Returns the appropriate outward margin for this axis. It is needed if \ref
+  QCPAxisRect::setAutoMargins is set to true on the parent axis rect. An axis with axis type \ref
+  atLeft will return an appropriate left margin, \ref atBottom will return an appropriate bottom
+  margin and so forth. For the calculation, this function goes through similar steps as \ref draw,
+  so changing one function likely requires the modification of the other one as well.
+  
+  The margin consists of the outward tick length, tick label padding, tick label size, label
+  padding, label size, and padding.
+  
+  The margin is cached internally, so repeated calls while leaving the axis range, fonts, etc.
+  unchanged are very fast.
+*/
+int QCPAxis::calculateMargin()
+{
+  if (mCachedMarginValid)
+    return mCachedMargin;
+  
+  // run through similar steps as QCPAxis::draw, and caluclate margin needed to fit axis and its labels
+  int margin = 0;
+  
+  if (mVisible)
+  {
+    int lowTick, highTick;
+    visibleTickBounds(lowTick, highTick);
+    // get length of tick marks pointing outwards:
+    if (mTicks)
+      margin += qMax(0, qMax(mTickLengthOut, mSubTickLengthOut));
+    // calculate size of tick labels:
+    QSize tickLabelsSize(0, 0);
+    if (mTickLabels)
+    {
+      for (int i=lowTick; i<=highTick; ++i)
+        getMaxTickLabelSize(mTickLabelFont, mTickVectorLabels.at(i), &tickLabelsSize); // don't use getTickLabelFont() because we don't want margin to possibly change on selection
+      margin += orientation() == Qt::Horizontal ? tickLabelsSize.height() : tickLabelsSize.width();
+      margin += mTickLabelPadding;
+    }
+    // calculate size of axis label (only height needed, because left/right labels are rotated by 90 degrees):
+    if (!mLabel.isEmpty())
+    {
+      QFontMetrics fontMetrics(mLabelFont); // don't use getLabelFont() because we don't want margin to possibly change on selection
+      QRect bounds;
+      bounds = fontMetrics.boundingRect(0, 0, 0, 0, Qt::TextDontClip | Qt::AlignHCenter | Qt::AlignVCenter, mLabel);
+      margin += bounds.height() + mLabelPadding;
+    }
+  }
+  margin += mPadding;
+
+  mCachedMargin = margin;
+  mCachedMarginValid = true;
+  return margin;
+}
+
+/* inherits documentation from base class */
+QCP::Interaction QCPAxis::selectionCategory() const
+{
+  return QCP::iSelectAxes;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPAbstractPlottable
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPAbstractPlottable
+  \brief The abstract base class for all data representing objects in a plot.
+
+  It defines a very basic interface like name, pen, brush, visibility etc. Since this class is
+  abstract, it can't be instantiated. Use one of the subclasses or create a subclass yourself to
+  create new ways of displaying data (see "Creating own plottables" below).
+  
+  All further specifics are in the subclasses, for example:
+  \li A normal graph with possibly a line, scatter points and error bars is displayed by \ref QCPGraph
+  (typically created with \ref QCustomPlot::addGraph).
+  \li A parametric curve can be displayed with \ref QCPCurve.
+  \li A stackable bar chart can be achieved with \ref QCPBars.
+  \li A box of a statistical box plot is created with \ref QCPStatisticalBox.
+  
+  \section plottables-subclassing Creating own plottables
+  
+  To create an own plottable, you implement a subclass of QCPAbstractPlottable. These are the pure
+  virtual functions, you must implement:
+  \li \ref clearData
+  \li \ref selectTest
+  \li \ref draw
+  \li \ref drawLegendIcon
+  \li \ref getKeyRange
+  \li \ref getValueRange
+  
+  See the documentation of those functions for what they need to do.
+  
+  For drawing your plot, you can use the \ref coordsToPixels functions to translate a point in plot
+  coordinates to pixel coordinates. This function is quite convenient, because it takes the
+  orientation of the key and value axes into account for you (x and y are swapped when the key axis
+  is vertical and the value axis horizontal). If you are worried about performance (i.e. you need
+  to translate many points in a loop like QCPGraph), you can directly use \ref
+  QCPAxis::coordToPixel. However, you must then take care about the orientation of the axis
+  yourself.
+  
+  Here are some important members you inherit from QCPAbstractPlottable:
+  <table>
+  <tr>
+    <td>QCustomPlot *\b mParentPlot</td>
+    <td>A pointer to the parent QCustomPlot instance. The parent plot is inferred from the axes that are passed in the constructor.</td>
+  </tr><tr>
+    <td>QString \b mName</td>
+    <td>The name of the plottable.</td>
+  </tr><tr>
+    <td>QPen \b mPen</td>
+    <td>The generic pen of the plottable. You should use this pen for the most prominent data representing lines in the plottable (e.g QCPGraph uses this pen for its graph lines and scatters)</td>
+  </tr><tr>
+    <td>QPen \b mSelectedPen</td>
+    <td>The generic pen that should be used when the plottable is selected (hint: \ref mainPen gives you the right pen, depending on selection state).</td>
+  </tr><tr>
+    <td>QBrush \b mBrush</td>
+    <td>The generic brush of the plottable. You should use this brush for the most prominent fillable structures in the plottable (e.g. QCPGraph uses this brush to control filling under the graph)</td>
+  </tr><tr>
+    <td>QBrush \b mSelectedBrush</td>
+    <td>The generic brush that should be used when the plottable is selected (hint: \ref mainBrush gives you the right brush, depending on selection state).</td>
+  </tr><tr>
+    <td>QPointer<QCPAxis>\b mKeyAxis, \b mValueAxis</td>
+    <td>The key and value axes this plottable is attached to. Call their QCPAxis::coordToPixel functions to translate coordinates to pixels in either the key or value dimension.
+        Make sure to check whether the weak pointer is null before using it. If one of the axes is null, don't draw the plottable.</td>
+  </tr><tr>
+    <td>bool \b mSelected</td>
+    <td>indicates whether the plottable is selected or not.</td>
+  </tr>
+  </table>
+*/
+
+/* start of documentation of pure virtual functions */
+
+/*! \fn void QCPAbstractPlottable::clearData() = 0
+  Clears all data in the plottable.
+*/
+
+/*! \fn void QCPAbstractPlottable::drawLegendIcon(QCPPainter *painter, const QRect &rect) const = 0
+  \internal
+  
+  called by QCPLegend::draw (via QCPPlottableLegendItem::draw) to create a graphical representation
+  of this plottable inside \a rect, next to the plottable name.
+*/
+
+/*! \fn QCPRange QCPAbstractPlottable::getKeyRange(bool &validRange, SignDomain inSignDomain) const = 0
+  \internal
+  
+  called by rescaleAxes functions to get the full data key bounds. For logarithmic plots, one can
+  set \a inSignDomain to either \ref sdNegative or \ref sdPositive in order to restrict the
+  returned range to that sign domain. E.g. when only negative range is wanted, set \a inSignDomain
+  to \ref sdNegative and all positive points will be ignored for range calculation. For no
+  restriction, just set \a inSignDomain to \ref sdBoth (default). \a validRange is an output
+  parameter that indicates whether a proper range could be found or not. If this is false, you
+  shouldn't use the returned range (e.g. no points in data).
+  
+  \see rescaleAxes, getValueRange
+*/
+
+/*! \fn QCPRange QCPAbstractPlottable::getValueRange(bool &validRange, SignDomain inSignDomain) const = 0
+  \internal
+  
+  called by rescaleAxes functions to get the full data value bounds. For logarithmic plots, one can
+  set \a inSignDomain to either \ref sdNegative or \ref sdPositive in order to restrict the
+  returned range to that sign domain. E.g. when only negative range is wanted, set \a inSignDomain
+  to \ref sdNegative and all positive points will be ignored for range calculation. For no
+  restriction, just set \a inSignDomain to \ref sdBoth (default). \a validRange is an output
+  parameter that indicates whether a proper range could be found or not. If this is false, you
+  shouldn't use the returned range (e.g. no points in data).
+  
+  \see rescaleAxes, getKeyRange
+*/
+
+/* end of documentation of pure virtual functions */
+/* start of documentation of signals */
+
+/*! \fn void QCPAbstractPlottable::selectionChanged(bool selected)
+  
+  This signal is emitted when the selection state of this plottable has changed to \a selected,
+  either by user interaction or by a direct call to \ref setSelected.
+*/
+
+/* end of documentation of signals */
+
+/*!
+  Constructs an abstract plottable which uses \a keyAxis as its key axis ("x") and \a valueAxis as
+  its value axis ("y"). \a keyAxis and \a valueAxis must reside in the same QCustomPlot instance
+  and have perpendicular orientations. If either of these restrictions is violated, a corresponding
+  message is printed to the debug output (qDebug), the construction is not aborted, though.
+  
+  Since QCPAbstractPlottable is an abstract class that defines the basic interface to plottables,
+  it can't be directly instantiated.
+  
+  You probably want one of the subclasses like \ref QCPGraph or \ref QCPCurve instead.
+*/
+QCPAbstractPlottable::QCPAbstractPlottable(QCPAxis *keyAxis, QCPAxis *valueAxis) :
+  QCPLayerable(keyAxis->parentPlot(), "", keyAxis->axisRect()),
+  mName(""),
+  mAntialiasedFill(true),
+  mAntialiasedScatters(true),
+  mAntialiasedErrorBars(false),
+  mPen(Qt::black),
+  mSelectedPen(Qt::black),
+  mBrush(Qt::NoBrush),
+  mSelectedBrush(Qt::NoBrush),
+  mKeyAxis(keyAxis),
+  mValueAxis(valueAxis),
+  mSelectable(true),
+  mSelected(false)
+{
+  if (keyAxis->parentPlot() != valueAxis->parentPlot())
+    qDebug() << Q_FUNC_INFO << "Parent plot of keyAxis is not the same as that of valueAxis.";
+  if (keyAxis->orientation() == valueAxis->orientation())
+    qDebug() << Q_FUNC_INFO << "keyAxis and valueAxis must be orthogonal to each other.";
+}
+
+/*!
+   The name is the textual representation of this plottable as it is displayed in the legend
+   (\ref QCPLegend). It may contain any UTF-8 characters, including newlines.
+*/
+void QCPAbstractPlottable::setName(const QString &name)
+{
+  mName = name;
+}
+
+/*!
+  Sets whether fills of this plottable is drawn antialiased or not.
+  
+  Note that this setting may be overridden by \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+*/
+void QCPAbstractPlottable::setAntialiasedFill(bool enabled)
+{
+  mAntialiasedFill = enabled;
+}
+
+/*!
+  Sets whether the scatter symbols of this plottable are drawn antialiased or not.
+  
+  Note that this setting may be overridden by \ref QCustomPlot::setAntialiasedElements and \ref
