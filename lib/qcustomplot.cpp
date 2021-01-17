@@ -6634,3 +6634,229 @@ void QCPAbstractPlottable::setAntialiasedFill(bool enabled)
   Sets whether the scatter symbols of this plottable are drawn antialiased or not.
   
   Note that this setting may be overridden by \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+*/
+void QCPAbstractPlottable::setAntialiasedScatters(bool enabled)
+{
+  mAntialiasedScatters = enabled;
+}
+
+/*!
+  Sets whether the error bars of this plottable are drawn antialiased or not.
+  
+  Note that this setting may be overridden by \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+*/
+void QCPAbstractPlottable::setAntialiasedErrorBars(bool enabled)
+{
+  mAntialiasedErrorBars = enabled;
+}
+
+
+/*!
+  The pen is used to draw basic lines that make up the plottable representation in the
+  plot.
+  
+  For example, the \ref QCPGraph subclass draws its graph lines and scatter points
+  with this pen.
+
+  \see setBrush
+*/
+void QCPAbstractPlottable::setPen(const QPen &pen)
+{
+  mPen = pen;
+}
+
+/*!
+  When the plottable is selected, this pen is used to draw basic lines instead of the normal
+  pen set via \ref setPen.
+
+  \see setSelected, setSelectable, setSelectedBrush, selectTest
+*/
+void QCPAbstractPlottable::setSelectedPen(const QPen &pen)
+{
+  mSelectedPen = pen;
+}
+
+/*!
+  The brush is used to draw basic fills of the plottable representation in the
+  plot. The Fill can be a color, gradient or texture, see the usage of QBrush.
+  
+  For example, the \ref QCPGraph subclass draws the fill under the graph with this brush, when
+  it's not set to Qt::NoBrush.
+
+  \see setPen
+*/
+void QCPAbstractPlottable::setBrush(const QBrush &brush)
+{
+  mBrush = brush;
+}
+
+/*!
+  When the plottable is selected, this brush is used to draw fills instead of the normal
+  brush set via \ref setBrush.
+
+  \see setSelected, setSelectable, setSelectedPen, selectTest
+*/
+void QCPAbstractPlottable::setSelectedBrush(const QBrush &brush)
+{
+  mSelectedBrush = brush;
+}
+
+/*!
+  The key axis of a plottable can be set to any axis of a QCustomPlot, as long as it is orthogonal
+  to the plottable's value axis. This function performs no checks to make sure this is the case.
+  The typical mathematical choice is to use the x-axis (QCustomPlot::xAxis) as key axis and the
+  y-axis (QCustomPlot::yAxis) as value axis.
+  
+  Normally, the key and value axes are set in the constructor of the plottable (or \ref
+  QCustomPlot::addGraph when working with QCPGraphs through the dedicated graph interface).
+
+  \see setValueAxis
+*/
+void QCPAbstractPlottable::setKeyAxis(QCPAxis *axis)
+{
+  mKeyAxis = axis;
+}
+
+/*!
+  The value axis of a plottable can be set to any axis of a QCustomPlot, as long as it is
+  orthogonal to the plottable's key axis. This function performs no checks to make sure this is the
+  case. The typical mathematical choice is to use the x-axis (QCustomPlot::xAxis) as key axis and
+  the y-axis (QCustomPlot::yAxis) as value axis.
+
+  Normally, the key and value axes are set in the constructor of the plottable (or \ref
+  QCustomPlot::addGraph when working with QCPGraphs through the dedicated graph interface).
+  
+  \see setKeyAxis
+*/
+void QCPAbstractPlottable::setValueAxis(QCPAxis *axis)
+{
+  mValueAxis = axis;
+}
+
+/*!
+  Sets whether the user can (de-)select this plottable by clicking on the QCustomPlot surface.
+  (When \ref QCustomPlot::setInteractions contains iSelectPlottables.)
+  
+  However, even when \a selectable was set to false, it is possible to set the selection manually,
+  by calling \ref setSelected directly.
+  
+  \see setSelected
+*/
+void QCPAbstractPlottable::setSelectable(bool selectable)
+{
+  mSelectable = selectable;
+}
+
+/*!
+  Sets whether this plottable is selected or not. When selected, it uses a different pen and brush
+  to draw its lines and fills, see \ref setSelectedPen and \ref setSelectedBrush.
+
+  The entire selection mechanism for plottables is handled automatically when \ref
+  QCustomPlot::setInteractions contains iSelectPlottables. You only need to call this function when
+  you wish to change the selection state manually.
+  
+  This function can change the selection state even when \ref setSelectable was set to false.
+  
+  emits the \ref selectionChanged signal when \a selected is different from the previous selection state.
+  
+  \see setSelectable, selectTest
+*/
+void QCPAbstractPlottable::setSelected(bool selected)
+{
+  if (mSelected != selected)
+  {
+    mSelected = selected;
+    emit selectionChanged(mSelected);
+  }
+}
+
+/*!
+  Rescales the key and value axes associated with this plottable to contain all displayed data, so
+  the whole plottable is visible. If the scaling of an axis is logarithmic, rescaleAxes will make
+  sure not to rescale to an illegal range i.e. a range containing different signs and/or zero.
+  Instead it will stay in the current sign domain and ignore all parts of the plottable that lie
+  outside of that domain.
+  
+  \a onlyEnlarge makes sure the ranges are only expanded, never reduced. So it's possible to show
+  multiple plottables in their entirety by multiple calls to rescaleAxes where the first call has
+  \a onlyEnlarge set to false (the default), and all subsequent set to true.
+  
+  \see rescaleKeyAxis, rescaleValueAxis, QCustomPlot::rescaleAxes, QCPAxis::rescale
+*/
+void QCPAbstractPlottable::rescaleAxes(bool onlyEnlarge) const
+{
+  rescaleKeyAxis(onlyEnlarge);
+  rescaleValueAxis(onlyEnlarge);
+}
+
+/*!
+  Rescales the key axis of the plottable so the whole plottable is visible.
+  
+  See \ref rescaleAxes for detailed behaviour.
+*/
+void QCPAbstractPlottable::rescaleKeyAxis(bool onlyEnlarge) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  if (!keyAxis) { qDebug() << Q_FUNC_INFO << "invalid key axis"; return; }
+  
+  SignDomain signDomain = sdBoth;
+  if (keyAxis->scaleType() == QCPAxis::stLogarithmic)
+    signDomain = (keyAxis->range().upper < 0 ? sdNegative : sdPositive);
+  
+  bool rangeValid;
+  QCPRange newRange = getKeyRange(rangeValid, signDomain);
+  if (rangeValid)
+  {
+    if (onlyEnlarge)
+      newRange.expand(keyAxis->range());
+    keyAxis->setRange(newRange);
+  }
+}
+
+/*!
+  Rescales the value axis of the plottable so the whole plottable is visible.
+  
+  Returns true if the axis was actually scaled. This might not be the case if this plottable has an
+  invalid range, e.g. because it has no data points.
+  
+  See \ref rescaleAxes for detailed behaviour.
+*/
+void QCPAbstractPlottable::rescaleValueAxis(bool onlyEnlarge) const
+{
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!valueAxis) { qDebug() << Q_FUNC_INFO << "invalid value axis"; return; }
+  
+  SignDomain signDomain = sdBoth;
+  if (valueAxis->scaleType() == QCPAxis::stLogarithmic)
+    signDomain = (valueAxis->range().upper < 0 ? sdNegative : sdPositive);
+  
+  bool rangeValid;
+  QCPRange newRange = getValueRange(rangeValid, signDomain);
+  if (rangeValid)
+  {
+    if (onlyEnlarge)
+      newRange.expand(valueAxis->range());
+    valueAxis->setRange(newRange);
+  }
+}
+
+/*!
+  Adds this plottable to the legend of the parent QCustomPlot (QCustomPlot::legend).
+    
+  Normally, a QCPPlottableLegendItem is created and inserted into the legend. If the plottable
+  needs a more specialized representation in the legend, this function will take this into account
+  and instead create the specialized subclass of QCPAbstractLegendItem.
+    
+  Returns true on success, i.e. when the legend exists and a legend item associated with this plottable isn't already in
+  the legend.
+    
+  \see removeFromLegend, QCPLegend::addItem
+*/
+bool QCPAbstractPlottable::addToLegend()
+{
+  if (!mParentPlot || !mParentPlot->legend)
+    return false;
+  
+  if (!mParentPlot->legend->hasItemWithPlottable(this))
