@@ -6860,3 +6860,285 @@ bool QCPAbstractPlottable::addToLegend()
     return false;
   
   if (!mParentPlot->legend->hasItemWithPlottable(this))
+  {
+    mParentPlot->legend->addItem(new QCPPlottableLegendItem(mParentPlot->legend, this));
+    return true;
+  } else
+    return false;
+}
+
+/*! 
+  Removes the plottable from the legend of the parent QCustomPlot. This means the
+  QCPAbstractLegendItem (usually a QCPPlottableLegendItem) that is associated with this plottable
+  is removed.
+    
+  Returns true on success, i.e. if the legend exists and a legend item associated with this
+  plottable was found and removed.
+    
+  \see addToLegend, QCPLegend::removeItem
+*/
+bool QCPAbstractPlottable::removeFromLegend() const
+{
+  if (!mParentPlot->legend)
+    return false;
+  
+  if (QCPPlottableLegendItem *lip = mParentPlot->legend->itemWithPlottable(this))
+    return mParentPlot->legend->removeItem(lip);
+  else
+    return false;
+}
+
+/* inherits documentation from base class */
+QRect QCPAbstractPlottable::clipRect() const
+{
+  if (mKeyAxis && mValueAxis)
+    return mKeyAxis.data()->axisRect()->rect() & mValueAxis.data()->axisRect()->rect();
+  else
+    return QRect();
+}
+
+/* inherits documentation from base class */
+QCP::Interaction QCPAbstractPlottable::selectionCategory() const
+{
+  return QCP::iSelectPlottables;
+}
+
+/*! \internal
+  
+  Convenience function for transforming a key/value pair to pixels on the QCustomPlot surface,
+  taking the orientations of the axes associated with this plottable into account (e.g. whether key
+  represents x or y).
+  
+  \a key and \a value are transformed to the coodinates in pixels and are written to \a x and \a y.
+    
+  \see pixelsToCoords, QCPAxis::coordToPixel
+*/
+void QCPAbstractPlottable::coordsToPixels(double key, double value, double &x, double &y) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  
+  if (keyAxis->orientation() == Qt::Horizontal)
+  {
+    x = keyAxis->coordToPixel(key);
+    y = valueAxis->coordToPixel(value);
+  } else
+  {
+    y = keyAxis->coordToPixel(key);
+    x = valueAxis->coordToPixel(value);
+  }
+}
+
+/*! \internal 
+  \overload
+  
+  Returns the input as pixel coordinates in a QPointF.
+*/
+const QPointF QCPAbstractPlottable::coordsToPixels(double key, double value) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return QPointF(); }
+  
+  if (keyAxis->orientation() == Qt::Horizontal)
+    return QPointF(keyAxis->coordToPixel(key), valueAxis->coordToPixel(value));
+  else
+    return QPointF(valueAxis->coordToPixel(value), keyAxis->coordToPixel(key));
+}
+
+/*! \internal
+  
+  Convenience function for transforming a x/y pixel pair on the QCustomPlot surface to plot coordinates,
+  taking the orientations of the axes associated with this plottable into account (e.g. whether key
+  represents x or y).
+  
+  \a x and \a y are transformed to the plot coodinates and are written to \a key and \a value.
+    
+  \see coordsToPixels, QCPAxis::coordToPixel
+*/
+void QCPAbstractPlottable::pixelsToCoords(double x, double y, double &key, double &value) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  
+  if (keyAxis->orientation() == Qt::Horizontal)
+  {
+    key = keyAxis->pixelToCoord(x);
+    value = valueAxis->pixelToCoord(y);
+  } else
+  {
+    key = keyAxis->pixelToCoord(y);
+    value = valueAxis->pixelToCoord(x);
+  }
+}
+
+/*! \internal
+  \overload
+
+  Returns the pixel input \a pixelPos as plot coordinates \a key and \a value.
+*/
+void QCPAbstractPlottable::pixelsToCoords(const QPointF &pixelPos, double &key, double &value) const
+{
+  pixelsToCoords(pixelPos.x(), pixelPos.y(), key, value);
+}
+
+/*! \internal
+
+  Returns the pen that should be used for drawing lines of the plottable. Returns mPen when the
+  graph is not selected and mSelectedPen when it is.
+*/
+QPen QCPAbstractPlottable::mainPen() const
+{
+  return mSelected ? mSelectedPen : mPen;
+}
+
+/*! \internal
+
+  Returns the brush that should be used for drawing fills of the plottable. Returns mBrush when the
+  graph is not selected and mSelectedBrush when it is.
+*/
+QBrush QCPAbstractPlottable::mainBrush() const
+{
+  return mSelected ? mSelectedBrush : mBrush;
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing plottable lines.
+
+  This is the antialiasing state the painter passed to the \ref draw method is in by default.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased, applyFillAntialiasingHint, applyScattersAntialiasingHint, applyErrorBarsAntialiasingHint
+*/
+void QCPAbstractPlottable::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiased, QCP::aePlottables);
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing plottable fills.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased, applyDefaultAntialiasingHint, applyScattersAntialiasingHint, applyErrorBarsAntialiasingHint
+*/
+void QCPAbstractPlottable::applyFillAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiasedFill, QCP::aeFills);
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing plottable scatter points.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased, applyFillAntialiasingHint, applyDefaultAntialiasingHint, applyErrorBarsAntialiasingHint
+*/
+void QCPAbstractPlottable::applyScattersAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiasedScatters, QCP::aeScatters);
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing plottable error bars.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased, applyFillAntialiasingHint, applyScattersAntialiasingHint, applyDefaultAntialiasingHint
+*/
+void QCPAbstractPlottable::applyErrorBarsAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiasedErrorBars, QCP::aeErrorBars);
+}
+
+/*! \internal
+
+  Finds the shortest squared distance of \a point to the line segment defined by \a start and \a
+  end.
+  
+  This function may be used to help with the implementation of the \ref selectTest function for
+  specific plottables.
+  
+  \note This function is identical to QCPAbstractItem::distSqrToLine
+*/
+double QCPAbstractPlottable::distSqrToLine(const QPointF &start, const QPointF &end, const QPointF &point) const
+{
+  QVector2D a(start);
+  QVector2D b(end);
+  QVector2D p(point);
+  QVector2D v(b-a);
+  
+  double vLengthSqr = v.lengthSquared();
+  if (!qFuzzyIsNull(vLengthSqr))
+  {
+    double mu = QVector2D::dotProduct(p-a, v)/vLengthSqr;
+    if (mu < 0)
+      return (a-p).lengthSquared();
+    else if (mu > 1)
+      return (b-p).lengthSquared();
+    else
+      return ((a + mu*v)-p).lengthSquared();
+  } else
+    return (a-p).lengthSquared();
+}
+
+/* inherits documentation from base class */
+void QCPAbstractPlottable::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
+{
+  Q_UNUSED(event)
+  Q_UNUSED(details)
+  if (mSelectable)
+  {
+    bool selBefore = mSelected;
+    setSelected(additive ? !mSelected : true);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+void QCPAbstractPlottable::deselectEvent(bool *selectionStateChanged)
+{
+  if (mSelectable)
+  {
+    bool selBefore = mSelected;
+    setSelected(false);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPItemAnchor
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPItemAnchor
+  \brief An anchor of an item to which positions can be attached to.
+  
+  An item (QCPAbstractItem) may have one or more anchors. Unlike QCPItemPosition, an anchor doesn't
+  control anything on its item, but provides a way to tie other items via their positions to the
+  anchor.
+
+  For example, a QCPItemRect is defined by its positions \a topLeft and \a bottomRight.
+  Additionally it has various anchors like \a top, \a topRight or \a bottomLeft etc. So you can
+  attach the \a start (which is a QCPItemPosition) of a QCPItemLine to one of the anchors by
