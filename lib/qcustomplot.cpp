@@ -7142,3 +7142,219 @@ void QCPAbstractPlottable::deselectEvent(bool *selectionStateChanged)
   For example, a QCPItemRect is defined by its positions \a topLeft and \a bottomRight.
   Additionally it has various anchors like \a top, \a topRight or \a bottomLeft etc. So you can
   attach the \a start (which is a QCPItemPosition) of a QCPItemLine to one of the anchors by
+  calling QCPItemPosition::setParentAnchor on \a start, passing the wanted anchor of the
+  QCPItemRect. This way the start of the line will now always follow the respective anchor location
+  on the rect item.
+  
+  Note that QCPItemPosition derives from QCPItemAnchor, so every position can also serve as an
+  anchor to other positions.
+  
+  To learn how to provide anchors in your own item subclasses, see the subclassing section of the
+  QCPAbstractItem documentation.
+*/
+
+/* start documentation of inline functions */
+
+/*! \fn virtual QCPItemPosition *QCPItemAnchor::toQCPItemPosition()
+  
+  Returns 0 if this instance is merely a QCPItemAnchor, and a valid pointer of type QCPItemPosition* if
+  it actually is a QCPItemPosition (which is a subclass of QCPItemAnchor).
+  
+  This safe downcast functionality could also be achieved with a dynamic_cast. However, QCustomPlot avoids
+  dynamic_cast to work with projects that don't have RTTI support enabled (e.g. -fno-rtti flag with
+  gcc compiler).
+*/
+
+/* end documentation of inline functions */
+
+/*!
+  Creates a new QCPItemAnchor. You shouldn't create QCPItemAnchor instances directly, even if
+  you want to make a new item subclass. Use \ref QCPAbstractItem::createAnchor instead, as
+  explained in the subclassing section of the QCPAbstractItem documentation.
+*/
+QCPItemAnchor::QCPItemAnchor(QCustomPlot *parentPlot, QCPAbstractItem *parentItem, const QString name, int anchorId) :
+  mName(name),
+  mParentPlot(parentPlot),
+  mParentItem(parentItem),
+  mAnchorId(anchorId)
+{
+}
+
+QCPItemAnchor::~QCPItemAnchor()
+{
+  // unregister as parent at children:
+  QList<QCPItemPosition*> currentChildren(mChildren.toList());
+  for (int i=0; i<currentChildren.size(); ++i)
+    currentChildren.at(i)->setParentAnchor(0); // this acts back on this anchor and child removes itself from mChildren
+}
+
+/*!
+  Returns the final absolute pixel position of the QCPItemAnchor on the QCustomPlot surface.
+  
+  The pixel information is internally retrieved via QCPAbstractItem::anchorPixelPosition of the
+  parent item, QCPItemAnchor is just an intermediary.
+*/
+QPointF QCPItemAnchor::pixelPoint() const
+{
+  if (mParentItem)
+  {
+    if (mAnchorId > -1)
+    {
+      return mParentItem->anchorPixelPoint(mAnchorId);
+    } else
+    {
+      qDebug() << Q_FUNC_INFO << "no valid anchor id set:" << mAnchorId;
+      return QPointF();
+    }
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "no parent item set";
+    return QPointF();
+  }
+}
+
+/*! \internal
+
+  Adds \a pos to the child list of this anchor. This is necessary to notify the children prior to
+  destruction of the anchor.
+  
+  Note that this function does not change the parent setting in \a pos.
+*/
+void QCPItemAnchor::addChild(QCPItemPosition *pos)
+{
+  if (!mChildren.contains(pos))
+    mChildren.insert(pos);
+  else
+    qDebug() << Q_FUNC_INFO << "provided pos is child already" << reinterpret_cast<quintptr>(pos);
+}
+
+/*! \internal
+
+  Removes \a pos from the child list of this anchor.
+  
+  Note that this function does not change the parent setting in \a pos.
+*/
+void QCPItemAnchor::removeChild(QCPItemPosition *pos)
+{
+  if (!mChildren.remove(pos))
+    qDebug() << Q_FUNC_INFO << "provided pos isn't child" << reinterpret_cast<quintptr>(pos);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPItemPosition
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPItemPosition
+  \brief Manages the position of an item.
+  
+  Every item has at least one public QCPItemPosition member pointer which provides ways to position the
+  item on the QCustomPlot surface. Some items have multiple positions, for example QCPItemRect has two:
+  \a topLeft and \a bottomRight.
+
+  QCPItemPosition has a type (\ref PositionType) that can be set with \ref setType. This type defines
+  how coordinates passed to \ref setCoords are to be interpreted, e.g. as absolute pixel coordinates, as
+  plot coordinates of certain axes, etc.
+
+  Further, QCPItemPosition may have a parent QCPItemAnchor, see \ref setParentAnchor. (Note that every
+  QCPItemPosition inherits from QCPItemAnchor and thus can itself be used as parent anchor for other
+  positions.) This way you can tie multiple items together. If the QCPItemPosition has a parent, the
+  coordinates set with \ref setCoords are considered to be absolute values in the reference frame of the
+  parent anchor, where (0, 0) means directly ontop of the parent anchor. For example, You could attach
+  the \a start position of a QCPItemLine to the \a bottom anchor of a QCPItemText to make the starting
+  point of the line always be centered under the text label, no matter where the text is moved to, or is
+  itself tied to.
+
+  To set the apparent pixel position on the QCustomPlot surface directly, use \ref setPixelPoint. This
+  works no matter what type this QCPItemPosition is or what parent-child situation it is in, as \ref
+  setPixelPoint transforms the coordinates appropriately, to make the position appear at the specified
+  pixel values.
+*/
+
+/*!
+  Creates a new QCPItemPosition. You shouldn't create QCPItemPosition instances directly, even if
+  you want to make a new item subclass. Use \ref QCPAbstractItem::createPosition instead, as
+  explained in the subclassing section of the QCPAbstractItem documentation.
+*/
+QCPItemPosition::QCPItemPosition(QCustomPlot *parentPlot, QCPAbstractItem *parentItem, const QString name) :
+  QCPItemAnchor(parentPlot, parentItem, name),
+  mPositionType(ptAbsolute),
+  mKey(0),
+  mValue(0),
+  mParentAnchor(0)
+{
+}
+
+QCPItemPosition::~QCPItemPosition()
+{
+  // unregister as parent at children:
+  // Note: this is done in ~QCPItemAnchor again, but it's important QCPItemPosition does it itself, because only then
+  //       the setParentAnchor(0) call the correct QCPItemPosition::pixelPoint function instead of QCPItemAnchor::pixelPoint
+  QList<QCPItemPosition*> currentChildren(mChildren.toList());
+  for (int i=0; i<currentChildren.size(); ++i)
+    currentChildren.at(i)->setParentAnchor(0); // this acts back on this anchor and child removes itself from mChildren
+  // unregister as child in parent:
+  if (mParentAnchor)
+    mParentAnchor->removeChild(this);
+}
+
+/* can't make this a header inline function, because QPointer breaks with forward declared types, see QTBUG-29588 */
+QCPAxisRect *QCPItemPosition::axisRect() const
+{
+  return mAxisRect.data();
+}
+
+/*!
+  Sets the type of the position. The type defines how the coordinates passed to \ref setCoords
+  should be handled and how the QCPItemPosition should behave in the plot.
+  
+  The possible values for \a type can be separated in two main categories:
+
+  \li The position is regarded as a point in plot coordinates. This corresponds to \ref ptPlotCoords
+  and requires two axes that define the plot coordinate system. They can be specified with \ref setAxes.
+  By default, the QCustomPlot's x- and yAxis are used.
+  
+  \li The position is fixed on the QCustomPlot surface, i.e. independent of axis ranges. This
+  corresponds to all other types, i.e. \ref ptAbsolute, \ref ptViewportRatio and \ref
+  ptAxisRectRatio. They differ only in the way the absolute position is described, see the
+  documentation of PositionType for details. For \ref ptAxisRectRatio, note that you can specify
+  the axis rect with \ref setAxisRect. By default this is set to the main axis rect.
+  
+  Note that the position type \ref ptPlotCoords is only available (and sensible) when the position
+  has no parent anchor (\ref setParentAnchor).
+  
+  If the type is changed, the apparent pixel position on the plot is preserved. This means
+  the coordinates as retrieved with coords() and set with \ref setCoords may change in the process.
+*/
+void QCPItemPosition::setType(QCPItemPosition::PositionType type)
+{
+  if (mPositionType != type)
+  {
+    // if switching from or to coordinate type that isn't valid (e.g. because axes or axis rect
+    // were deleted), don't try to recover the pixelPoint() because it would output a qDebug warning.
+    bool recoverPixelPosition = true;
+    if ((mPositionType == ptPlotCoords || type == ptPlotCoords) && (!mKeyAxis || !mValueAxis))
+      recoverPixelPosition = false;
+    if ((mPositionType == ptAxisRectRatio || type == ptAxisRectRatio) && (!mAxisRect))
+      recoverPixelPosition = false;
+      
+    QPointF pixelP;
+    if (recoverPixelPosition)
+      pixelP = pixelPoint();
+    
+    mPositionType = type;
+    
+    if (recoverPixelPosition)
+      setPixelPoint(pixelP);
+  }
+}
+
+/*!
+  Sets the parent of this QCPItemPosition to \a parentAnchor. This means the position will now
+  follow any position changes of the anchor. The local coordinate system of positions with a parent
+  anchor always is absolute with (0, 0) being exactly on top of the parent anchor. (Hence the type
+  shouldn't be \ref ptPlotCoords for positions with parent anchors.)
+  
+  if \a keepPixelPosition is true, the current pixel position of the QCPItemPosition is preserved
+  during reparenting. If it's set to false, the coordinates are set to (0, 0), i.e. the position
+  will be exactly on top of the parent anchor.
