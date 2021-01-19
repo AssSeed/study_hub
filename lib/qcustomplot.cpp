@@ -7358,3 +7358,267 @@ void QCPItemPosition::setType(QCPItemPosition::PositionType type)
   if \a keepPixelPosition is true, the current pixel position of the QCPItemPosition is preserved
   during reparenting. If it's set to false, the coordinates are set to (0, 0), i.e. the position
   will be exactly on top of the parent anchor.
+  
+  To remove this QCPItemPosition from any parent anchor, set \a parentAnchor to 0.
+  
+  If the QCPItemPosition previously had no parent and the type is \ref ptPlotCoords, the type is
+  set to \ref ptAbsolute, to keep the position in a valid state.
+*/
+bool QCPItemPosition::setParentAnchor(QCPItemAnchor *parentAnchor, bool keepPixelPosition)
+{
+  // make sure self is not assigned as parent:
+  if (parentAnchor == this)
+  {
+    qDebug() << Q_FUNC_INFO << "can't set self as parent anchor" << reinterpret_cast<quintptr>(parentAnchor);
+    return false;
+  }
+  // make sure no recursive parent-child-relationships are created:
+  QCPItemAnchor *currentParent = parentAnchor;
+  while (currentParent)
+  {
+    if (QCPItemPosition *currentParentPos = currentParent->toQCPItemPosition())
+    {
+      // is a QCPItemPosition, might have further parent, so keep iterating
+      if (currentParentPos == this)
+      {
+        qDebug() << Q_FUNC_INFO << "can't create recursive parent-child-relationship" << reinterpret_cast<quintptr>(parentAnchor);
+        return false;
+      }
+      currentParent = currentParentPos->mParentAnchor;
+    } else
+    {
+      // is a QCPItemAnchor, can't have further parent. Now make sure the parent items aren't the
+      // same, to prevent a position being child of an anchor which itself depends on the position,
+      // because they're both on the same item:
+      if (currentParent->mParentItem == mParentItem)
+      {
+        qDebug() << Q_FUNC_INFO << "can't set parent to be an anchor which itself depends on this position" << reinterpret_cast<quintptr>(parentAnchor);
+        return false;
+      }
+      break;
+    }
+  }
+  
+  // if previously no parent set and PosType is still ptPlotCoords, set to ptAbsolute:
+  if (!mParentAnchor && mPositionType == ptPlotCoords)
+    setType(ptAbsolute);
+  
+  // save pixel position:
+  QPointF pixelP;
+  if (keepPixelPosition)
+    pixelP = pixelPoint();
+  // unregister at current parent anchor:
+  if (mParentAnchor)
+    mParentAnchor->removeChild(this);
+  // register at new parent anchor:
+  if (parentAnchor)
+    parentAnchor->addChild(this);
+  mParentAnchor = parentAnchor;
+  // restore pixel position under new parent:
+  if (keepPixelPosition)
+    setPixelPoint(pixelP);
+  else
+    setCoords(0, 0);
+  return true;
+}
+
+/*!
+  Sets the coordinates of this QCPItemPosition. What the coordinates mean, is defined by the type
+  (\ref setType).
+  
+  For example, if the type is \ref ptAbsolute, \a key and \a value mean the x and y pixel position
+  on the QCustomPlot surface. In that case the origin (0, 0) is in the top left corner of the
+  QCustomPlot viewport. If the type is \ref ptPlotCoords, \a key and \a value mean a point in the
+  plot coordinate system defined by the axes set by \ref setAxes. By default those are the
+  QCustomPlot's xAxis and yAxis. See the documentation of \ref setType for other available
+  coordinate types and their meaning.
+
+  \see setPixelPoint
+*/
+void QCPItemPosition::setCoords(double key, double value)
+{
+  mKey = key;
+  mValue = value;
+}
+
+/*! \overload
+
+  Sets the coordinates as a QPointF \a pos where pos.x has the meaning of \a key and pos.y the
+  meaning of \a value of the \ref setCoords(double key, double value) method.
+*/
+void QCPItemPosition::setCoords(const QPointF &pos)
+{
+  setCoords(pos.x(), pos.y());
+}
+
+/*!
+  Returns the final absolute pixel position of the QCPItemPosition on the QCustomPlot surface. It
+  includes all effects of type (\ref setType) and possible parent anchors (\ref setParentAnchor).
+
+  \see setPixelPoint
+*/
+QPointF QCPItemPosition::pixelPoint() const
+{
+  switch (mPositionType)
+  {
+    case ptAbsolute:
+    {
+      if (mParentAnchor)
+        return QPointF(mKey, mValue) + mParentAnchor->pixelPoint();
+      else
+        return QPointF(mKey, mValue);
+    }
+    
+    case ptViewportRatio:
+    {
+      if (mParentAnchor)
+      {
+        return QPointF(mKey*mParentPlot->viewport().width(),
+                       mValue*mParentPlot->viewport().height()) + mParentAnchor->pixelPoint();
+      } else
+      {
+        return QPointF(mKey*mParentPlot->viewport().width(),
+                       mValue*mParentPlot->viewport().height()) + mParentPlot->viewport().topLeft();
+      }
+    }
+      
+    case ptAxisRectRatio:
+    {
+      if (mAxisRect)
+      {
+        if (mParentAnchor)
+        {
+          return QPointF(mKey*mAxisRect.data()->width(),
+                         mValue*mAxisRect.data()->height()) + mParentAnchor->pixelPoint();
+        } else
+        {
+          return QPointF(mKey*mAxisRect.data()->width(),
+                       mValue*mAxisRect.data()->height()) + mAxisRect.data()->topLeft();
+        }
+      } else
+      {
+        qDebug() << Q_FUNC_INFO << "No axis rect defined";
+        return QPointF(mKey, mValue);
+      }
+    }
+    
+    case ptPlotCoords:
+    {
+      double x, y;
+      if (mKeyAxis && mValueAxis)
+      {
+        // both key and value axis are given, translate key/value to x/y coordinates:
+        if (mKeyAxis.data()->orientation() == Qt::Horizontal)
+        {
+          x = mKeyAxis.data()->coordToPixel(mKey);
+          y = mValueAxis.data()->coordToPixel(mValue);
+        } else
+        {
+          y = mKeyAxis.data()->coordToPixel(mKey);
+          x = mValueAxis.data()->coordToPixel(mValue);
+        }
+      } else if (mKeyAxis)
+      {
+        // only key axis is given, depending on orientation only transform x or y to key coordinate, other stays pixel:
+        if (mKeyAxis.data()->orientation() == Qt::Horizontal)
+        {
+          x = mKeyAxis.data()->coordToPixel(mKey);
+          y = mValue;
+        } else
+        {
+          y = mKeyAxis.data()->coordToPixel(mKey);
+          x = mValue;
+        }
+      } else if (mValueAxis)
+      {
+        // only value axis is given, depending on orientation only transform x or y to value coordinate, other stays pixel:
+        if (mValueAxis.data()->orientation() == Qt::Horizontal)
+        {
+          x = mValueAxis.data()->coordToPixel(mValue);
+          y = mKey;
+        } else
+        {
+          y = mValueAxis.data()->coordToPixel(mValue);
+          x = mKey;
+        }
+      } else
+      {
+        // no axis given, basically the same as if mPositionType were ptAbsolute
+        qDebug() << Q_FUNC_INFO << "No axes defined";
+        x = mKey;
+        y = mValue;
+      }
+      return QPointF(x, y);
+    }
+  }
+  return QPointF();
+}
+
+/*!
+  When \ref setType is \ref ptPlotCoords, this function may be used to specify the axes the
+  coordinates set with \ref setCoords relate to. By default they are set to the initial xAxis and
+  yAxis of the QCustomPlot.
+*/
+void QCPItemPosition::setAxes(QCPAxis *keyAxis, QCPAxis *valueAxis)
+{
+  mKeyAxis = keyAxis;
+  mValueAxis = valueAxis;
+}
+
+/*!
+  When \ref setType is \ref ptAxisRectRatio, this function may be used to specify the axis rect the
+  coordinates set with \ref setCoords relate to. By default this is set to the main axis rect of
+  the QCustomPlot.
+*/
+void QCPItemPosition::setAxisRect(QCPAxisRect *axisRect)
+{
+  mAxisRect = axisRect;
+}
+
+/*!
+  Sets the apparent pixel position. This works no matter what type (\ref setType) this
+  QCPItemPosition is or what parent-child situation it is in, as coordinates are transformed
+  appropriately, to make the position finally appear at the specified pixel values.
+
+  Only if the type is \ref ptAbsolute and no parent anchor is set, this function's effect is
+  identical to that of \ref setCoords.
+
+  \see pixelPoint, setCoords
+*/
+void QCPItemPosition::setPixelPoint(const QPointF &pixelPoint)
+{
+  switch (mPositionType)
+  {
+    case ptAbsolute:
+    {
+      if (mParentAnchor)
+        setCoords(pixelPoint-mParentAnchor->pixelPoint());
+      else
+        setCoords(pixelPoint);
+      break;
+    }
+      
+    case ptViewportRatio:
+    {
+      if (mParentAnchor)
+      {
+        QPointF p(pixelPoint-mParentAnchor->pixelPoint());
+        p.rx() /= (double)mParentPlot->viewport().width();
+        p.ry() /= (double)mParentPlot->viewport().height();
+        setCoords(p);
+      } else
+      {
+        QPointF p(pixelPoint-mParentPlot->viewport().topLeft());
+        p.rx() /= (double)mParentPlot->viewport().width();
+        p.ry() /= (double)mParentPlot->viewport().height();
+        setCoords(p);
+      }
+      break;
+    }
+      
+    case ptAxisRectRatio:
+    {
+      if (mAxisRect)
+      {
+        if (mParentAnchor)
+        {
