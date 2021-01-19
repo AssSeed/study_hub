@@ -7884,3 +7884,276 @@ QCPAbstractItem::~QCPAbstractItem()
 }
 
 /* can't make this a header inline function, because QPointer breaks with forward declared types, see QTBUG-29588 */
+QCPAxisRect *QCPAbstractItem::clipAxisRect() const
+{
+  return mClipAxisRect.data();
+}
+
+/*!
+  Sets whether the item shall be clipped to an axis rect or whether it shall be visible on the
+  entire QCustomPlot. The axis rect can be set with \ref setClipAxisRect.
+  
+  \see setClipAxisRect
+*/
+void QCPAbstractItem::setClipToAxisRect(bool clip)
+{
+  mClipToAxisRect = clip;
+  if (mClipToAxisRect)
+    setParentLayerable(mClipAxisRect.data());
+}
+
+/*!
+  Sets the clip axis rect. It defines the rect that will be used to clip the item when \ref
+  setClipToAxisRect is set to true.
+  
+  \see setClipToAxisRect
+*/
+void QCPAbstractItem::setClipAxisRect(QCPAxisRect *rect)
+{
+  mClipAxisRect = rect;
+  if (mClipToAxisRect)
+    setParentLayerable(mClipAxisRect.data());
+}
+
+/*!
+  Sets whether the user can (de-)select this item by clicking on the QCustomPlot surface.
+  (When \ref QCustomPlot::setInteractions contains QCustomPlot::iSelectItems.)
+  
+  However, even when \a selectable was set to false, it is possible to set the selection manually,
+  by calling \ref setSelected.
+  
+  \see QCustomPlot::setInteractions, setSelected
+*/
+void QCPAbstractItem::setSelectable(bool selectable)
+{
+  mSelectable = selectable;
+}
+
+/*!
+  Sets whether this item is selected or not. When selected, it might use a different visual
+  appearance (e.g. pen and brush), this depends on the specific item though.
+
+  The entire selection mechanism for items is handled automatically when \ref
+  QCustomPlot::setInteractions contains QCustomPlot::iSelectItems. You only need to call this
+  function when you wish to change the selection state manually.
+  
+  This function can change the selection state even when \ref setSelectable was set to false.
+  
+  emits the \ref selectionChanged signal when \a selected is different from the previous selection state.
+  
+  \see setSelectable, selectTest
+*/
+void QCPAbstractItem::setSelected(bool selected)
+{
+  if (mSelected != selected)
+  {
+    mSelected = selected;
+    emit selectionChanged(mSelected);
+  }
+}
+
+/*!
+  Returns the QCPItemPosition with the specified \a name. If this item doesn't have a position by
+  that name, returns 0.
+  
+  This function provides an alternative way to access item positions. Normally, you access
+  positions direcly by their member pointers (which typically have the same variable name as \a
+  name).
+  
+  \see positions, anchor 
+*/
+QCPItemPosition *QCPAbstractItem::position(const QString &name) const
+{
+  for (int i=0; i<mPositions.size(); ++i)
+  {
+    if (mPositions.at(i)->name() == name)
+      return mPositions.at(i);
+  }
+  qDebug() << Q_FUNC_INFO << "position with name not found:" << name;
+  return 0;
+}
+
+/*!
+  Returns the QCPItemAnchor with the specified \a name. If this item doesn't have an anchor by
+  that name, returns 0.
+  
+  This function provides an alternative way to access item anchors. Normally, you access
+  anchors direcly by their member pointers (which typically have the same variable name as \a
+  name).
+  
+  \see anchors, position 
+*/
+QCPItemAnchor *QCPAbstractItem::anchor(const QString &name) const
+{
+  for (int i=0; i<mAnchors.size(); ++i)
+  {
+    if (mAnchors.at(i)->name() == name)
+      return mAnchors.at(i);
+  }
+  qDebug() << Q_FUNC_INFO << "anchor with name not found:" << name;
+  return 0;
+}
+
+/*!
+  Returns whether this item has an anchor with the specified \a name.
+  
+  Note that you can check for positions with this function, too. This is because every position is
+  also an anchor (QCPItemPosition inherits from QCPItemAnchor).
+  
+  \see anchor, position 
+*/
+bool QCPAbstractItem::hasAnchor(const QString &name) const
+{
+  for (int i=0; i<mAnchors.size(); ++i)
+  {
+    if (mAnchors.at(i)->name() == name)
+      return true;
+  }
+  return false;
+}
+
+/*! \internal
+  
+  Returns the rect the visual representation of this item is clipped to. This depends on the
+  current setting of \ref setClipToAxisRect as well as the axis rect set with \ref setClipAxisRect.
+  
+  If the item is not clipped to an axis rect, the \ref QCustomPlot::viewport rect is returned.
+  
+  \see draw
+*/
+QRect QCPAbstractItem::clipRect() const
+{
+  if (mClipToAxisRect && mClipAxisRect)
+    return mClipAxisRect.data()->rect();
+  else
+    return mParentPlot->viewport();
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing item lines.
+
+  This is the antialiasing state the painter passed to the \ref draw method is in by default.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased
+*/
+void QCPAbstractItem::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiased, QCP::aeItems);
+}
+
+/*! \internal
+
+  Finds the shortest squared distance of \a point to the line segment defined by \a start and \a
+  end.
+  
+  This function may be used to help with the implementation of the \ref selectTest function for
+  specific items.
+  
+  \note This function is identical to QCPAbstractPlottable::distSqrToLine
+  
+  \see rectSelectTest
+*/
+double QCPAbstractItem::distSqrToLine(const QPointF &start, const QPointF &end, const QPointF &point) const
+{
+  QVector2D a(start);
+  QVector2D b(end);
+  QVector2D p(point);
+  QVector2D v(b-a);
+  
+  double vLengthSqr = v.lengthSquared();
+  if (!qFuzzyIsNull(vLengthSqr))
+  {
+    double mu = QVector2D::dotProduct(p-a, v)/vLengthSqr;
+    if (mu < 0)
+      return (a-p).lengthSquared();
+    else if (mu > 1)
+      return (b-p).lengthSquared();
+    else
+      return ((a + mu*v)-p).lengthSquared();
+  } else
+    return (a-p).lengthSquared();
+}
+
+/*! \internal
+
+  A convenience function which returns the selectTest value for a specified \a rect and a specified
+  click position \a pos. \a filledRect defines whether a click inside the rect should also be
+  considered a hit or whether only the rect border is sensitive to hits.
+  
+  This function may be used to help with the implementation of the \ref selectTest function for
+  specific items.
+  
+  For example, if your item consists of four rects, call this function four times, once for each
+  rect, in your \ref selectTest reimplementation. Finally, return the minimum of all four returned
+  values which were greater or equal to zero. (Because this function may return -1.0 when \a pos
+  doesn't hit \a rect at all). If all calls returned -1.0, return -1.0, too, because your item
+  wasn't hit.
+  
+  \see distSqrToLine
+*/
+double QCPAbstractItem::rectSelectTest(const QRectF &rect, const QPointF &pos, bool filledRect) const
+{
+  double result = -1;
+
+  // distance to border:
+  QList<QLineF> lines;
+  lines << QLineF(rect.topLeft(), rect.topRight()) << QLineF(rect.bottomLeft(), rect.bottomRight())
+        << QLineF(rect.topLeft(), rect.bottomLeft()) << QLineF(rect.topRight(), rect.bottomRight());
+  double minDistSqr = std::numeric_limits<double>::max();
+  for (int i=0; i<lines.size(); ++i)
+  {
+    double distSqr = distSqrToLine(lines.at(i).p1(), lines.at(i).p2(), pos);
+    if (distSqr < minDistSqr)
+      minDistSqr = distSqr;
+  }
+  result = qSqrt(minDistSqr);
+  
+  // filled rect, allow click inside to count as hit:
+  if (filledRect && result > mParentPlot->selectionTolerance()*0.99)
+  {
+    if (rect.contains(pos))
+      result = mParentPlot->selectionTolerance()*0.99;
+  }
+  return result;
+}
+
+/*! \internal
+
+  Returns the pixel position of the anchor with Id \a anchorId. This function must be reimplemented in
+  item subclasses if they want to provide anchors (QCPItemAnchor).
+  
+  For example, if the item has two anchors with id 0 and 1, this function takes one of these anchor
+  ids and returns the respective pixel points of the specified anchor.
+  
+  \see createAnchor
+*/
+QPointF QCPAbstractItem::anchorPixelPoint(int anchorId) const
+{
+  qDebug() << Q_FUNC_INFO << "called on item which shouldn't have any anchors (this method not reimplemented). anchorId" << anchorId;
+  return QPointF();
+}
+
+/*! \internal
+
+  Creates a QCPItemPosition, registers it with this item and returns a pointer to it. The specified
+  \a name must be a unique string that is usually identical to the variable name of the position
+  member (This is needed to provide the name-based \ref position access to positions).
+  
+  Don't delete positions created by this function manually, as the item will take care of it.
+  
+  Use this function in the constructor (initialization list) of the specific item subclass to
+  create each position member. Don't create QCPItemPositions with \b new yourself, because they
+  won't be registered with the item properly.
+  
+  \see createAnchor
+*/
+QCPItemPosition *QCPAbstractItem::createPosition(const QString &name)
+{
+  if (hasAnchor(name))
+    qDebug() << Q_FUNC_INFO << "anchor/position with name exists already:" << name;
