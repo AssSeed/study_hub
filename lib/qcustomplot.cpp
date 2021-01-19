@@ -7622,3 +7622,265 @@ void QCPItemPosition::setPixelPoint(const QPointF &pixelPoint)
       {
         if (mParentAnchor)
         {
+          QPointF p(pixelPoint-mParentAnchor->pixelPoint());
+          p.rx() /= (double)mAxisRect.data()->width();
+          p.ry() /= (double)mAxisRect.data()->height();
+          setCoords(p);
+        } else
+        {
+          QPointF p(pixelPoint-mAxisRect.data()->topLeft());
+          p.rx() /= (double)mAxisRect.data()->width();
+          p.ry() /= (double)mAxisRect.data()->height();
+          setCoords(p);
+        }
+      } else
+      {
+        qDebug() << Q_FUNC_INFO << "No axis rect defined";
+        setCoords(pixelPoint);
+      }
+      break;
+    }
+      
+    case ptPlotCoords:
+    {
+      double newKey, newValue;
+      if (mKeyAxis && mValueAxis)
+      {
+        // both key and value axis are given, translate point to key/value coordinates:
+        if (mKeyAxis.data()->orientation() == Qt::Horizontal)
+        {
+          newKey = mKeyAxis.data()->pixelToCoord(pixelPoint.x());
+          newValue = mValueAxis.data()->pixelToCoord(pixelPoint.y());
+        } else
+        {
+          newKey = mKeyAxis.data()->pixelToCoord(pixelPoint.y());
+          newValue = mValueAxis.data()->pixelToCoord(pixelPoint.x());
+        }
+      } else if (mKeyAxis)
+      {
+        // only key axis is given, depending on orientation only transform x or y to key coordinate, other stays pixel:
+        if (mKeyAxis.data()->orientation() == Qt::Horizontal)
+        {
+          newKey = mKeyAxis.data()->pixelToCoord(pixelPoint.x());
+          newValue = pixelPoint.y();
+        } else
+        {
+          newKey = mKeyAxis.data()->pixelToCoord(pixelPoint.y());
+          newValue = pixelPoint.x();
+        }
+      } else if (mValueAxis)
+      {
+        // only value axis is given, depending on orientation only transform x or y to value coordinate, other stays pixel:
+        if (mValueAxis.data()->orientation() == Qt::Horizontal)
+        {
+          newKey = pixelPoint.y();
+          newValue = mValueAxis.data()->pixelToCoord(pixelPoint.x());
+        } else
+        {
+          newKey = pixelPoint.x();
+          newValue = mValueAxis.data()->pixelToCoord(pixelPoint.y());
+        }
+      } else
+      {
+        // no axis given, basically the same as if mPositionType were ptAbsolute
+        qDebug() << Q_FUNC_INFO << "No axes defined";
+        newKey = pixelPoint.x();
+        newValue = pixelPoint.y();
+      }
+      setCoords(newKey, newValue);
+      break;
+    }
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPAbstractItem
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPAbstractItem
+  \brief The abstract base class for all items in a plot.
+  
+  In QCustomPlot, items are supplemental graphical elements that are neither plottables
+  (QCPAbstractPlottable) nor axes (QCPAxis). While plottables are always tied to two axes and thus
+  plot coordinates, items can also be placed in absolute coordinates independent of any axes. Each
+  specific item has at least one QCPItemPosition member which controls the positioning. Some items
+  are defined by more than one coordinate and thus have two or more QCPItemPosition members (For
+  example, QCPItemRect has \a topLeft and \a bottomRight).
+  
+  This abstract base class defines a very basic interface like visibility and clipping. Since this
+  class is abstract, it can't be instantiated. Use one of the subclasses or create a subclass
+  yourself to create new items.
+  
+  The built-in items are:
+  <table>
+  <tr><td>QCPItemLine</td><td>A line defined by a start and an end point. May have different ending styles on each side (e.g. arrows).</td></tr>
+  <tr><td>QCPItemStraightLine</td><td>A straight line defined by a start and a direction point. Unlike QCPItemLine, the straight line is infinitely long and has no endings.</td></tr>
+  <tr><td>QCPItemCurve</td><td>A curve defined by start, end and two intermediate control points. May have different ending styles on each side (e.g. arrows).</td></tr>
+  <tr><td>QCPItemRect</td><td>A rectangle</td></tr>
+  <tr><td>QCPItemEllipse</td><td>An ellipse</td></tr>
+  <tr><td>QCPItemPixmap</td><td>An arbitrary pixmap</td></tr>
+  <tr><td>QCPItemText</td><td>A text label</td></tr>
+  <tr><td>QCPItemBracket</td><td>A bracket which may be used to reference/highlight certain parts in the plot.</td></tr>
+  <tr><td>QCPItemTracer</td><td>An item that can be attached to a QCPGraph and sticks to its data points, given a key coordinate.</td></tr>
+  </table>
+  
+  Items are by default clipped to the main axis rect. To make an item visible outside that axis
+  rect, disable clipping via \ref setClipToAxisRect.
+  
+  \section items-using Using items
+  
+  First you instantiate the item you want to use and add it to the plot:
+  \code
+  QCPItemLine *line = new QCPItemLine(customPlot);
+  customPlot->addItem(line);
+  \endcode
+  by default, the positions of the item are bound to the x- and y-Axis of the plot. So we can just
+  set the plot coordinates where the line should start/end:
+  \code
+  line->start->setCoords(-0.1, 0.8);
+  line->end->setCoords(1.1, 0.2);
+  \endcode
+  If we don't want the line to be positioned in plot coordinates but a different coordinate system,
+  e.g. absolute pixel positions on the QCustomPlot surface, we need to change the position type like this:
+  \code
+  line->start->setType(QCPItemPosition::ptAbsolute);
+  line->end->setType(QCPItemPosition::ptAbsolute);
+  \endcode
+  Then we can set the coordinates, this time in pixels:
+  \code
+  line->start->setCoords(100, 200);
+  line->end->setCoords(450, 320);
+  \endcode
+  
+  \section items-subclassing Creating own items
+  
+  To create an own item, you implement a subclass of QCPAbstractItem. These are the pure
+  virtual functions, you must implement:
+  \li \ref selectTest
+  \li \ref draw
+  
+  See the documentation of those functions for what they need to do.
+  
+  \subsection items-positioning Allowing the item to be positioned
+  
+  As mentioned, item positions are represented by QCPItemPosition members. Let's assume the new item shall
+  have only one point as its position (as opposed to two like a rect or multiple like a polygon). You then add
+  a public member of type QCPItemPosition like so:
+  
+  \code QCPItemPosition * const myPosition;\endcode
+  
+  the const makes sure the pointer itself can't be modified from the user of your new item (the QCPItemPosition
+  instance it points to, can be modified, of course).
+  The initialization of this pointer is made easy with the \ref createPosition function. Just assign
+  the return value of this function to each QCPItemPosition in the constructor of your item. \ref createPosition
+  takes a string which is the name of the position, typically this is identical to the variable name.
+  For example, the constructor of QCPItemExample could look like this:
+  
+  \code
+  QCPItemExample::QCPItemExample(QCustomPlot *parentPlot) :
+    QCPAbstractItem(parentPlot),
+    myPosition(createPosition("myPosition"))
+  {
+    // other constructor code
+  }
+  \endcode
+  
+  \subsection items-drawing The draw function
+  
+  To give your item a visual representation, reimplement the \ref draw function and use the passed
+  QCPPainter to draw the item. You can retrieve the item position in pixel coordinates from the
+  position member(s) via \ref QCPItemPosition::pixelPoint.
+
+  To optimize performance you should calculate a bounding rect first (don't forget to take the pen
+  width into account), check whether it intersects the \ref clipRect, and only draw the item at all
+  if this is the case.
+  
+  \subsection items-selection The selectTest function
+  
+  Your implementation of the \ref selectTest function may use the helpers \ref distSqrToLine and
+  \ref rectSelectTest. With these, the implementation of the selection test becomes significantly
+  simpler for most items. See the documentation of \ref selectTest for what the function parameters
+  mean and what the function should return.
+  
+  \subsection anchors Providing anchors
+  
+  Providing anchors (QCPItemAnchor) starts off like adding a position. First you create a public
+  member, e.g.
+  
+  \code QCPItemAnchor * const bottom;\endcode
+
+  and create it in the constructor with the \ref createAnchor function, assigning it a name and an
+  anchor id (an integer enumerating all anchors on the item, you may create an own enum for this).
+  Since anchors can be placed anywhere, relative to the item's position(s), your item needs to
+  provide the position of every anchor with the reimplementation of the \ref anchorPixelPoint(int
+  anchorId) function.
+  
+  In essence the QCPItemAnchor is merely an intermediary that itself asks your item for the pixel
+  position when anything attached to the anchor needs to know the coordinates.
+*/
+
+/* start of documentation of inline functions */
+
+/*! \fn QList<QCPItemPosition*> QCPAbstractItem::positions() const
+  
+  Returns all positions of the item in a list.
+  
+  \see anchors, position
+*/
+
+/*! \fn QList<QCPItemAnchor*> QCPAbstractItem::anchors() const
+  
+  Returns all anchors of the item in a list. Note that since a position (QCPItemPosition) is always
+  also an anchor, the list will also contain the positions of this item.
+  
+  \see positions, anchor
+*/
+
+/* end of documentation of inline functions */
+/* start documentation of pure virtual functions */
+
+/*! \fn void QCPAbstractItem::draw(QCPPainter *painter) = 0
+  \internal
+  
+  Draws this item with the provided \a painter.
+  
+  The cliprect of the provided painter is set to the rect returned by \ref clipRect before this
+  function is called. The clipRect depends on the clipping settings defined by \ref
+  setClipToAxisRect and \ref setClipAxisRect.
+*/
+
+/* end documentation of pure virtual functions */
+/* start documentation of signals */
+
+/*! \fn void QCPAbstractItem::selectionChanged(bool selected)
+  This signal is emitted when the selection state of this item has changed, either by user interaction
+  or by a direct call to \ref setSelected.
+*/
+
+/* end documentation of signals */
+
+/*!
+  Base class constructor which initializes base class members.
+*/
+QCPAbstractItem::QCPAbstractItem(QCustomPlot *parentPlot) :
+  QCPLayerable(parentPlot),
+  mClipToAxisRect(false),
+  mSelectable(true),
+  mSelected(false)
+{
+  QList<QCPAxisRect*> rects = parentPlot->axisRects();
+  if (rects.size() > 0)
+  {
+    setClipToAxisRect(true);
+    setClipAxisRect(rects.first());
+  }
+}
+
+QCPAbstractItem::~QCPAbstractItem()
+{
+  // don't delete mPositions because every position is also an anchor and thus in mAnchors
+  qDeleteAll(mAnchors);
+}
+
+/* can't make this a header inline function, because QPointer breaks with forward declared types, see QTBUG-29588 */
