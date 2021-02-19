@@ -8353,3 +8353,248 @@ QCP::Interaction QCPAbstractItem::selectionCategory() const
   
   \section mainpage-layoutelements Layout elements and layouts
   
+  QCustomPlot uses an internal layout system to provide dynamic sizing and positioning of objects like
+  the axis rect(s), legends and the plot title. They are all based on \ref QCPLayoutElement and are arranged by
+  placing them inside a \ref QCPLayout.
+  
+  Details on this topic are given on the dedicated page about \ref thelayoutsystem "the layout system".
+  
+  \section mainpage-performancetweaks Performance Tweaks
+  
+  Although QCustomPlot is quite fast, some features like translucent fills, antialiasing and thick
+  lines can cause a significant slow down. If you notice this in your application, here are some
+  thoughts on how to increase performance. By far the most time is spent in the drawing functions,
+  specifically the drawing of graphs. For maximum performance, consider the following (most
+  recommended/effective measures first):
+  
+  \li use Qt 4.8.0 and up. Performance has doubled or tripled with respect to Qt 4.7.4. However
+  QPainter was broken and drawing pixel precise things, e.g. scatters, isn't possible with Qt >=
+  4.8.0. So it's a performance vs. plot quality tradeoff when switching to Qt 4.8.
+  \li To increase responsiveness during dragging, consider setting \ref QCustomPlot::setNoAntialiasingOnDrag to true.
+  \li On X11 (GNU/Linux), avoid the slow native drawing system, use raster by supplying
+  "-graphicssystem raster" as command line argument or calling QApplication::setGraphicsSystem("raster")
+  before creating the QApplication object. (Only available for Qt versions before 5.0)
+  \li On all operating systems, use OpenGL hardware acceleration by supplying "-graphicssystem
+  opengl" as command line argument or calling QApplication::setGraphicsSystem("opengl") (Only
+  available for Qt versions before 5.0). If OpenGL is available, this will slightly decrease the
+  quality of antialiasing, but extremely increase performance especially with alpha
+  (semi-transparent) fills, much antialiasing and a large QCustomPlot drawing surface. Note
+  however, that the maximum frame rate might be constrained by the vertical sync frequency of your
+  monitor (VSync can be disabled in the graphics card driver configuration). So for simple plots
+  (where the potential framerate is far above 60 frames per second), OpenGL acceleration might
+  achieve numerically lower frame rates than the other graphics systems, because they are not
+  capped at the VSync frequency.
+  \li Avoid any kind of alpha (transparency), especially in fills
+  \li Avoid lines with a pen width greater than one
+  \li Avoid any kind of antialiasing, especially in graph lines (see \ref QCustomPlot::setNotAntialiasedElements)
+  \li Avoid repeatedly setting the complete data set with \ref QCPGraph::setData. Use \ref QCPGraph::addData instead, if most
+  data points stay unchanged, e.g. in a running measurement.
+  \li Set the \a copy parameter of the setData functions to false, so only pointers get
+  transferred. (Relevant only if preparing data maps with a large number of points, i.e. over 10000)
+  
+  \section mainpage-flags Preprocessor Define Flags
+  
+  QCustomPlot understands some preprocessor defines that are useful for debugging and compilation:
+  <dl>
+  <dt>\c QCUSTOMPLOT_COMPILE_LIBRARY
+  <dd>Define this flag when you compile QCustomPlot as a shared library (.so/.dll)
+  <dt>\c QCUSTOMPLOT_USE_LIBRARY
+  <dd>Define this flag before including the header, when using QCustomPlot as a shared library
+  <dt>\c QCUSTOMPLOT_CHECK_DATA
+  <dd>If this flag is defined, the QCustomPlot plottables will perform data validity checks on every redraw.
+      This means they will give qDebug output when you plot \e inf or \e nan values, they will not
+      fix your data.
+  </dl>
+
+*/
+
+/*! \page classoverview Class Overview
+  
+  The following diagrams may help to gain a deeper understanding of the relationships between classes that make up
+  the QCustomPlot library. The diagrams are not exhaustive, so only the classes deemed most relevant are shown.
+  
+  \section classoverview-relations Class Relationship Diagram
+  \image html RelationOverview.png "Overview of most important classes and their relations"
+  \section classoverview-inheritance Class Inheritance Tree
+  \image html InheritanceOverview.png "Inheritance tree of most important classes"
+  
+*/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCustomPlot
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCustomPlot
+  
+  \brief The central class of the library. This is the QWidget which displays the plot and
+  interacts with the user.
+  
+  For tutorials on how to use QCustomPlot, see the website\n
+  http://www.qcustomplot.com/
+*/
+
+/* start of documentation of inline functions */
+
+/*! \fn QRect QCustomPlot::viewport() const
+  
+  Returns the viewport rect of this QCustomPlot instance. The viewport is the area the plot is
+  drawn in, all mechanisms, e.g. margin caluclation take the viewport to be the outer border of the
+  plot. The viewport normally is the rect() of the QCustomPlot widget, i.e. a rect with top left
+  (0, 0) and size of the QCustomPlot widget.
+  
+  Don't confuse the viewport with the axis rect (QCustomPlot::axisRect). An axis rect is typically
+  an area enclosed by four axes, where the graphs/plottables are drawn in. The viewport is larger
+  and contains also the axes themselves, their tick numbers, their labels, the plot title etc.
+  
+  Only when saving to a file (see \ref savePng, savePdf etc.) the viewport is temporarily modified
+  to allow saving plots with sizes independent of the current widget size.
+*/
+
+/*! \fn QCPLayoutGrid *QCustomPlot::plotLayout() const
+  
+  Returns the top level layout of this QCustomPlot instance. It is a \ref QCPLayoutGrid, initially containing just
+  one cell with the main QCPAxisRect inside.
+*/
+
+/* end of documentation of inline functions */
+/* start of documentation of signals */
+
+/*! \fn void QCustomPlot::mouseDoubleClick(QMouseEvent *event)
+
+  This signal is emitted when the QCustomPlot receives a mouse double click event.
+*/
+
+/*! \fn void QCustomPlot::mousePress(QMouseEvent *event)
+
+  This signal is emitted when the QCustomPlot receives a mouse press event.
+  
+  It is emitted before QCustomPlot handles any other mechanism like range dragging. So a slot
+  connected to this signal can still influence the behaviour e.g. with \ref QCPAxisRect::setRangeDrag or \ref
+  QCPAxisRect::setRangeDragAxes.
+*/
+
+/*! \fn void QCustomPlot::mouseMove(QMouseEvent *event)
+
+  This signal is emitted when the QCustomPlot receives a mouse move event.
+  
+  It is emitted before QCustomPlot handles any other mechanism like range dragging. So a slot
+  connected to this signal can still influence the behaviour e.g. with \ref QCPAxisRect::setRangeDrag or \ref
+  QCPAxisRect::setRangeDragAxes.
+  
+  \warning It is discouraged to change the drag-axes with \ref QCPAxisRect::setRangeDragAxes here,
+  because the dragging starting point was saved the moment the mouse was pressed. Thus it only has
+  a meaning for the range drag axes that were set at that moment. If you want to change the drag
+  axes, consider doing this in the \ref mousePress signal instead.
+*/
+
+/*! \fn void QCustomPlot::mouseRelease(QMouseEvent *event)
+
+  This signal is emitted when the QCustomPlot receives a mouse release event.
+  
+  It is emitted before QCustomPlot handles any other mechanisms like object selection. So a
+  slot connected to this signal can still influence the behaviour e.g. with \ref setInteractions or
+  \ref QCPAbstractPlottable::setSelectable.
+*/
+
+/*! \fn void QCustomPlot::mouseWheel(QMouseEvent *event)
+
+  This signal is emitted when the QCustomPlot receives a mouse wheel event.
+  
+  It is emitted before QCustomPlot handles any other mechanisms like range zooming. So a slot
+  connected to this signal can still influence the behaviour e.g. with \ref QCPAxisRect::setRangeZoom, \ref
+  QCPAxisRect::setRangeZoomAxes or \ref QCPAxisRect::setRangeZoomFactor.
+*/
+
+/*! \fn void QCustomPlot::plottableClick(QCPAbstractPlottable *plottable, QMouseEvent *event)
+  
+  This signal is emitted when a plottable is clicked.
+
+  \a event is the mouse event that caused the click and \a plottable is the plottable that received
+  the click.
+  
+  \see plottableDoubleClick
+*/
+
+/*! \fn void QCustomPlot::plottableDoubleClick(QCPAbstractPlottable *plottable, QMouseEvent *event)
+  
+  This signal is emitted when a plottable is double clicked.
+  
+  \a event is the mouse event that caused the click and \a plottable is the plottable that received
+  the click.
+  
+  \see plottableClick
+*/
+
+/*! \fn void QCustomPlot::itemClick(QCPAbstractItem *item, QMouseEvent *event)
+  
+  This signal is emitted when an item is clicked.
+
+  \a event is the mouse event that caused the click and \a item is the item that received the
+  click.
+  
+  \see itemDoubleClick
+*/
+
+/*! \fn void QCustomPlot::itemDoubleClick(QCPAbstractItem *item, QMouseEvent *event)
+  
+  This signal is emitted when an item is double clicked.
+  
+  \a event is the mouse event that caused the click and \a item is the item that received the
+  click.
+  
+  \see itemClick
+*/
+
+/*! \fn void QCustomPlot::axisClick(QCPAxis *axis, QCPAxis::SelectablePart part, QMouseEvent *event)
+  
+  This signal is emitted when an axis is clicked.
+  
+  \a event is the mouse event that caused the click, \a axis is the axis that received the click and
+  \a part indicates the part of the axis that was clicked.
+  
+  \see axisDoubleClick
+*/
+
+/*! \fn void QCustomPlot::axisDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart part, QMouseEvent *event)
+
+  This signal is emitted when an axis is double clicked.
+  
+  \a event is the mouse event that caused the click, \a axis is the axis that received the click and
+  \a part indicates the part of the axis that was clicked.
+  
+  \see axisClick
+*/
+
+/*! \fn void QCustomPlot::legendClick(QCPLegend *legend, QCPAbstractLegendItem *item, QMouseEvent *event)
+
+  This signal is emitted when a legend (item) is clicked.
+  
+  \a event is the mouse event that caused the click, \a legend is the legend that received the
+  click and \a item is the legend item that received the click. If only the legend and no item is
+  clicked, \a item is 0. This happens for a click inside the legend padding or the space between
+  two items.
+  
+  \see legendDoubleClick
+*/
+
+/*! \fn void QCustomPlot::legendDoubleClick(QCPLegend *legend,  QCPAbstractLegendItem *item, QMouseEvent *event)
+
+  This signal is emitted when a legend (item) is double clicked.
+  
+  \a event is the mouse event that caused the click, \a legend is the legend that received the
+  click and \a item is the legend item that received the click. If only the legend and no item is
+  clicked, \a item is 0. This happens for a click inside the legend padding or the space between
+  two items.
+  
+  \see legendClick
+*/
+
+/*! \fn void QCustomPlot:: titleClick(QMouseEvent *event, QCPPlotTitle *title)
+
+  This signal is emitted when a plot title is clicked.
+  
+  \a event is the mouse event that caused the click and \a title is the plot title that received
+  the click.
+  
+  \see titleDoubleClick
+*/
