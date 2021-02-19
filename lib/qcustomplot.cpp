@@ -8157,3 +8157,199 @@ QCPItemPosition *QCPAbstractItem::createPosition(const QString &name)
 {
   if (hasAnchor(name))
     qDebug() << Q_FUNC_INFO << "anchor/position with name exists already:" << name;
+  QCPItemPosition *newPosition = new QCPItemPosition(mParentPlot, this, name);
+  mPositions.append(newPosition);
+  mAnchors.append(newPosition); // every position is also an anchor
+  newPosition->setAxes(mParentPlot->xAxis, mParentPlot->yAxis);
+  newPosition->setType(QCPItemPosition::ptPlotCoords);
+  if (mParentPlot->axisRect())
+    newPosition->setAxisRect(mParentPlot->axisRect());
+  newPosition->setCoords(0, 0);
+  return newPosition;
+}
+
+/*! \internal
+
+  Creates a QCPItemAnchor, registers it with this item and returns a pointer to it. The specified
+  \a name must be a unique string that is usually identical to the variable name of the anchor
+  member (This is needed to provide the name based \ref anchor access to anchors).
+  
+  The \a anchorId must be a number identifying the created anchor. It is recommended to create an
+  enum (e.g. "AnchorIndex") for this on each item that uses anchors. This id is used by the anchor
+  to identify itself when it calls QCPAbstractItem::anchorPixelPoint. That function then returns
+  the correct pixel coordinates for the passed anchor id.
+  
+  Don't delete anchors created by this function manually, as the item will take care of it.
+  
+  Use this function in the constructor (initialization list) of the specific item subclass to
+  create each anchor member. Don't create QCPItemAnchors with \b new yourself, because then they
+  won't be registered with the item properly.
+  
+  \see createPosition
+*/
+QCPItemAnchor *QCPAbstractItem::createAnchor(const QString &name, int anchorId)
+{
+  if (hasAnchor(name))
+    qDebug() << Q_FUNC_INFO << "anchor/position with name exists already:" << name;
+  QCPItemAnchor *newAnchor = new QCPItemAnchor(mParentPlot, this, name, anchorId);
+  mAnchors.append(newAnchor);
+  return newAnchor;
+}
+
+/* inherits documentation from base class */
+void QCPAbstractItem::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
+{
+  Q_UNUSED(event)
+  Q_UNUSED(details)
+  if (mSelectable)
+  {
+    bool selBefore = mSelected;
+    setSelected(additive ? !mSelected : true);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+void QCPAbstractItem::deselectEvent(bool *selectionStateChanged)
+{
+  if (mSelectable)
+  {
+    bool selBefore = mSelected;
+    setSelected(false);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+QCP::Interaction QCPAbstractItem::selectionCategory() const
+{
+  return QCP::iSelectItems;
+}
+
+
+/*! \file */
+
+
+
+/*! \mainpage %QCustomPlot 1.1.0 Documentation
+
+  \image html qcp-doc-logo.png
+  
+  Below is a brief overview of and guide to the classes and their relations. If you are new to
+  QCustomPlot and just want to start using it, it's recommended to look at the tutorials and
+  examples at
+ 
+  http://www.qcustomplot.com/
+ 
+  This documentation is especially helpful as a reference, when you're familiar with the basic
+  concept of how to use %QCustomPlot and you wish to learn more about specific functionality.
+  See the \ref classoverview "class overview" for diagrams explaining the relationships between
+  the most important classes of the QCustomPlot library.
+  
+  The central widget which displays the plottables and axes on its surface is QCustomPlot. Every
+  QCustomPlot contains four axes by default. They can be accessed via the members xAxis, yAxis,
+  xAxis2 and yAxis2, and are of type QCPAxis. QCustomPlot supports an arbitrary number of axes and
+  axis rects, see the documentation of QCPAxisRect for details.
+
+  \section mainpage-plottables Plottables
+  
+  \a Plottables are classes that display any kind of data inside the QCustomPlot. They all derive
+  from QCPAbstractPlottable. For example, the QCPGraph class is a plottable that displays a graph
+  inside the plot with different line styles, scatter styles, filling etc.
+  
+  Since plotting graphs is such a dominant use case, QCustomPlot has a special interface for working
+  with QCPGraph plottables, that makes it very easy to handle them:\n
+  You create a new graph with QCustomPlot::addGraph and access them with QCustomPlot::graph.
+  
+  For all other plottables, you need to use the normal plottable interface:\n
+  First, you create an instance of the plottable you want, e.g.
+  \code
+  QCPCurve *newCurve = new QCPCurve(customPlot->xAxis, customPlot->yAxis);\endcode
+  add it to the customPlot:
+  \code
+  customPlot->addPlottable(newCurve);\endcode
+  and then modify the properties of the newly created plottable via the <tt>newCurve</tt> pointer.
+  
+  Plottables (including graphs) can be retrieved via QCustomPlot::plottable. Since the return type
+  of that function is the abstract base class of all plottables, QCPAbstractPlottable, you will
+  probably want to qobject_cast the returned pointer to the respective plottable subclass. (As
+  usual, if the cast returns zero, the plottable wasn't of that specific subclass.)
+  
+  All further interfacing with plottables (e.g how to set data) is specific to the plottable type.
+  See the documentations of the subclasses: QCPGraph, QCPCurve, QCPBars, QCPStatisticalBox.
+
+  \section mainpage-axes Controlling the Axes
+  
+  As mentioned, QCustomPlot has four axes by default: \a xAxis (bottom), \a yAxis (left), \a xAxis2
+  (top), \a yAxis2 (right).
+  
+  Their range is handled by the simple QCPRange class. You can set the range with the
+  QCPAxis::setRange function. By default, the axes represent a linear scale. To set a logarithmic
+  scale, set \ref QCPAxis::setScaleType to \ref QCPAxis::stLogarithmic. The logarithm base can be set freely
+  with \ref QCPAxis::setScaleLogBase.
+  
+  By default, an axis automatically creates and labels ticks in a sensible manner. See the
+  following functions for tick manipulation:\n QCPAxis::setTicks, QCPAxis::setAutoTicks,
+  QCPAxis::setAutoTickCount, QCPAxis::setAutoTickStep, QCPAxis::setTickLabels,
+  QCPAxis::setTickLabelType, QCPAxis::setTickLabelRotation, QCPAxis::setTickStep,
+  QCPAxis::setTickLength,...
+  
+  Each axis can be given an axis label (e.g. "Voltage (mV)") with QCPAxis::setLabel.
+  
+  The distance of an axis backbone to the respective viewport border is called its margin.
+  Normally, the margins are calculated automatically. To change this, set
+  \ref QCPAxisRect::setAutoMargins to exclude the respective margin sides, set the margins manually with
+  \ref QCPAxisRect::setMargins. The main axis rect can be reached with \ref QCustomPlot::axisRect().
+  
+  \section mainpage-legend Plot Legend
+  
+  Every QCustomPlot owns one QCPLegend (as \a legend) by default. A legend is a small layout
+  element inside the plot which lists the plottables with an icon of the plottable line/symbol and
+  a description. The Description is retrieved from the plottable name
+  (QCPAbstractPlottable::setName). Plottables can be added and removed from the legend via \ref
+  QCPAbstractPlottable::addToLegend and \ref QCPAbstractPlottable::removeFromLegend. By default,
+  adding a plottable to QCustomPlot automatically adds it to the legend, too. This behaviour can be
+  modified with the QCustomPlot::setAutoAddPlottableToLegend property.
+  
+  The QCPLegend provides an interface to access, add and remove legend items directly, too. See
+  QCPLegend::item, QCPLegend::itemWithPlottable, QCPLegend::addItem, QCPLegend::removeItem for
+  example.
+  
+  Multiple legends are supported via the layout system (as a QCPLegend simply is a normal layout
+  element).
+  
+  \section mainpage-userinteraction User Interactions
+  
+  QCustomPlot supports dragging axis ranges with the mouse (\ref
+  QCPAxisRect::setRangeDrag), zooming axis ranges with the mouse wheel (\ref
+  QCPAxisRect::setRangeZoom) and a complete selection mechanism.
+  
+  The availability of these interactions is controlled with \ref QCustomPlot::setInteractions. For
+  details about the interaction system, see the documentation there.
+  
+  Further, QCustomPlot always emits corresponding signals, when objects are clicked or
+  doubleClicked. See \ref QCustomPlot::plottableClick, \ref QCustomPlot::plottableDoubleClick
+  and \ref QCustomPlot::axisClick for example.
+  
+  \section mainpage-items Items
+  
+  Apart from plottables there is another category of plot objects that are important: Items. The
+  base class of all items is QCPAbstractItem. An item sets itself apart from plottables in that
+  it's not necessarily bound to any axes. This means it may also be positioned in absolute pixel
+  coordinates or placed at a relative position on an axis rect. Further, it usually doesn't
+  represent data directly, but acts as decoration, emphasis, description etc.
+  
+  Multiple items can be arranged in a parent-child-hierarchy allowing for dynamical behaviour. For
+  example, you could place the head of an arrow at a fixed plot coordinate, so it always points to
+  some important area in the plot. The tail of the arrow can be anchored to a text item which
+  always resides in the top center of the axis rect, independent of where the user drags the axis
+  ranges. This way the arrow stretches and turns so it always points from the label to the
+  specified plot coordinate, without any further code necessary.
+  
+  For a more detailed introduction, see the QCPAbstractItem documentation, and from there the
+  documentations of the individual built-in items, to find out how to use them.
+  
+  \section mainpage-layoutelements Layout elements and layouts
+  
