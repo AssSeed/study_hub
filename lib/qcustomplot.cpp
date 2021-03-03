@@ -8598,3 +8598,252 @@ QCP::Interaction QCPAbstractItem::selectionCategory() const
   
   \see titleDoubleClick
 */
+
+/*! \fn void QCustomPlot::titleDoubleClick(QMouseEvent *event, QCPPlotTitle *title)
+
+  This signal is emitted when a plot title is double clicked.
+  
+  \a event is the mouse event that caused the click and \a title is the plot title that received
+  the click.
+  
+  \see titleClick
+*/
+
+/*! \fn void QCustomPlot::selectionChangedByUser()
+  
+  This signal is emitted after the user has changed the selection in the QCustomPlot, e.g. by
+  clicking. It is not emitted when the selection state of an object has changed programmatically by
+  a direct call to setSelected() on an object or by calling \ref deselectAll.
+  
+  In addition to this signal, selectable objects also provide individual signals, for example
+  QCPAxis::selectionChanged or QCPAbstractPlottable::selectionChanged. Note that those signals are
+  emitted even if the selection state is changed programmatically.
+  
+  See the documentation of \ref setInteractions for details about the selection mechanism.
+  
+  \see selectedPlottables, selectedGraphs, selectedItems, selectedAxes, selectedLegends
+*/
+
+/*! \fn void QCustomPlot::beforeReplot()
+  
+  This signal is emitted immediately before a replot takes place (caused by a call to the slot \ref
+  replot).
+  
+  It is safe to mutually connect the replot slot with this signal on two QCustomPlots to make them
+  replot synchronously, it won't cause an infinite recursion.
+  
+  \see replot, afterReplot
+*/
+
+/*! \fn void QCustomPlot::afterReplot()
+  
+  This signal is emitted immediately after a replot has taken place (caused by a call to the slot \ref
+  replot).
+  
+  It is safe to mutually connect the replot slot with this signal on two QCustomPlots to make them
+  replot synchronously, it won't cause an infinite recursion.
+  
+  \see replot, beforeReplot
+*/
+
+/* end of documentation of signals */
+
+/*!
+  Constructs a QCustomPlot and sets reasonable default values.
+*/
+QCustomPlot::QCustomPlot(QWidget *parent) :
+  QWidget(parent),
+  xAxis(0),
+  yAxis(0),
+  xAxis2(0),
+  yAxis2(0),
+  legend(0),
+  mPlotLayout(0),
+  mAutoAddPlottableToLegend(true),
+  mAntialiasedElements(QCP::aeNone),
+  mNotAntialiasedElements(QCP::aeNone),
+  mInteractions(0),
+  mSelectionTolerance(8),
+  mNoAntialiasingOnDrag(false),
+  mBackgroundBrush(Qt::white, Qt::SolidPattern),
+  mBackgroundScaled(true),
+  mBackgroundScaledMode(Qt::KeepAspectRatioByExpanding),
+  mCurrentLayer(0),
+  mPlottingHints(QCP::phCacheLabels),
+  mMultiSelectModifier(Qt::ControlModifier),
+  mPaintBuffer(size()),
+  mMouseEventElement(0),
+  mReplotting(false)
+{
+  setAttribute(Qt::WA_NoMousePropagation);
+  setAttribute(Qt::WA_OpaquePaintEvent);
+  setMouseTracking(true);
+  QLocale currentLocale = locale();
+  currentLocale.setNumberOptions(QLocale::OmitGroupSeparator);
+  setLocale(currentLocale);
+  
+  // create initial layers:
+  mLayers.append(new QCPLayer(this, "background"));
+  mLayers.append(new QCPLayer(this, "grid"));
+  mLayers.append(new QCPLayer(this, "main"));
+  mLayers.append(new QCPLayer(this, "axes"));
+  mLayers.append(new QCPLayer(this, "legend"));
+  updateLayerIndices();
+  setCurrentLayer("main");
+  
+  // create initial layout, axis rect and legend:
+  mPlotLayout = new QCPLayoutGrid;
+  mPlotLayout->initializeParentPlot(this);
+  mPlotLayout->setParent(this); // important because if parent is QWidget, QCPLayout::sizeConstraintsChanged will call QWidget::updateGeometry
+  QCPAxisRect *defaultAxisRect = new QCPAxisRect(this, true);
+  mPlotLayout->addElement(0, 0, defaultAxisRect);
+  xAxis = defaultAxisRect->axis(QCPAxis::atBottom);
+  yAxis = defaultAxisRect->axis(QCPAxis::atLeft);
+  xAxis2 = defaultAxisRect->axis(QCPAxis::atTop);
+  yAxis2 = defaultAxisRect->axis(QCPAxis::atRight);
+  legend = new QCPLegend;
+  legend->setVisible(false);
+  defaultAxisRect->insetLayout()->addElement(legend, Qt::AlignRight|Qt::AlignTop);
+  defaultAxisRect->insetLayout()->setMargins(QMargins(12, 12, 12, 12));
+  
+  defaultAxisRect->setLayer("background");
+  xAxis->setLayer("axes");
+  yAxis->setLayer("axes");
+  xAxis2->setLayer("axes");
+  yAxis2->setLayer("axes");
+  xAxis->grid()->setLayer("grid");
+  yAxis->grid()->setLayer("grid");
+  xAxis2->grid()->setLayer("grid");
+  yAxis2->grid()->setLayer("grid");
+  legend->setLayer("legend");
+  
+  setViewport(rect()); // needs to be called after mPlotLayout has been created
+  
+#ifdef Q_OS_WIN
+  setPlottingHint(QCP::phForceRepaint);
+#endif
+  
+  replot();
+}
+
+QCustomPlot::~QCustomPlot()
+{
+  clearPlottables();
+  clearItems();
+
+  if (mPlotLayout)
+  {
+    delete mPlotLayout;
+    mPlotLayout = 0;
+  }
+  
+  mCurrentLayer = 0;
+  qDeleteAll(mLayers); // don't use removeLayer, because it would prevent the last layer to be removed
+  mLayers.clear();
+}
+
+/*!
+  Sets which elements are forcibly drawn antialiased as an \a or combination of QCP::AntialiasedElement.
+  
+  This overrides the antialiasing settings for whole element groups, normally controlled with the
+  \a setAntialiasing function on the individual elements. If an element is neither specified in
+  \ref setAntialiasedElements nor in \ref setNotAntialiasedElements, the antialiasing setting on
+  each individual element instance is used.
+  
+  For example, if \a antialiasedElements contains \ref QCP::aePlottables, all plottables will be
+  drawn antialiased, no matter what the specific QCPAbstractPlottable::setAntialiased value was set
+  to.
+  
+  if an element in \a antialiasedElements is already set in \ref setNotAntialiasedElements, it is
+  removed from there.
+  
+  \see setNotAntialiasedElements
+*/
+void QCustomPlot::setAntialiasedElements(const QCP::AntialiasedElements &antialiasedElements)
+{
+  mAntialiasedElements = antialiasedElements;
+  
+  // make sure elements aren't in mNotAntialiasedElements and mAntialiasedElements simultaneously:
+  if ((mNotAntialiasedElements & mAntialiasedElements) != 0)
+    mNotAntialiasedElements |= ~mAntialiasedElements;
+}
+
+/*!
+  Sets whether the specified \a antialiasedElement is forcibly drawn antialiased.
+  
+  See \ref setAntialiasedElements for details.
+  
+  \see setNotAntialiasedElement
+*/
+void QCustomPlot::setAntialiasedElement(QCP::AntialiasedElement antialiasedElement, bool enabled)
+{
+  if (!enabled && mAntialiasedElements.testFlag(antialiasedElement))
+    mAntialiasedElements &= ~antialiasedElement;
+  else if (enabled && !mAntialiasedElements.testFlag(antialiasedElement))
+    mAntialiasedElements |= antialiasedElement;
+  
+  // make sure elements aren't in mNotAntialiasedElements and mAntialiasedElements simultaneously:
+  if ((mNotAntialiasedElements & mAntialiasedElements) != 0)
+    mNotAntialiasedElements |= ~mAntialiasedElements;
+}
+
+/*!
+  Sets which elements are forcibly drawn not antialiased as an \a or combination of
+  QCP::AntialiasedElement.
+  
+  This overrides the antialiasing settings for whole element groups, normally controlled with the
+  \a setAntialiasing function on the individual elements. If an element is neither specified in
+  \ref setAntialiasedElements nor in \ref setNotAntialiasedElements, the antialiasing setting on
+  each individual element instance is used.
+  
+  For example, if \a notAntialiasedElements contains \ref QCP::aePlottables, no plottables will be
+  drawn antialiased, no matter what the specific QCPAbstractPlottable::setAntialiased value was set
+  to.
+  
+  if an element in \a notAntialiasedElements is already set in \ref setAntialiasedElements, it is
+  removed from there.
+  
+  \see setAntialiasedElements
+*/
+void QCustomPlot::setNotAntialiasedElements(const QCP::AntialiasedElements &notAntialiasedElements)
+{
+  mNotAntialiasedElements = notAntialiasedElements;
+  
+  // make sure elements aren't in mNotAntialiasedElements and mAntialiasedElements simultaneously:
+  if ((mNotAntialiasedElements & mAntialiasedElements) != 0)
+    mAntialiasedElements |= ~mNotAntialiasedElements;
+}
+
+/*!
+  Sets whether the specified \a notAntialiasedElement is forcibly drawn not antialiased.
+  
+  See \ref setNotAntialiasedElements for details.
+  
+  \see setAntialiasedElement
+*/
+void QCustomPlot::setNotAntialiasedElement(QCP::AntialiasedElement notAntialiasedElement, bool enabled)
+{
+  if (!enabled && mNotAntialiasedElements.testFlag(notAntialiasedElement))
+    mNotAntialiasedElements &= ~notAntialiasedElement;
+  else if (enabled && !mNotAntialiasedElements.testFlag(notAntialiasedElement))
+    mNotAntialiasedElements |= notAntialiasedElement;
+  
+  // make sure elements aren't in mNotAntialiasedElements and mAntialiasedElements simultaneously:
+  if ((mNotAntialiasedElements & mAntialiasedElements) != 0)
+    mAntialiasedElements |= ~mNotAntialiasedElements;
+}
+
+/*!
+  If set to true, adding a plottable (e.g. a graph) to the QCustomPlot automatically also adds the
+  plottable to the legend (QCustomPlot::legend).
+  
+  \see addPlottable, addGraph, QCPLegend::addItem
+*/
+void QCustomPlot::setAutoAddPlottableToLegend(bool on)
+{
+  mAutoAddPlottableToLegend = on;
+}
+
+/*!
+  Sets the possible interactions of this QCustomPlot as an or-combination of \ref QCP::Interaction
+  enums. There are the following types of interactions:
