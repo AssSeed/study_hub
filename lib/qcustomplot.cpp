@@ -8847,3 +8847,238 @@ void QCustomPlot::setAutoAddPlottableToLegend(bool on)
 /*!
   Sets the possible interactions of this QCustomPlot as an or-combination of \ref QCP::Interaction
   enums. There are the following types of interactions:
+  
+  <b>Axis range manipulation</b> is controlled via \ref QCP::iRangeDrag and \ref QCP::iRangeZoom. When the
+  respective interaction is enabled, the user may drag axes ranges and zoom with the mouse wheel.
+  For details how to control which axes the user may drag/zoom and in what orientations, see \ref
+  QCPAxisRect::setRangeDrag, \ref QCPAxisRect::setRangeZoom, \ref QCPAxisRect::setRangeDragAxes,
+  \ref QCPAxisRect::setRangeZoomAxes.
+  
+  <b>Plottable selection</b> is controlled by \ref QCP::iSelectPlottables. If \ref QCP::iSelectPlottables is
+  set, the user may select plottables (graphs, curves, bars,...) by clicking on them or in their
+  vicinity (\ref setSelectionTolerance). Whether the user can actually select a plottable can
+  further be restricted with the \ref QCPAbstractPlottable::setSelectable function on the specific
+  plottable. To find out whether a specific plottable is selected, call
+  QCPAbstractPlottable::selected(). To retrieve a list of all currently selected plottables, call
+  \ref selectedPlottables. If you're only interested in QCPGraphs, you may use the convenience
+  function \ref selectedGraphs.
+  
+  <b>Item selection</b> is controlled by \ref QCP::iSelectItems. If \ref QCP::iSelectItems is set, the user
+  may select items (QCPItemLine, QCPItemText,...) by clicking on them or in their vicinity. To find
+  out whether a specific item is selected, call QCPAbstractItem::selected(). To retrieve a list of
+  all currently selected items, call \ref selectedItems.
+  
+  <b>Axis selection</b> is controlled with \ref QCP::iSelectAxes. If \ref QCP::iSelectAxes is set, the user
+  may select parts of the axes by clicking on them. What parts exactly (e.g. Axis base line, tick
+  labels, axis label) are selectable can be controlled via \ref QCPAxis::setSelectableParts for
+  each axis. To retrieve a list of all axes that currently contain selected parts, call \ref
+  selectedAxes. Which parts of an axis are selected, can be retrieved with QCPAxis::selectedParts().
+  
+  <b>Legend selection</b> is controlled with \ref QCP::iSelectLegend. If this is set, the user may
+  select the legend itself or individual items by clicking on them. What parts exactly are
+  selectable can be controlled via \ref QCPLegend::setSelectableParts. To find out whether the
+  legend or any of its child items are selected, check the value of QCPLegend::selectedParts. To
+  find out which child items are selected, call \ref QCPLegend::selectedItems.
+  
+  <b>All other selectable elements</b> The selection of all other selectable objects (e.g.
+  QCPPlotTitle, or your own layerable subclasses) is controlled with \ref QCP::iSelectOther. If set, the
+  user may select those objects by clicking on them. To find out which are currently selected, you
+  need to check their selected state explicitly.
+  
+  If the selection state has changed by user interaction, the \ref selectionChangedByUser signal is
+  emitted. Each selectable object additionally emits an individual selectionChanged signal whenever
+  their selection state has changed, i.e. not only by user interaction.
+  
+  To allow multiple objects to be selected by holding the selection modifier (\ref
+  setMultiSelectModifier), set the flag \ref QCP::iMultiSelect.
+  
+  \note In addition to the selection mechanism presented here, QCustomPlot always emits
+  corresponding signals, when an object is clicked or double clicked. see \ref plottableClick and
+  \ref plottableDoubleClick for example.
+  
+  \see setInteraction, setSelectionTolerance
+*/
+void QCustomPlot::setInteractions(const QCP::Interactions &interactions)
+{
+  mInteractions = interactions;
+}
+
+/*!
+  Sets the single \a interaction of this QCustomPlot to \a enabled.
+  
+  For details about the interaction system, see \ref setInteractions.
+  
+  \see setInteractions
+*/
+void QCustomPlot::setInteraction(const QCP::Interaction &interaction, bool enabled)
+{
+  if (!enabled && mInteractions.testFlag(interaction))
+    mInteractions &= ~interaction;
+  else if (enabled && !mInteractions.testFlag(interaction))
+    mInteractions |= interaction;
+}
+
+/*!
+  Sets the tolerance that is used to decide whether a click selects an object (e.g. a plottable) or
+  not.
+  
+  If the user clicks in the vicinity of the line of e.g. a QCPGraph, it's only regarded as a
+  potential selection when the minimum distance between the click position and the graph line is
+  smaller than \a pixels. Objects that are defined by an area (e.g. QCPBars) only react to clicks
+  directly inside the area and ignore this selection tolerance. In other words, it only has meaning
+  for parts of objects that are too thin to exactly hit with a click and thus need such a
+  tolerance.
+  
+  \see setInteractions, QCPLayerable::selectTest
+*/
+void QCustomPlot::setSelectionTolerance(int pixels)
+{
+  mSelectionTolerance = pixels;
+}
+
+/*!
+  Sets whether antialiasing is disabled for this QCustomPlot while the user is dragging axes
+  ranges. If many objects, especially plottables, are drawn antialiased, this greatly improves
+  performance during dragging. Thus it creates a more responsive user experience. As soon as the
+  user stops dragging, the last replot is done with normal antialiasing, to restore high image
+  quality.
+  
+  \see setAntialiasedElements, setNotAntialiasedElements
+*/
+void QCustomPlot::setNoAntialiasingOnDrag(bool enabled)
+{
+  mNoAntialiasingOnDrag = enabled;
+}
+
+/*!
+  Sets the plotting hints for this QCustomPlot instance as an \a or combination of QCP::PlottingHint.
+  
+  \see setPlottingHint
+*/
+void QCustomPlot::setPlottingHints(const QCP::PlottingHints &hints)
+{
+  mPlottingHints = hints;
+}
+
+/*!
+  Sets the specified plotting \a hint to \a enabled.
+  
+  \see setPlottingHints
+*/
+void QCustomPlot::setPlottingHint(QCP::PlottingHint hint, bool enabled)
+{
+  QCP::PlottingHints newHints = mPlottingHints;
+  if (!enabled)
+    newHints &= ~hint;
+  else
+    newHints |= hint;
+  
+  if (newHints != mPlottingHints)
+    setPlottingHints(newHints);
+}
+
+/*!
+  Sets the keyboard modifier that will be recognized as multi-select-modifier.
+  
+  If \ref QCP::iMultiSelect is specified in \ref setInteractions, the user may select multiple objects
+  by clicking on them one after the other while holding down \a modifier.
+  
+  By default the multi-select-modifier is set to Qt::ControlModifier.
+  
+  \see setInteractions
+*/
+void QCustomPlot::setMultiSelectModifier(Qt::KeyboardModifier modifier)
+{
+  mMultiSelectModifier = modifier;
+}
+
+/*!
+  Sets the viewport of this QCustomPlot. The Viewport is the area that the top level layout
+  (QCustomPlot::plotLayout()) uses as its rect. Normally, the viewport is the entire widget rect.
+  
+  This function is used to allow arbitrary size exports with \ref toPixmap, \ref savePng, \ref
+  savePdf, etc. by temporarily changing the viewport size.
+*/
+void QCustomPlot::setViewport(const QRect &rect)
+{
+  mViewport = rect;
+  if (mPlotLayout)
+    mPlotLayout->setOuterRect(mViewport);
+}
+
+/*!
+  Sets \a pm as the viewport background pixmap (see \ref setViewport). The pixmap is always drawn
+  below all other objects in the plot.
+
+  For cases where the provided pixmap doesn't have the same size as the viewport, scaling can be
+  enabled with \ref setBackgroundScaled and the scaling mode (whether and how the aspect ratio is
+  preserved) can be set with \ref setBackgroundScaledMode. To set all these options in one call,
+  consider using the overloaded version of this function.
+  
+  If a background brush was set with \ref setBackground(const QBrush &brush), the viewport will
+  first be filled with that brush, before drawing the background pixmap. This can be useful for
+  background pixmaps with translucent areas.
+
+  \see setBackgroundScaled, setBackgroundScaledMode
+*/
+void QCustomPlot::setBackground(const QPixmap &pm)
+{
+  mBackgroundPixmap = pm;
+  mScaledBackgroundPixmap = QPixmap();
+}
+
+/*!
+  Sets the background brush of the viewport (see \ref setViewport).
+
+  Before drawing everything else, the background is filled with \a brush. If a background pixmap
+  was set with \ref setBackground(const QPixmap &pm), this brush will be used to fill the viewport
+  before the background pixmap is drawn. This can be useful for background pixmaps with translucent
+  areas.
+  
+  Set \a brush to Qt::NoBrush or Qt::Transparent to leave background transparent. This can be
+  useful for exporting to image formats which support transparency, e.g. \ref savePng.
+
+  \see setBackgroundScaled, setBackgroundScaledMode
+*/
+void QCustomPlot::setBackground(const QBrush &brush)
+{
+  mBackgroundBrush = brush;
+}
+
+/*! \overload
+  
+  Allows setting the background pixmap of the viewport, whether it shall be scaled and how it
+  shall be scaled in one call.
+
+  \see setBackground(const QPixmap &pm), setBackgroundScaled, setBackgroundScaledMode
+*/
+void QCustomPlot::setBackground(const QPixmap &pm, bool scaled, Qt::AspectRatioMode mode)
+{
+  mBackgroundPixmap = pm;
+  mScaledBackgroundPixmap = QPixmap();
+  mBackgroundScaled = scaled;
+  mBackgroundScaledMode = mode;
+}
+
+/*!
+  Sets whether the viewport background pixmap shall be scaled to fit the viewport. If \a scaled is
+  set to true, control whether and how the aspect ratio of the original pixmap is preserved with
+  \ref setBackgroundScaledMode.
+  
+  Note that the scaled version of the original pixmap is buffered, so there is no performance
+  penalty on replots. (Except when the viewport dimensions are changed continuously.)
+  
+  \see setBackground, setBackgroundScaledMode
+*/
+void QCustomPlot::setBackgroundScaled(bool scaled)
+{
+  mBackgroundScaled = scaled;
+}
+
+/*!
+  If scaling of the viewport background pixmap is enabled (\ref setBackgroundScaled), use this
+  function to define whether and how the aspect ratio of the original pixmap is preserved.
+  
+  \see setBackground, setBackgroundScaled
+*/
+void QCustomPlot::setBackgroundScaledMode(Qt::AspectRatioMode mode)
