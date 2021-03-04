@@ -9082,3 +9082,253 @@ void QCustomPlot::setBackgroundScaled(bool scaled)
   \see setBackground, setBackgroundScaled
 */
 void QCustomPlot::setBackgroundScaledMode(Qt::AspectRatioMode mode)
+{
+  mBackgroundScaledMode = mode;
+}
+
+/*!
+  Returns the plottable with \a index. If the index is invalid, returns 0.
+  
+  There is an overloaded version of this function with no parameter which returns the last added
+  plottable, see QCustomPlot::plottable()
+  
+  \see plottableCount, addPlottable
+*/
+QCPAbstractPlottable *QCustomPlot::plottable(int index)
+{
+  if (index >= 0 && index < mPlottables.size())
+  {
+    return mPlottables.at(index);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "index out of bounds:" << index;
+    return 0;
+  }
+}
+
+/*! \overload
+  
+  Returns the last plottable that was added with \ref addPlottable. If there are no plottables in
+  the plot, returns 0.
+  
+  \see plottableCount, addPlottable
+*/
+QCPAbstractPlottable *QCustomPlot::plottable()
+{
+  if (!mPlottables.isEmpty())
+  {
+    return mPlottables.last();
+  } else
+    return 0;
+}
+
+/*!
+  Adds the specified plottable to the plot and, if \ref setAutoAddPlottableToLegend is enabled, to
+  the legend (QCustomPlot::legend). QCustomPlot takes ownership of the plottable.
+  
+  Returns true on success, i.e. when \a plottable isn't already in the plot and the parent plot of
+  \a plottable is this QCustomPlot (the latter is controlled by what axes were passed in the
+  plottable's constructor).
+  
+  \see plottable, plottableCount, removePlottable, clearPlottables
+*/
+bool QCustomPlot::addPlottable(QCPAbstractPlottable *plottable)
+{
+  if (mPlottables.contains(plottable))
+  {
+    qDebug() << Q_FUNC_INFO << "plottable already added to this QCustomPlot:" << reinterpret_cast<quintptr>(plottable);
+    return false;
+  }
+  if (plottable->parentPlot() != this)
+  {
+    qDebug() << Q_FUNC_INFO << "plottable not created with this QCustomPlot as parent:" << reinterpret_cast<quintptr>(plottable);
+    return false;
+  }
+  
+  mPlottables.append(plottable);
+  // possibly add plottable to legend:
+  if (mAutoAddPlottableToLegend)
+    plottable->addToLegend();
+  // special handling for QCPGraphs to maintain the simple graph interface:
+  if (QCPGraph *graph = qobject_cast<QCPGraph*>(plottable))
+    mGraphs.append(graph);
+  if (!plottable->layer()) // usually the layer is already set in the constructor of the plottable (via QCPLayerable constructor)
+    plottable->setLayer(currentLayer());
+  return true;
+}
+
+/*!
+  Removes the specified plottable from the plot and, if necessary, from the legend (QCustomPlot::legend).
+  
+  Returns true on success.
+  
+  \see addPlottable, clearPlottables
+*/
+bool QCustomPlot::removePlottable(QCPAbstractPlottable *plottable)
+{
+  if (!mPlottables.contains(plottable))
+  {
+    qDebug() << Q_FUNC_INFO << "plottable not in list:" << reinterpret_cast<quintptr>(plottable);
+    return false;
+  }
+  
+  // remove plottable from legend:
+  plottable->removeFromLegend();
+  // special handling for QCPGraphs to maintain the simple graph interface:
+  if (QCPGraph *graph = qobject_cast<QCPGraph*>(plottable))
+    mGraphs.removeOne(graph);
+  // remove plottable:
+  delete plottable;
+  mPlottables.removeOne(plottable);
+  return true;
+}
+
+/*! \overload
+  
+  Removes the plottable by its \a index.
+*/
+bool QCustomPlot::removePlottable(int index)
+{
+  if (index >= 0 && index < mPlottables.size())
+    return removePlottable(mPlottables[index]);
+  else
+  {
+    qDebug() << Q_FUNC_INFO << "index out of bounds:" << index;
+    return false;
+  }
+}
+
+/*!
+  Removes all plottables from the plot (and the QCustomPlot::legend, if necessary).
+  
+  Returns the number of plottables removed.
+  
+  \see removePlottable
+*/
+int QCustomPlot::clearPlottables()
+{
+  int c = mPlottables.size();
+  for (int i=c-1; i >= 0; --i)
+    removePlottable(mPlottables[i]);
+  return c;
+}
+
+/*!
+  Returns the number of currently existing plottables in the plot
+  
+  \see plottable, addPlottable
+*/
+int QCustomPlot::plottableCount() const
+{
+  return mPlottables.size();
+}
+
+/*!
+  Returns a list of the selected plottables. If no plottables are currently selected, the list is empty.
+  
+  There is a convenience function if you're only interested in selected graphs, see \ref selectedGraphs.
+  
+  \see setInteractions, QCPAbstractPlottable::setSelectable, QCPAbstractPlottable::setSelected
+*/
+QList<QCPAbstractPlottable*> QCustomPlot::selectedPlottables() const
+{
+  QList<QCPAbstractPlottable*> result;
+  for (int i=0; i<mPlottables.size(); ++i)
+  {
+    if (mPlottables.at(i)->selected())
+      result.append(mPlottables.at(i));
+  }
+  return result;
+}
+
+/*!
+  Returns the plottable at the pixel position \a pos. Plottables that only consist of single lines
+  (like graphs) have a tolerance band around them, see \ref setSelectionTolerance. If multiple
+  plottables come into consideration, the one closest to \a pos is returned.
+  
+  If \a onlySelectable is true, only plottables that are selectable
+  (QCPAbstractPlottable::setSelectable) are considered.
+  
+  If there is no plottable at \a pos, the return value is 0.
+  
+  \see itemAt, layoutElementAt
+*/
+QCPAbstractPlottable *QCustomPlot::plottableAt(const QPointF &pos, bool onlySelectable) const
+{
+  QCPAbstractPlottable *resultPlottable = 0;
+  double resultDistance = mSelectionTolerance; // only regard clicks with distances smaller than mSelectionTolerance as selections, so initialize with that value
+  
+  for (int i=0; i<mPlottables.size(); ++i)
+  {
+    QCPAbstractPlottable *currentPlottable = mPlottables.at(i);
+    if (onlySelectable && !currentPlottable->selectable()) // we could have also passed onlySelectable to the selectTest function, but checking here is faster, because we have access to QCPabstractPlottable::selectable
+      continue;
+    if ((currentPlottable->keyAxis()->axisRect()->rect() & currentPlottable->valueAxis()->axisRect()->rect()).contains(pos.toPoint())) // only consider clicks inside the rect that is spanned by the plottable's key/value axes
+    {
+      double currentDistance = currentPlottable->selectTest(pos, false);
+      if (currentDistance >= 0 && currentDistance < resultDistance)
+      {
+        resultPlottable = currentPlottable;
+        resultDistance = currentDistance;
+      }
+    }
+  }
+  
+  return resultPlottable;
+}
+
+/*!
+  Returns whether this QCustomPlot instance contains the \a plottable.
+  
+  \see addPlottable
+*/
+bool QCustomPlot::hasPlottable(QCPAbstractPlottable *plottable) const
+{
+  return mPlottables.contains(plottable);
+}
+
+/*!
+  Returns the graph with \a index. If the index is invalid, returns 0.
+  
+  There is an overloaded version of this function with no parameter which returns the last created
+  graph, see QCustomPlot::graph()
+  
+  \see graphCount, addGraph
+*/
+QCPGraph *QCustomPlot::graph(int index) const
+{
+  if (index >= 0 && index < mGraphs.size())
+  {
+    return mGraphs.at(index);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "index out of bounds:" << index;
+    return 0;
+  }
+}
+
+/*! \overload
+  
+  Returns the last graph, that was created with \ref addGraph. If there are no graphs in the plot,
+  returns 0.
+  
+  \see graphCount, addGraph
+*/
+QCPGraph *QCustomPlot::graph() const
+{
+  if (!mGraphs.isEmpty())
+  {
+    return mGraphs.last();
+  } else
+    return 0;
+}
+
+/*!
+  Creates a new graph inside the plot. If \a keyAxis and \a valueAxis are left unspecified (0), the
+  bottom (xAxis) is used as key and the left (yAxis) is used as value axis. If specified, \a
+  keyAxis and \a valueAxis must reside in this QCustomPlot.
+  
+  \a keyAxis will be used as key axis (typically "x") and \a valueAxis as value axis (typically
+  "y") for the graph.
+  
+  Returns a pointer to the newly created graph, or 0 if adding the graph failed.
