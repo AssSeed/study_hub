@@ -9332,3 +9332,252 @@ QCPGraph *QCustomPlot::graph() const
   "y") for the graph.
   
   Returns a pointer to the newly created graph, or 0 if adding the graph failed.
+  
+  \see graph, graphCount, removeGraph, clearGraphs
+*/
+QCPGraph *QCustomPlot::addGraph(QCPAxis *keyAxis, QCPAxis *valueAxis)
+{
+  if (!keyAxis) keyAxis = xAxis;
+  if (!valueAxis) valueAxis = yAxis;
+  if (!keyAxis || !valueAxis)
+  {
+    qDebug() << Q_FUNC_INFO << "can't use default QCustomPlot xAxis or yAxis, because at least one is invalid (has been deleted)";
+    return 0;
+  }
+  if (keyAxis->parentPlot() != this || valueAxis->parentPlot() != this)
+  {
+    qDebug() << Q_FUNC_INFO << "passed keyAxis or valueAxis doesn't have this QCustomPlot as parent";
+    return 0;
+  }
+  
+  QCPGraph *newGraph = new QCPGraph(keyAxis, valueAxis);
+  if (addPlottable(newGraph))
+  {
+    newGraph->setName("Graph "+QString::number(mGraphs.size()));
+    return newGraph;
+  } else
+  {
+    delete newGraph;
+    return 0;
+  }
+}
+
+/*!
+  Removes the specified \a graph from the plot and, if necessary, from the QCustomPlot::legend. If
+  any other graphs in the plot have a channel fill set towards the removed graph, the channel fill
+  property of those graphs is reset to zero (no channel fill).
+  
+  Returns true on success.
+  
+  \see clearGraphs
+*/
+bool QCustomPlot::removeGraph(QCPGraph *graph)
+{
+  return removePlottable(graph);
+}
+
+/*! \overload
+  
+  Removes the graph by its \a index.
+*/
+bool QCustomPlot::removeGraph(int index)
+{
+  if (index >= 0 && index < mGraphs.size())
+    return removeGraph(mGraphs[index]);
+  else
+    return false;
+}
+
+/*!
+  Removes all graphs from the plot (and the QCustomPlot::legend, if necessary).
+
+  Returns the number of graphs removed.
+  
+  \see removeGraph
+*/
+int QCustomPlot::clearGraphs()
+{
+  int c = mGraphs.size();
+  for (int i=c-1; i >= 0; --i)
+    removeGraph(mGraphs[i]);
+  return c;
+}
+
+/*!
+  Returns the number of currently existing graphs in the plot
+  
+  \see graph, addGraph
+*/
+int QCustomPlot::graphCount() const
+{
+  return mGraphs.size();
+}
+
+/*!
+  Returns a list of the selected graphs. If no graphs are currently selected, the list is empty.
+  
+  If you are not only interested in selected graphs but other plottables like QCPCurve, QCPBars,
+  etc., use \ref selectedPlottables.
+  
+  \see setInteractions, selectedPlottables, QCPAbstractPlottable::setSelectable, QCPAbstractPlottable::setSelected
+*/
+QList<QCPGraph*> QCustomPlot::selectedGraphs() const
+{
+  QList<QCPGraph*> result;
+  for (int i=0; i<mGraphs.size(); ++i)
+  {
+    if (mGraphs.at(i)->selected())
+      result.append(mGraphs.at(i));
+  }
+  return result;
+}
+
+/*!
+  Returns the item with \a index. If the index is invalid, returns 0.
+  
+  There is an overloaded version of this function with no parameter which returns the last added
+  item, see QCustomPlot::item()
+  
+  \see itemCount, addItem
+*/
+QCPAbstractItem *QCustomPlot::item(int index) const
+{
+  if (index >= 0 && index < mItems.size())
+  {
+    return mItems.at(index);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "index out of bounds:" << index;
+    return 0;
+  }
+}
+
+/*! \overload
+  
+  Returns the last item, that was added with \ref addItem. If there are no items in the plot,
+  returns 0.
+  
+  \see itemCount, addItem
+*/
+QCPAbstractItem *QCustomPlot::item() const
+{
+  if (!mItems.isEmpty())
+  {
+    return mItems.last();
+  } else
+    return 0;
+}
+
+/*!
+  Adds the specified item to the plot. QCustomPlot takes ownership of the item.
+  
+  Returns true on success, i.e. when \a item wasn't already in the plot and the parent plot of \a
+  item is this QCustomPlot.
+  
+  \see item, itemCount, removeItem, clearItems
+*/
+bool QCustomPlot::addItem(QCPAbstractItem *item)
+{
+  if (!mItems.contains(item) && item->parentPlot() == this)
+  {
+    mItems.append(item);
+    return true;
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "item either already in list or not created with this QCustomPlot as parent:" << reinterpret_cast<quintptr>(item);
+    return false;
+  }
+}
+
+/*!
+  Removes the specified item from the plot.
+  
+  Returns true on success.
+  
+  \see addItem, clearItems
+*/
+bool QCustomPlot::removeItem(QCPAbstractItem *item)
+{
+  if (mItems.contains(item))
+  {
+    delete item;
+    mItems.removeOne(item);
+    return true;
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "item not in list:" << reinterpret_cast<quintptr>(item);
+    return false;
+  }
+}
+
+/*! \overload
+  
+  Removes the item by its \a index.
+*/
+bool QCustomPlot::removeItem(int index)
+{
+  if (index >= 0 && index < mItems.size())
+    return removeItem(mItems[index]);
+  else
+  {
+    qDebug() << Q_FUNC_INFO << "index out of bounds:" << index;
+    return false;
+  }
+}
+
+/*!
+  Removes all items from the plot.
+  
+  Returns the number of items removed.
+  
+  \see removeItem
+*/
+int QCustomPlot::clearItems()
+{
+  int c = mItems.size();
+  for (int i=c-1; i >= 0; --i)
+    removeItem(mItems[i]);
+  return c;
+}
+
+/*!
+  Returns the number of currently existing items in the plot
+  
+  \see item, addItem
+*/
+int QCustomPlot::itemCount() const
+{
+  return mItems.size();
+}
+
+/*!
+  Returns a list of the selected items. If no items are currently selected, the list is empty.
+  
+  \see setInteractions, QCPAbstractItem::setSelectable, QCPAbstractItem::setSelected
+*/
+QList<QCPAbstractItem*> QCustomPlot::selectedItems() const
+{
+  QList<QCPAbstractItem*> result;
+  for (int i=0; i<mItems.size(); ++i)
+  {
+    if (mItems.at(i)->selected())
+      result.append(mItems.at(i));
+  }
+  return result;
+}
+
+/*!
+  Returns the item at the pixel position \a pos. Items that only consist of single lines (e.g. \ref
+  QCPItemLine or \ref QCPItemCurve) have a tolerance band around them, see \ref
+  setSelectionTolerance. If multiple items come into consideration, the one closest to \a pos is
+  returned.
+  
+  If \a onlySelectable is true, only items that are selectable (QCPAbstractItem::setSelectable) are
+  considered.
+  
+  If there is no item at \a pos, the return value is 0.
+  
+  \see plottableAt, layoutElementAt
+*/
+QCPAbstractItem *QCustomPlot::itemAt(const QPointF &pos, bool onlySelectable) const
+{
