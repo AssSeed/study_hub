@@ -9820,3 +9820,251 @@ bool QCustomPlot::moveLayer(QCPLayer *layer, QCPLayer *otherLayer, QCustomPlot::
   updateLayerIndices();
   return true;
 }
+
+/*!
+  Returns the number of axis rects in the plot.
+  
+  All axis rects can be accessed via QCustomPlot::axisRect().
+  
+  Initially, only one axis rect exists in the plot.
+  
+  \see axisRect, axisRects
+*/
+int QCustomPlot::axisRectCount() const
+{
+  return axisRects().size();
+}
+
+/*!
+  Returns the axis rect with \a index.
+  
+  Initially, only one axis rect (with index 0) exists in the plot. If multiple axis rects were
+  added, all of them may be accessed with this function in a linear fashion (even when they are
+  nested in a layout hierarchy or inside other axis rects via QCPAxisRect::insetLayout).
+  
+  \see axisRectCount, axisRects
+*/
+QCPAxisRect *QCustomPlot::axisRect(int index) const
+{
+  const QList<QCPAxisRect*> rectList = axisRects();
+  if (index >= 0 && index < rectList.size())
+  {
+    return rectList.at(index);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "invalid axis rect index" << index;
+    return 0;
+  }
+}
+
+/*!
+  Returns all axis rects in the plot.
+  
+  \see axisRectCount, axisRect
+*/
+QList<QCPAxisRect*> QCustomPlot::axisRects() const
+{
+  QList<QCPAxisRect*> result;
+  QStack<QCPLayoutElement*> elementStack;
+  if (mPlotLayout)
+    elementStack.push(mPlotLayout);
+  
+  while (!elementStack.isEmpty())
+  {
+    QList<QCPLayoutElement*> subElements = elementStack.pop()->elements(false);
+    for (int i=0; i<subElements.size(); ++i)
+    {
+      if (QCPLayoutElement *element = subElements.at(i))
+      {
+        elementStack.push(element);
+        if (QCPAxisRect *ar = qobject_cast<QCPAxisRect*>(element))
+          result.append(ar);
+      }
+    }
+  }
+  
+  return result;
+}
+
+/*!
+  Returns the layout element at pixel position \a pos. If there is no element at that position,
+  returns 0.
+  
+  Only visible elements are used. If \ref QCPLayoutElement::setVisible on the element itself or on
+  any of its parent elements is set to false, it will not be considered.
+  
+  \see itemAt, plottableAt
+*/
+QCPLayoutElement *QCustomPlot::layoutElementAt(const QPointF &pos) const
+{
+  QCPLayoutElement *current = mPlotLayout;
+  bool searchSubElements = true;
+  while (searchSubElements && current)
+  {
+    searchSubElements = false;
+    const QList<QCPLayoutElement*> elements = current->elements(false);
+    for (int i=0; i<elements.size(); ++i)
+    {
+      if (elements.at(i) && elements.at(i)->realVisibility() && elements.at(i)->selectTest(pos, false) >= 0)
+      {
+        current = elements.at(i);
+        searchSubElements = true;
+        break;
+      }
+    }
+  }
+  return current;
+}
+
+/*!
+  Returns the axes that currently have selected parts, i.e. whose selection state is not \ref
+  QCPAxis::spNone.
+  
+  \see selectedPlottables, selectedLegends, setInteractions, QCPAxis::setSelectedParts,
+  QCPAxis::setSelectableParts
+*/
+QList<QCPAxis*> QCustomPlot::selectedAxes() const
+{
+  QList<QCPAxis*> result, allAxes;
+  QList<QCPAxisRect*> rects = axisRects();
+  for (int i=0; i<rects.size(); ++i)
+    allAxes << rects.at(i)->axes();
+  
+  for (int i=0; i<allAxes.size(); ++i)
+  {
+    if (allAxes.at(i)->selectedParts() != QCPAxis::spNone)
+      result.append(allAxes.at(i));
+  }
+  
+  return result;
+}
+
+/*!
+  Returns the legends that currently have selected parts, i.e. whose selection state is not \ref
+  QCPLegend::spNone.
+  
+  \see selectedPlottables, selectedAxes, setInteractions, QCPLegend::setSelectedParts,
+  QCPLegend::setSelectableParts, QCPLegend::selectedItems
+*/
+QList<QCPLegend*> QCustomPlot::selectedLegends() const
+{
+  QList<QCPLegend*> result;
+  
+  QStack<QCPLayoutElement*> elementStack;
+  if (mPlotLayout)
+    elementStack.push(mPlotLayout);
+  
+  while (!elementStack.isEmpty())
+  {
+    QList<QCPLayoutElement*> subElements = elementStack.pop()->elements(false);
+    for (int i=0; i<subElements.size(); ++i)
+    {
+      if (QCPLayoutElement *element = subElements.at(i))
+      {
+        elementStack.push(element);
+        if (QCPLegend *leg = qobject_cast<QCPLegend*>(element))
+        {
+          if (leg->selectedParts() != QCPLegend::spNone)
+            result.append(leg);
+        }
+      }
+    }
+  }
+  
+  return result;
+}
+
+/*!
+  Deselects all layerables (plottables, items, axes, legends,...) of the QCustomPlot.
+  
+  Since calling this function is not a user interaction, this does not emit the \ref
+  selectionChangedByUser signal. The individual selectionChanged signals are emitted though, if the
+  objects were previously selected.
+  
+  \see setInteractions, selectedPlottables, selectedItems, selectedAxes, selectedLegends
+*/
+void QCustomPlot::deselectAll()
+{
+  for (int i=0; i<mLayers.size(); ++i)
+  {
+    QList<QCPLayerable*> layerables = mLayers.at(i)->children();
+    for (int k=0; k<layerables.size(); ++k)
+      layerables.at(k)->deselectEvent(0);
+  }
+}
+
+/*!
+  Causes a complete replot into the internal buffer. Finally, update() is called, to redraw the
+  buffer on the QCustomPlot widget surface. This is the method that must be called to make changes,
+  for example on the axis ranges or data points of graphs, visible.
+  
+  Under a few circumstances, QCustomPlot causes a replot by itself. Those are resize events of the
+  QCustomPlot widget and user interactions (object selection and range dragging/zooming).
+  
+  Before the replot happens, the signal \ref beforeReplot is emitted. After the replot, \ref
+  afterReplot is emitted. It is safe to mutually connect the replot slot with any of those two
+  signals on two QCustomPlots to make them replot synchronously, it won't cause an infinite
+  recursion.
+*/
+void QCustomPlot::replot()
+{
+  if (mReplotting) // incase signals loop back to replot slot
+    return;
+  mReplotting = true;
+  emit beforeReplot();
+  mPaintBuffer.fill(mBackgroundBrush.style() == Qt::SolidPattern ? mBackgroundBrush.color() : Qt::transparent);
+  QCPPainter painter;
+  painter.begin(&mPaintBuffer);
+  if (painter.isActive()) 
+  {
+    painter.setRenderHint(QPainter::HighQualityAntialiasing); // to make Antialiasing look good if using the OpenGL graphicssystem
+    if (mBackgroundBrush.style() != Qt::SolidPattern && mBackgroundBrush.style() != Qt::NoBrush)
+      painter.fillRect(mViewport, mBackgroundBrush);
+    draw(&painter);
+    painter.end();
+    if (mPlottingHints.testFlag(QCP::phForceRepaint))
+      repaint();
+    else
+      update();
+  } else // might happen if QCustomPlot has width or height zero
+    qDebug() << Q_FUNC_INFO << "Couldn't activate painter on buffer";
+  emit afterReplot();
+  mReplotting = false;
+}
+
+/*!
+  Rescales the axes such that all plottables (like graphs) in the plot are fully visible.
+  
+  if \a onlyVisiblePlottables is set to true, only the plottables that have their visibility set to true
+  (QCPLayerable::setVisible), will be used to rescale the axes.
+  
+  \see QCPAbstractPlottable::rescaleAxes, QCPAxis::rescale
+*/
+void QCustomPlot::rescaleAxes(bool onlyVisiblePlottables)
+{
+  // get a list of all axes in the plot:
+  QList<QCPAxis*> axes;
+  QList<QCPAxisRect*> rects = axisRects();
+  for (int i=0; i<rects.size(); ++i)
+    axes << rects.at(i)->axes();
+  
+  // call rescale on all axes:
+  for (int i=0; i<axes.size(); ++i)
+    axes.at(i)->rescale(onlyVisiblePlottables);
+}
+
+/*!
+  Saves a PDF with the vectorized plot to the file \a fileName. The axis ratio as well as the scale
+  of texts and lines will be derived from the specified \a width and \a height. This means, the
+  output will look like the normal on-screen output of a QCustomPlot widget with the corresponding
+  pixel width and height. If either \a width or \a height is zero, the exported image will have the
+  same dimensions as the QCustomPlot widget currently has.
+
+  \a noCosmeticPen disables the use of cosmetic pens when drawing to the PDF file. Cosmetic pens
+  are pens with numerical width 0, which are always drawn as a one pixel wide line, no matter what
+  zoom factor is set in the PDF-Viewer. For more information about cosmetic pens, see the QPainter
+  and QPen documentation.
+  
+  The objects of the plot will appear in the current selection state. If you don't want any
+  selected objects to be painted in their selected look, deselect everything with \ref deselectAll
+  before calling this function.
