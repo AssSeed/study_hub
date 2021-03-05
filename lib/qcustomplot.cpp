@@ -9581,3 +9581,242 @@ QList<QCPAbstractItem*> QCustomPlot::selectedItems() const
 */
 QCPAbstractItem *QCustomPlot::itemAt(const QPointF &pos, bool onlySelectable) const
 {
+  QCPAbstractItem *resultItem = 0;
+  double resultDistance = mSelectionTolerance; // only regard clicks with distances smaller than mSelectionTolerance as selections, so initialize with that value
+  
+  for (int i=0; i<mItems.size(); ++i)
+  {
+    QCPAbstractItem *currentItem = mItems[i];
+    if (onlySelectable && !currentItem->selectable()) // we could have also passed onlySelectable to the selectTest function, but checking here is faster, because we have access to QCPAbstractItem::selectable
+      continue;
+    if (!currentItem->clipToAxisRect() || currentItem->clipRect().contains(pos.toPoint())) // only consider clicks inside axis cliprect of the item if actually clipped to it
+    {
+      double currentDistance = currentItem->selectTest(pos, false);
+      if (currentDistance >= 0 && currentDistance < resultDistance)
+      {
+        resultItem = currentItem;
+        resultDistance = currentDistance;
+      }
+    }
+  }
+  
+  return resultItem;
+}
+
+/*!
+  Returns whether this QCustomPlot contains the \a item.
+  
+  \see addItem
+*/
+bool QCustomPlot::hasItem(QCPAbstractItem *item) const
+{
+  return mItems.contains(item);
+}
+
+/*!
+  Returns the layer with the specified \a name. If there is no layer with the specified name, 0 is
+  returned.
+  
+  Layer names are case-sensitive.
+  
+  \see addLayer, moveLayer, removeLayer
+*/
+QCPLayer *QCustomPlot::layer(const QString &name) const
+{
+  for (int i=0; i<mLayers.size(); ++i)
+  {
+    if (mLayers.at(i)->name() == name)
+      return mLayers.at(i);
+  }
+  return 0;
+}
+
+/*! \overload
+  
+  Returns the layer by \a index. If the index is invalid, 0 is returned.
+  
+  \see addLayer, moveLayer, removeLayer
+*/
+QCPLayer *QCustomPlot::layer(int index) const
+{
+  if (index >= 0 && index < mLayers.size())
+  {
+    return mLayers.at(index);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "index out of bounds:" << index;
+    return 0;
+  }
+}
+
+/*!
+  Returns the layer that is set as current layer (see \ref setCurrentLayer).
+*/
+QCPLayer *QCustomPlot::currentLayer() const
+{
+  return mCurrentLayer; 
+}
+
+/*!
+  Sets the layer with the specified \a name to be the current layer. All layerables (\ref
+  QCPLayerable), e.g. plottables and items, are created on the current layer.
+  
+  Returns true on success, i.e. if there is a layer with the specified \a name in the QCustomPlot.
+  
+  Layer names are case-sensitive.
+  
+  \see addLayer, moveLayer, removeLayer, QCPLayerable::setLayer
+*/
+bool QCustomPlot::setCurrentLayer(const QString &name)
+{
+  if (QCPLayer *newCurrentLayer = layer(name))
+  {
+    return setCurrentLayer(newCurrentLayer);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "layer with name doesn't exist:" << name;
+    return false;
+  }
+}
+
+/*! \overload
+  
+  Sets the provided \a layer to be the current layer.
+  
+  Returns true on success, i.e. when \a layer is a valid layer in the QCustomPlot.
+  
+  \see addLayer, moveLayer, removeLayer
+*/
+bool QCustomPlot::setCurrentLayer(QCPLayer *layer)
+{
+  if (!mLayers.contains(layer))
+  {
+    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(layer);
+    return false;
+  }
+  
+  mCurrentLayer = layer;
+  return true;
+}
+
+/*!
+  Returns the number of currently existing layers in the plot
+  
+  \see layer, addLayer
+*/
+int QCustomPlot::layerCount() const
+{
+  return mLayers.size();
+}
+
+/*!
+  Adds a new layer to this QCustomPlot instance. The new layer will have the name \a name, which
+  must be unique. Depending on \a insertMode, it is positioned either below or above \a otherLayer.
+  
+  Returns true on success, i.e. if there is no other layer named \a name and \a otherLayer is a
+  valid layer inside this QCustomPlot.
+  
+  If \a otherLayer is 0, the highest layer in the QCustomPlot will be used.
+  
+  For an explanation of what layers are in QCustomPlot, see the documentation of \ref QCPLayer.
+  
+  \see layer, moveLayer, removeLayer
+*/
+bool QCustomPlot::addLayer(const QString &name, QCPLayer *otherLayer, QCustomPlot::LayerInsertMode insertMode)
+{
+  if (!otherLayer)
+    otherLayer = mLayers.last();
+  if (!mLayers.contains(otherLayer))
+  {
+    qDebug() << Q_FUNC_INFO << "otherLayer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(otherLayer);
+    return false;
+  }
+  if (layer(name))
+  {
+    qDebug() << Q_FUNC_INFO << "A layer exists already with the name" << name;
+    return false;
+  }
+    
+  QCPLayer *newLayer = new QCPLayer(this, name);
+  mLayers.insert(otherLayer->index() + (insertMode==limAbove ? 1:0), newLayer);
+  updateLayerIndices();
+  return true;
+}
+
+/*!
+  Removes the specified \a layer and returns true on success.
+  
+  All layerables (e.g. plottables and items) on the removed layer will be moved to the layer below
+  \a layer. If \a layer is the bottom layer, the layerables are moved to the layer above. In both
+  cases, the total rendering order of all layerables in the QCustomPlot is preserved.
+  
+  If \a layer is the current layer (\ref setCurrentLayer), the layer below (or above, if bottom
+  layer) becomes the new current layer.
+  
+  It is not possible to remove the last layer of the plot.
+  
+  \see layer, addLayer, moveLayer
+*/
+bool QCustomPlot::removeLayer(QCPLayer *layer)
+{
+  if (!mLayers.contains(layer))
+  {
+    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(layer);
+    return false;
+  }
+  if (mLayers.size() < 2)
+  {
+    qDebug() << Q_FUNC_INFO << "can't remove last layer";
+    return false;
+  }
+  
+  // append all children of this layer to layer below (if this is lowest layer, prepend to layer above)
+  int removedIndex = layer->index();
+  bool isFirstLayer = removedIndex==0;
+  QCPLayer *targetLayer = isFirstLayer ? mLayers.at(removedIndex+1) : mLayers.at(removedIndex-1);
+  QList<QCPLayerable*> children = layer->children();
+  if (isFirstLayer) // prepend in reverse order (so order relative to each other stays the same)
+  {
+    for (int i=children.size()-1; i>=0; --i)
+      children.at(i)->moveToLayer(targetLayer, true);
+  } else  // append normally
+  {
+    for (int i=0; i<children.size(); ++i)
+      children.at(i)->moveToLayer(targetLayer, false);
+  }
+  // if removed layer is current layer, change current layer to layer below/above:
+  if (layer == mCurrentLayer)
+    setCurrentLayer(targetLayer);
+  // remove layer:
+  delete layer;
+  mLayers.removeOne(layer);
+  updateLayerIndices();
+  return true;
+}
+
+/*!
+  Moves the specified \a layer either above or below \a otherLayer. Whether it's placed above or
+  below is controlled with \a insertMode.
+  
+  Returns true on success, i.e. when both \a layer and \a otherLayer are valid layers in the
+  QCustomPlot.
+  
+  \see layer, addLayer, moveLayer
+*/
+bool QCustomPlot::moveLayer(QCPLayer *layer, QCPLayer *otherLayer, QCustomPlot::LayerInsertMode insertMode)
+{
+  if (!mLayers.contains(layer))
+  {
+    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(layer);
+    return false;
+  }
+  if (!mLayers.contains(otherLayer))
+  {
+    qDebug() << Q_FUNC_INFO << "otherLayer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(otherLayer);
+    return false;
+  }
+  
+  mLayers.move(layer->index(), otherLayer->index() + (insertMode==limAbove ? 1:0));
+  updateLayerIndices();
+  return true;
+}
