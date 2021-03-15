@@ -10068,3 +10068,257 @@ void QCustomPlot::rescaleAxes(bool onlyVisiblePlottables)
   The objects of the plot will appear in the current selection state. If you don't want any
   selected objects to be painted in their selected look, deselect everything with \ref deselectAll
   before calling this function.
+
+  Returns true on success.
+  
+  \warning
+  \li If you plan on editing the exported PDF file with a vector graphics editor like
+  Inkscape, it is advised to set \a noCosmeticPen to true to avoid losing those cosmetic lines
+  (which might be quite many, because cosmetic pens are the default for e.g. axes and tick marks).
+  \li If calling this function inside the constructor of the parent of the QCustomPlot widget
+  (i.e. the MainWindow constructor, if QCustomPlot is inside the MainWindow), always provide
+  explicit non-zero widths and heights. If you leave \a width or \a height as 0 (default), this
+  function uses the current width and height of the QCustomPlot widget. However, in Qt, these
+  aren't defined yet inside the constructor, so you would get an image that has strange
+  widths/heights.
+  
+  \note On Android systems, this method does nothing and issues an according qDebug warning message.
+  
+  \see savePng, saveBmp, saveJpg, saveRastered
+*/
+bool QCustomPlot::savePdf(const QString &fileName, bool noCosmeticPen, int width, int height)
+{
+  bool success = false;
+#ifdef QT_NO_PRINTER
+  Q_UNUSED(fileName)
+  Q_UNUSED(noCosmeticPen)
+  Q_UNUSED(width)
+  Q_UNUSED(height)
+  qDebug() << Q_FUNC_INFO << "Qt was built without printer support (QT_NO_PRINTER). PDF not created.";
+#else
+  int newWidth, newHeight;
+  if (width == 0 || height == 0)
+  {
+    newWidth = this->width();
+    newHeight = this->height();
+  } else
+  {
+    newWidth = width;
+    newHeight = height;
+  }
+  
+  QPrinter printer(QPrinter::ScreenResolution);
+  printer.setOutputFileName(fileName);
+  printer.setOutputFormat(QPrinter::PdfFormat);
+  printer.setFullPage(true);
+  QRect oldViewport = viewport();
+  setViewport(QRect(0, 0, newWidth, newHeight));
+  printer.setPaperSize(viewport().size(), QPrinter::DevicePixel);
+  QCPPainter printpainter;
+  if (printpainter.begin(&printer))
+  {
+    printpainter.setMode(QCPPainter::pmVectorized);
+    printpainter.setMode(QCPPainter::pmNoCaching);
+    printpainter.setMode(QCPPainter::pmNonCosmetic, noCosmeticPen);
+    printpainter.setWindow(mViewport);
+    if (mBackgroundBrush.style() != Qt::NoBrush &&
+        mBackgroundBrush.color() != Qt::white &&
+        mBackgroundBrush.color() != Qt::transparent &&
+        mBackgroundBrush.color().alpha() > 0) // draw pdf background color if not white/transparent
+      printpainter.fillRect(viewport(), mBackgroundBrush);
+    draw(&printpainter);
+    printpainter.end();
+    success = true;
+  }
+  setViewport(oldViewport);
+#endif // QT_NO_PRINTER
+  return success;
+}
+
+/*!
+  Saves a PNG image file to \a fileName on disc. The output plot will have the dimensions \a width
+  and \a height in pixels. If either \a width or \a height is zero, the exported image will have
+  the same dimensions as the QCustomPlot widget currently has. Line widths and texts etc. are not
+  scaled up when larger widths/heights are used. If you want that effect, use the \a scale parameter.
+
+  For example, if you set both \a width and \a height to 100 and \a scale to 2, you will end up with an
+  image file of size 200*200 in which all graphical elements are scaled up by factor 2 (line widths,
+  texts, etc.). This scaling is not done by stretching a 100*100 image, the result will have full
+  200*200 pixel resolution.
+  
+  If you use a high scaling factor, it is recommended to enable antialiasing for all elements via
+  temporarily setting \ref QCustomPlot::setAntialiasedElements to \ref QCP::aeAll as this allows
+  QCustomPlot to place objects with sub-pixel accuracy.
+
+  \warning If calling this function inside the constructor of the parent of the QCustomPlot widget
+  (i.e. the MainWindow constructor, if QCustomPlot is inside the MainWindow), always provide
+  explicit non-zero widths and heights. If you leave \a width or \a height as 0 (default), this
+  function uses the current width and height of the QCustomPlot widget. However, in Qt, these
+  aren't defined yet inside the constructor, so you would get an image that has strange
+  widths/heights.
+  
+  The objects of the plot will appear in the current selection state. If you don't want any selected
+  objects to be painted in their selected look, deselect everything with \ref deselectAll before calling
+  this function.
+
+  If you want the PNG to have a transparent background, call \ref setBackground(const QBrush
+  &brush) with no brush (Qt::NoBrush) or a transparent color (Qt::transparent), before saving.
+
+  PNG compression can be controlled with the \a quality parameter which must be between 0 and 100 or
+  -1 to use the default setting.
+  
+  Returns true on success. If this function fails, most likely the PNG format isn't supported by
+  the system, see Qt docs about QImageWriter::supportedImageFormats().
+
+  \see savePdf, saveBmp, saveJpg, saveRastered
+*/
+bool QCustomPlot::savePng(const QString &fileName, int width, int height, double scale, int quality)
+{  
+  return saveRastered(fileName, width, height, scale, "PNG", quality);
+}
+
+/*!
+  Saves a JPG image file to \a fileName on disc. The output plot will have the dimensions \a width
+  and \a height in pixels. If either \a width or \a height is zero, the exported image will have
+  the same dimensions as the QCustomPlot widget currently has. Line widths and texts etc. are not
+  scaled up when larger widths/heights are used. If you want that effect, use the \a scale parameter.
+
+  For example, if you set both \a width and \a height to 100 and \a scale to 2, you will end up with an
+  image file of size 200*200 in which all graphical elements are scaled up by factor 2 (line widths,
+  texts, etc.). This scaling is not done by stretching a 100*100 image, the result will have full
+  200*200 pixel resolution.
+  
+  If you use a high scaling factor, it is recommended to enable antialiasing for all elements via
+  temporarily setting \ref QCustomPlot::setAntialiasedElements to \ref QCP::aeAll as this allows
+  QCustomPlot to place objects with sub-pixel accuracy.
+
+  \warning If calling this function inside the constructor of the parent of the QCustomPlot widget
+  (i.e. the MainWindow constructor, if QCustomPlot is inside the MainWindow), always provide
+  explicit non-zero widths and heights. If you leave \a width or \a height as 0 (default), this
+  function uses the current width and height of the QCustomPlot widget. However, in Qt, these
+  aren't defined yet inside the constructor, so you would get an image that has strange
+  widths/heights.
+
+  The objects of the plot will appear in the current selection state. If you don't want any selected
+  objects to be painted in their selected look, deselect everything with \ref deselectAll before calling
+  this function.
+
+  JPG compression can be controlled with the \a quality parameter which must be between 0 and 100 or
+  -1 to use the default setting.
+  
+  Returns true on success. If this function fails, most likely the JPG format isn't supported by
+  the system, see Qt docs about QImageWriter::supportedImageFormats().
+
+  \see savePdf, savePng, saveBmp, saveRastered
+*/
+bool QCustomPlot::saveJpg(const QString &fileName, int width, int height, double scale, int quality)
+{
+  return saveRastered(fileName, width, height, scale, "JPG", quality);
+}
+
+/*!
+  Saves a BMP image file to \a fileName on disc. The output plot will have the dimensions \a width
+  and \a height in pixels. If either \a width or \a height is zero, the exported image will have
+  the same dimensions as the QCustomPlot widget currently has. Line widths and texts etc. are not
+  scaled up when larger widths/heights are used. If you want that effect, use the \a scale parameter.
+
+  For example, if you set both \a width and \a height to 100 and \a scale to 2, you will end up with an
+  image file of size 200*200 in which all graphical elements are scaled up by factor 2 (line widths,
+  texts, etc.). This scaling is not done by stretching a 100*100 image, the result will have full
+  200*200 pixel resolution.
+  
+  If you use a high scaling factor, it is recommended to enable antialiasing for all elements via
+  temporarily setting \ref QCustomPlot::setAntialiasedElements to \ref QCP::aeAll as this allows
+  QCustomPlot to place objects with sub-pixel accuracy.
+
+  \warning If calling this function inside the constructor of the parent of the QCustomPlot widget
+  (i.e. the MainWindow constructor, if QCustomPlot is inside the MainWindow), always provide
+  explicit non-zero widths and heights. If you leave \a width or \a height as 0 (default), this
+  function uses the current width and height of the QCustomPlot widget. However, in Qt, these
+  aren't defined yet inside the constructor, so you would get an image that has strange
+  widths/heights.
+
+  The objects of the plot will appear in the current selection state. If you don't want any selected
+  objects to be painted in their selected look, deselect everything with \ref deselectAll before calling
+  this function.
+  
+  Returns true on success. If this function fails, most likely the BMP format isn't supported by
+  the system, see Qt docs about QImageWriter::supportedImageFormats().
+
+  \see savePdf, savePng, saveJpg, saveRastered
+*/
+bool QCustomPlot::saveBmp(const QString &fileName, int width, int height, double scale)
+{
+  return saveRastered(fileName, width, height, scale, "BMP");
+}
+
+/*! \internal
+  
+  Returns a minimum size hint that corresponds to the minimum size of the top level layout
+  (\ref plotLayout). To prevent QCustomPlot from being collapsed to size/width zero, set a minimum
+  size (setMinimumSize) either on the whole QCustomPlot or on any layout elements inside the plot.
+  This is especially important, when placed in a QLayout where other components try to take in as
+  much space as possible (e.g. QMdiArea).
+*/
+QSize QCustomPlot::minimumSizeHint() const
+{
+  return mPlotLayout->minimumSizeHint();
+}
+
+/*! \internal
+  
+  Returns a size hint that is the same as \ref minimumSizeHint.
+  
+*/
+QSize QCustomPlot::sizeHint() const
+{
+  return mPlotLayout->minimumSizeHint();
+}
+
+/*! \internal
+  
+  Event handler for when the QCustomPlot widget needs repainting. This does not cause a \ref replot, but
+  draws the internal buffer on the widget surface.
+*/
+void QCustomPlot::paintEvent(QPaintEvent *event)
+{
+  Q_UNUSED(event);
+  QPainter painter(this);
+  painter.drawPixmap(0, 0, mPaintBuffer);
+}
+
+/*! \internal
+  
+  Event handler for a resize of the QCustomPlot widget. Causes the internal buffer to be resized to
+  the new size. The viewport (which becomes the outer rect of mPlotLayout) is resized
+  appropriately. Finally a \ref replot is performed.
+*/
+void QCustomPlot::resizeEvent(QResizeEvent *event)
+{
+  // resize and repaint the buffer:
+  mPaintBuffer = QPixmap(event->size());
+  setViewport(rect());
+  replot();
+}
+
+/*! \internal
+  
+ Event handler for when a double click occurs. Emits the \ref mouseDoubleClick signal, then emits
+ the specialized signals when certain objecs are clicked (e.g. \ref plottableDoubleClick, \ref
+ axisDoubleClick, etc.). Finally determines the affected layout element and forwards the event to
+ it.
+ 
+ \see mousePressEvent, mouseReleaseEvent
+*/
+void QCustomPlot::mouseDoubleClickEvent(QMouseEvent *event)
+{
+  emit mouseDoubleClick(event);
+  
+  QVariant details;
+  QCPLayerable *clickedLayerable = layerableAt(event->pos(), false, &details);
+  
+  // emit specialized object double click signals:
+  if (QCPAbstractPlottable *ap = qobject_cast<QCPAbstractPlottable*>(clickedLayerable))
+    emit plottableDoubleClick(ap, event);
+  else if (QCPAxis *ax = qobject_cast<QCPAxis*>(clickedLayerable))
+    emit axisDoubleClick(ax, details.value<QCPAxis::SelectablePart>(), event);
