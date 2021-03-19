@@ -10559,3 +10559,245 @@ void QCustomPlot::drawBackground(QCPPainter *painter)
     if (mBackgroundScaled)
     {
       // check whether mScaledBackground needs to be updated:
+      QSize scaledSize(mBackgroundPixmap.size());
+      scaledSize.scale(mViewport.size(), mBackgroundScaledMode);
+      if (mScaledBackgroundPixmap.size() != scaledSize)
+        mScaledBackgroundPixmap = mBackgroundPixmap.scaled(mViewport.size(), mBackgroundScaledMode, Qt::SmoothTransformation);
+      painter->drawPixmap(mViewport.topLeft(), mScaledBackgroundPixmap, QRect(0, 0, mViewport.width(), mViewport.height()) & mScaledBackgroundPixmap.rect());
+    } else
+    {
+      painter->drawPixmap(mViewport.topLeft(), mBackgroundPixmap, QRect(0, 0, mViewport.width(), mViewport.height()));
+    }
+  }
+}
+
+
+/*! \internal
+  
+  This method is used by \ref QCPAxisRect::removeAxis to report removed axes to the QCustomPlot
+  so it may clear its QCustomPlot::xAxis, yAxis, xAxis2 and yAxis2 members accordingly.
+*/
+void QCustomPlot::axisRemoved(QCPAxis *axis)
+{
+  if (xAxis == axis)
+    xAxis = 0;
+  if (xAxis2 == axis)
+    xAxis2 = 0;
+  if (yAxis == axis)
+    yAxis = 0;
+  if (yAxis2 == axis)
+    yAxis2 = 0;
+  
+  // Note: No need to take care of range drag axes and range zoom axes, because they are stored in smart pointers
+}
+
+/*! \internal
+  
+  This method is used by the QCPLegend destructor to report legend removal to the QCustomPlot so
+  it may clear its QCustomPlot::legend member accordingly.
+*/
+void QCustomPlot::legendRemoved(QCPLegend *legend)
+{
+  if (this->legend == legend)
+    this->legend = 0;
+}
+
+/*! \internal
+  
+  Assigns all layers their index (QCPLayer::mIndex) in the mLayers list. This method is thus called
+  after every operation that changes the layer indices, like layer removal, layer creation, layer
+  moving.
+*/
+void QCustomPlot::updateLayerIndices() const
+{
+  for (int i=0; i<mLayers.size(); ++i)
+    mLayers.at(i)->mIndex = i;
+}
+
+/*! \internal
+  
+  Returns the layerable at pixel position \a pos. If \a onlySelectable is set to true, only those
+  layerables that are selectable will be considered. (Layerable subclasses communicate their
+  selectability via the QCPLayerable::selectTest method, by returning -1.)
+
+  \a selectionDetails is an output parameter that contains selection specifics of the affected
+  layerable. This is useful if the respective layerable shall be given a subsequent
+  QCPLayerable::selectEvent (like in \ref mouseReleaseEvent). \a selectionDetails usually contains
+  information about which part of the layerable was hit, in multi-part layerables (e.g.
+  QCPAxis::SelectablePart).
+*/
+QCPLayerable *QCustomPlot::layerableAt(const QPointF &pos, bool onlySelectable, QVariant *selectionDetails) const
+{
+  for (int layerIndex=mLayers.size()-1; layerIndex>=0; --layerIndex)
+  {
+    const QList<QCPLayerable*> layerables = mLayers.at(layerIndex)->children();
+    double minimumDistance = selectionTolerance()*1.1;
+    QCPLayerable *minimumDistanceLayerable = 0;
+    for (int i=layerables.size()-1; i>=0; --i)
+    {
+      if (!layerables.at(i)->realVisibility())
+        continue;
+      QVariant details;
+      double dist = layerables.at(i)->selectTest(pos, onlySelectable, &details);
+      if (dist >= 0 && dist < minimumDistance)
+      {
+        minimumDistance = dist;
+        minimumDistanceLayerable = layerables.at(i);
+        if (selectionDetails) *selectionDetails = details;
+      }
+    }
+    if (minimumDistance < selectionTolerance())
+      return minimumDistanceLayerable;
+  }
+  return 0;
+}
+
+/*!
+  Saves the plot to a rastered image file \a fileName in the image format \a format. The plot is
+  sized to \a width and \a height in pixels and scaled with \a scale. (width 100 and scale 2.0 lead
+  to a full resolution file with width 200.) If the \a format supports compression, \a quality may
+  be between 0 and 100 to control it.
+  
+  Returns true on success. If this function fails, most likely the given \a format isn't supported
+  by the system, see Qt docs about QImageWriter::supportedImageFormats().
+  
+  \see saveBmp, saveJpg, savePng, savePdf
+*/
+bool QCustomPlot::saveRastered(const QString &fileName, int width, int height, double scale, const char *format, int quality)
+{
+  QPixmap buffer = toPixmap(width, height, scale);
+  if (!buffer.isNull())
+    return buffer.save(fileName, format, quality);
+  else
+    return false;
+}
+
+/*!
+  Renders the plot to a pixmap and returns it.
+  
+  The plot is sized to \a width and \a height in pixels and scaled with \a scale. (width 100 and
+  scale 2.0 lead to a full resolution pixmap with width 200.)
+  
+  \see toPainter, saveRastered, saveBmp, savePng, saveJpg, savePdf
+*/
+QPixmap QCustomPlot::toPixmap(int width, int height, double scale)
+{
+  // this method is somewhat similar to toPainter. Change something here, and a change in toPainter might be necessary, too. 
+  int newWidth, newHeight;
+  if (width == 0 || height == 0)
+  {
+    newWidth = this->width();
+    newHeight = this->height();
+  } else
+  {
+    newWidth = width;
+    newHeight = height;
+  }
+  int scaledWidth = qRound(scale*newWidth);
+  int scaledHeight = qRound(scale*newHeight);
+
+  QPixmap result(scaledWidth, scaledHeight);
+  result.fill(mBackgroundBrush.style() == Qt::SolidPattern ? mBackgroundBrush.color() : Qt::transparent); // if using non-solid pattern, make transparent now and draw brush pattern later
+  QCPPainter painter;
+  painter.begin(&result);
+  if (painter.isActive())
+  {
+    QRect oldViewport = viewport();
+    setViewport(QRect(0, 0, newWidth, newHeight));
+    painter.setMode(QCPPainter::pmNoCaching);
+    if (!qFuzzyCompare(scale, 1.0))
+    {
+      if (scale > 1.0) // for scale < 1 we always want cosmetic pens where possible, because else lines might disappear for very small scales
+        painter.setMode(QCPPainter::pmNonCosmetic);
+      painter.scale(scale, scale);
+    }
+    if (mBackgroundBrush.style() != Qt::SolidPattern && mBackgroundBrush.style() != Qt::NoBrush)
+      painter.fillRect(mViewport, mBackgroundBrush);
+    draw(&painter);
+    setViewport(oldViewport);
+    painter.end();
+  } else // might happen if pixmap has width or height zero
+  {
+    qDebug() << Q_FUNC_INFO << "Couldn't activate painter on pixmap";
+    return QPixmap();
+  }
+  return result;
+}
+
+/*!
+  Renders the plot using the passed \a painter.
+  
+  The plot is sized to \a width and \a height in pixels. If the \a painter's scale is not 1.0, the resulting plot will
+  appear scaled accordingly.
+  
+  \note If you are restricted to using a QPainter (instead of QCPPainter), create a temporary QPicture and open a QCPPainter
+  on it. Then call \ref toPainter with this QCPPainter. After ending the paint operation on the picture, draw it with
+  the QPainter. This will reproduce the painter actions the QCPPainter took, with a QPainter.
+  
+  \see toPixmap
+*/
+void QCustomPlot::toPainter(QCPPainter *painter, int width, int height)
+{
+  // this method is somewhat similar to toPixmap. Change something here, and a change in toPixmap might be necessary, too. 
+  int newWidth, newHeight;
+  if (width == 0 || height == 0)
+  {
+    newWidth = this->width();
+    newHeight = this->height();
+  } else
+  {
+    newWidth = width;
+    newHeight = height;
+  }
+
+  if (painter->isActive())
+  {
+    QRect oldViewport = viewport();
+    setViewport(QRect(0, 0, newWidth, newHeight));
+    painter->setMode(QCPPainter::pmNoCaching);
+    // warning: the following is different in toPixmap, because a solid background color is applied there via QPixmap::fill
+    // here, we need to do this via QPainter::fillRect.
+    if (mBackgroundBrush.style() != Qt::NoBrush)
+      painter->fillRect(mViewport, mBackgroundBrush);
+    draw(painter);
+    setViewport(oldViewport);
+  } else
+    qDebug() << Q_FUNC_INFO << "Passed painter is not active";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPData
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPData
+  \brief Holds the data of one single data point for QCPGraph.
+  
+  The container for storing multiple data points is \ref QCPDataMap.
+  
+  The stored data is:
+  \li \a key: coordinate on the key axis of this data point
+  \li \a value: coordinate on the value axis of this data point
+  \li \a keyErrorMinus: negative error in the key dimension (for error bars)
+  \li \a keyErrorPlus: positive error in the key dimension (for error bars)
+  \li \a valueErrorMinus: negative error in the value dimension (for error bars)
+  \li \a valueErrorPlus: positive error in the value dimension (for error bars)
+  
+  \see QCPDataMap
+*/
+
+/*!
+  Constructs a data point with key, value and all errors set to zero.
+*/
+QCPData::QCPData() :
+  key(0),
+  value(0),
+  keyErrorPlus(0),
+  keyErrorMinus(0),
+  valueErrorPlus(0),
+  valueErrorMinus(0)
+{
+}
+
+/*!
+  Constructs a data point with the specified \a key and \a value. All errors are set to zero.
