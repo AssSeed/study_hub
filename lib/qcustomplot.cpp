@@ -10322,3 +10322,240 @@ void QCustomPlot::mouseDoubleClickEvent(QMouseEvent *event)
     emit plottableDoubleClick(ap, event);
   else if (QCPAxis *ax = qobject_cast<QCPAxis*>(clickedLayerable))
     emit axisDoubleClick(ax, details.value<QCPAxis::SelectablePart>(), event);
+  else if (QCPAbstractItem *ai = qobject_cast<QCPAbstractItem*>(clickedLayerable))
+    emit itemDoubleClick(ai, event);
+  else if (QCPLegend *lg = qobject_cast<QCPLegend*>(clickedLayerable))
+    emit legendDoubleClick(lg, 0, event);
+  else if (QCPAbstractLegendItem *li = qobject_cast<QCPAbstractLegendItem*>(clickedLayerable))
+    emit legendDoubleClick(li->parentLegend(), li, event);
+  else if (QCPPlotTitle *pt = qobject_cast<QCPPlotTitle*>(clickedLayerable))
+    emit titleDoubleClick(event, pt);
+  
+  // call double click event of affected layout element:
+  if (QCPLayoutElement *el = layoutElementAt(event->pos()))
+    el->mouseDoubleClickEvent(event);
+  
+  // call release event of affected layout element (as in mouseReleaseEvent, since the mouseDoubleClick replaces the second release event in double click case):
+  if (mMouseEventElement)
+  {
+    mMouseEventElement->mouseReleaseEvent(event);
+    mMouseEventElement = 0;
+  }
+  
+  //QWidget::mouseDoubleClickEvent(event); don't call base class implementation because it would just cause a mousePress/ReleaseEvent, which we don't want.
+}
+
+/*! \internal
+  
+  Event handler for when a mouse button is pressed. Emits the mousePress signal. Then determines
+  the affected layout element and forwards the event to it.
+  
+  \see mouseMoveEvent, mouseReleaseEvent
+*/
+void QCustomPlot::mousePressEvent(QMouseEvent *event)
+{
+  emit mousePress(event);
+  mMousePressPos = event->pos(); // need this to determine in releaseEvent whether it was a click (no position change between press and release)
+  
+  // call event of affected layout element:
+  mMouseEventElement = layoutElementAt(event->pos());
+  if (mMouseEventElement)
+    mMouseEventElement->mousePressEvent(event);
+  
+  QWidget::mousePressEvent(event);
+}
+
+/*! \internal
+  
+  Event handler for when the cursor is moved. Emits the \ref mouseMove signal.
+
+  If a layout element has mouse capture focus (a mousePressEvent happened on top of the layout
+  element before), the mouseMoveEvent is forwarded to that element.
+  
+  \see mousePressEvent, mouseReleaseEvent
+*/
+void QCustomPlot::mouseMoveEvent(QMouseEvent *event)
+{
+  emit mouseMove(event);
+
+  // call event of affected layout element:
+  if (mMouseEventElement)
+    mMouseEventElement->mouseMoveEvent(event);
+  
+  QWidget::mouseMoveEvent(event);
+}
+
+/*! \internal
+  
+  Event handler for when a mouse button is released. Emits the \ref mouseRelease signal.
+  
+  If the mouse was moved less than a certain threshold in any direction since the \ref
+  mousePressEvent, it is considered a click which causes the selection mechanism (if activated via
+  \ref setInteractions) to possibly change selection states accordingly. Further, specialized mouse
+  click signals are emitted (e.g. \ref plottableClick, \ref axisClick, etc.)
+  
+  If a layout element has mouse capture focus (a \ref mousePressEvent happened on top of the layout
+  element before), the \ref mouseReleaseEvent is forwarded to that element.
+  
+  \see mousePressEvent, mouseMoveEvent
+*/
+void QCustomPlot::mouseReleaseEvent(QMouseEvent *event)
+{
+  emit mouseRelease(event);
+  bool doReplot = false;
+  
+  if ((mMousePressPos-event->pos()).manhattanLength() < 5) // determine whether it was a click operation
+  {
+    if (event->button() == Qt::LeftButton)
+    {
+      // handle selection mechanism:
+      QVariant details;
+      QCPLayerable *clickedLayerable = layerableAt(event->pos(), true, &details);
+      bool selectionStateChanged = false;
+      bool additive = mInteractions.testFlag(QCP::iMultiSelect) && event->modifiers().testFlag(mMultiSelectModifier);
+      if (clickedLayerable && mInteractions.testFlag(clickedLayerable->selectionCategory()))
+      {
+        // a layerable was actually clicked, call its selectEvent:
+        bool selChanged = false;
+        clickedLayerable->selectEvent(event, additive, details, &selChanged);
+        selectionStateChanged |= selChanged;
+      }
+      // deselect all other layerables if not additive selection:
+      if (!additive)
+      {
+        for (int i=0; i<mLayers.size(); ++i)
+        {
+          QList<QCPLayerable*> layerables = mLayers.at(i)->children();
+          for (int k=0; k<layerables.size(); ++k)
+          {
+            if (layerables.at(k) != clickedLayerable && mInteractions.testFlag(layerables.at(k)->selectionCategory()))
+            {
+              bool selChanged = false;
+              layerables.at(k)->deselectEvent(&selChanged);
+              selectionStateChanged |= selChanged;
+            }
+          }
+        }
+      }
+      doReplot = true;
+      if (selectionStateChanged)
+        emit selectionChangedByUser();
+    }
+    
+    // emit specialized object click signals:
+    QVariant details;
+    QCPLayerable *clickedLayerable = layerableAt(event->pos(), false, &details); // for these signals, selectability is ignored, that's why we call this again with onlySelectable set to false
+    if (QCPAbstractPlottable *ap = qobject_cast<QCPAbstractPlottable*>(clickedLayerable))
+      emit plottableClick(ap, event);
+    else if (QCPAxis *ax = qobject_cast<QCPAxis*>(clickedLayerable))
+      emit axisClick(ax, details.value<QCPAxis::SelectablePart>(), event);
+    else if (QCPAbstractItem *ai = qobject_cast<QCPAbstractItem*>(clickedLayerable))
+      emit itemClick(ai, event);
+    else if (QCPLegend *lg = qobject_cast<QCPLegend*>(clickedLayerable))
+      emit legendClick(lg, 0, event);
+    else if (QCPAbstractLegendItem *li = qobject_cast<QCPAbstractLegendItem*>(clickedLayerable))
+      emit legendClick(li->parentLegend(), li, event);
+    else if (QCPPlotTitle *pt = qobject_cast<QCPPlotTitle*>(clickedLayerable))
+      emit titleClick(event, pt);
+  }
+  
+  // call event of affected layout element:
+  if (mMouseEventElement)
+  {
+    mMouseEventElement->mouseReleaseEvent(event);
+    mMouseEventElement = 0;
+  }
+  
+  if (doReplot || noAntialiasingOnDrag())
+    replot();
+  
+  QWidget::mouseReleaseEvent(event);
+}
+
+/*! \internal
+  
+  Event handler for mouse wheel events. First, the \ref mouseWheel signal is emitted. Then
+  determines the affected layout element and forwards the event to it.
+  
+*/
+void QCustomPlot::wheelEvent(QWheelEvent *event)
+{
+  emit mouseWheel(event);
+  
+  // call event of affected layout element:
+  if (QCPLayoutElement *el = layoutElementAt(event->pos()))
+    el->wheelEvent(event);
+  
+  QWidget::wheelEvent(event);
+}
+
+/*! \internal
+  
+  This is the main draw function. It draws the entire plot, including background pixmap, with the
+  specified \a painter. Note that it does not fill the background with the background brush (as the
+  user may specify with \ref setBackground(const QBrush &brush)), this is up to the respective
+  functions calling this method (e.g. \ref replot, \ref toPixmap and \ref toPainter).
+*/
+void QCustomPlot::draw(QCPPainter *painter)
+{
+  // update all axis tick vectors:
+  QList<QCPAxisRect*> rects = axisRects();
+  for (int i=0; i<rects.size(); ++i)
+  {
+    QList<QCPAxis*> axes = rects.at(i)->axes();
+    for (int k=0; k<axes.size(); ++k)
+      axes.at(k)->setupTickVectors();
+  }
+  
+  // recalculate layout:
+  mPlotLayout->update();
+  
+  // draw viewport background pixmap:
+  drawBackground(painter);
+
+  // draw all layered objects (grid, axes, plottables, items, legend,...):
+  for (int layerIndex=0; layerIndex < mLayers.size(); ++layerIndex)
+  {
+    QList<QCPLayerable*> layerChildren = mLayers.at(layerIndex)->children();
+    for (int k=0; k < layerChildren.size(); ++k)
+    {
+      QCPLayerable *child = layerChildren.at(k);
+      if (child->realVisibility())
+      {
+        painter->save();
+        painter->setClipRect(child->clipRect().translated(0, -1));
+        child->applyDefaultAntialiasingHint(painter);
+        child->draw(painter);
+        painter->restore();
+      }
+    }
+  }
+}
+
+/*! \internal
+  
+  Draws the viewport background pixmap of the plot.
+  
+  If a pixmap was provided via \ref setBackground, this function buffers the scaled version
+  depending on \ref setBackgroundScaled and \ref setBackgroundScaledMode and then draws it inside
+  the viewport with the provided \a painter. The scaled version is buffered in
+  mScaledBackgroundPixmap to prevent expensive rescaling at every redraw. It is only updated, when
+  the axis rect has changed in a way that requires a rescale of the background pixmap (this is
+  dependant on the \ref setBackgroundScaledMode), or when a differend axis backgroud pixmap was
+  set.
+  
+  Note that this function does not draw a fill with the background brush (\ref setBackground(const
+  QBrush &brush)) beneath the pixmap.
+  
+  \see setBackground, setBackgroundScaled, setBackgroundScaledMode
+*/
+void QCustomPlot::drawBackground(QCPPainter *painter)
+{
+  // Note: background color is handled in individual replot/save functions
+
+  // draw background pixmap (on top of fill, if brush specified):
+  if (!mBackgroundPixmap.isNull())
+  {
+    if (mBackgroundScaled)
+    {
+      // check whether mScaledBackground needs to be updated:
