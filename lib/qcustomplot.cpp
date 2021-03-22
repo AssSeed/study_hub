@@ -10801,3 +10801,252 @@ QCPData::QCPData() :
 
 /*!
   Constructs a data point with the specified \a key and \a value. All errors are set to zero.
+*/
+QCPData::QCPData(double key, double value) :
+  key(key),
+  value(value),
+  keyErrorPlus(0),
+  keyErrorMinus(0),
+  valueErrorPlus(0),
+  valueErrorMinus(0)
+{
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPGraph
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPGraph
+  \brief A plottable representing a graph in a plot.
+
+  \image html QCPGraph.png
+  
+  Usually QCustomPlot creates graphs internally via QCustomPlot::addGraph and the resulting
+  instance is accessed via QCustomPlot::graph.
+
+  To plot data, assign it with the \ref setData or \ref addData functions.
+  
+  Graphs are used to display single-valued data. Single-valued means that there should only be one
+  data point per unique key coordinate. In other words, the graph can't have \a loops. If you do
+  want to plot non-single-valued curves, rather use the QCPCurve plottable.
+  
+  \section appearance Changing the appearance
+  
+  The appearance of the graph is mainly determined by the line style, scatter style, brush and pen
+  of the graph (\ref setLineStyle, \ref setScatterStyle, \ref setBrush, \ref setPen).
+  
+  \subsection filling Filling under or between graphs
+  
+  QCPGraph knows two types of fills: Normal graph fills towards the zero-value-line parallel to
+  the key axis of the graph, and fills between two graphs, called channel fills. To enable a fill,
+  just set a brush with \ref setBrush which is neither Qt::NoBrush nor fully transparent.
+  
+  By default, a normal fill towards the zero-value-line will be drawn. To set up a channel fill
+  between this graph and another one, call \ref setChannelFillGraph with the other graph as
+  parameter.
+
+  \see QCustomPlot::addGraph, QCustomPlot::graph, QCPLegend::addGraph
+*/
+
+/*!
+  Constructs a graph which uses \a keyAxis as its key axis ("x") and \a valueAxis as its value
+  axis ("y"). \a keyAxis and \a valueAxis must reside in the same QCustomPlot instance and not have
+  the same orientation. If either of these restrictions is violated, a corresponding message is
+  printed to the debug output (qDebug), the construction is not aborted, though.
+  
+  The constructed QCPGraph can be added to the plot with QCustomPlot::addPlottable, QCustomPlot
+  then takes ownership of the graph.
+  
+  To directly create a graph inside a plot, you can also use the simpler QCustomPlot::addGraph function.
+*/
+QCPGraph::QCPGraph(QCPAxis *keyAxis, QCPAxis *valueAxis) :
+  QCPAbstractPlottable(keyAxis, valueAxis)
+{
+  mData = new QCPDataMap;
+  
+  setPen(QPen(Qt::blue, 0));
+  setErrorPen(QPen(Qt::black));
+  setBrush(Qt::NoBrush);
+  setSelectedPen(QPen(QColor(80, 80, 255), 2.5));
+  setSelectedBrush(Qt::NoBrush);
+  
+  setLineStyle(lsLine);
+  setErrorType(etNone);
+  setErrorBarSize(6);
+  setErrorBarSkipSymbol(true);
+  setChannelFillGraph(0);
+}
+
+QCPGraph::~QCPGraph()
+{
+  delete mData;
+}
+
+/*!
+  Replaces the current data with the provided \a data.
+  
+  If \a copy is set to true, data points in \a data will only be copied. if false, the graph
+  takes ownership of the passed data and replaces the internal data pointer with it. This is
+  significantly faster than copying for large datasets.
+*/
+void QCPGraph::setData(QCPDataMap *data, bool copy)
+{
+  if (copy)
+  {
+    *mData = *data;
+  } else
+  {
+    delete mData;
+    mData = data;
+  }
+}
+
+/*! \overload
+  
+  Replaces the current data with the provided points in \a key and \a value pairs. The provided
+  vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+*/
+void QCPGraph::setData(const QVector<double> &key, const QVector<double> &value)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    mData->insertMulti(newData.key, newData);
+  }
+}
+
+/*!
+  Replaces the current data with the provided points in \a key and \a value pairs. Additionally the
+  symmetrical value error of the data points are set to the values in \a valueError.
+  For error bars to show appropriately, see \ref setErrorType.
+  The provided vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+  
+  For asymmetrical errors (plus different from minus), see the overloaded version of this function.
+*/
+void QCPGraph::setDataValueError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &valueError)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  n = qMin(n, valueError.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    newData.valueErrorMinus = valueError[i];
+    newData.valueErrorPlus = valueError[i];
+    mData->insertMulti(key[i], newData);
+  }
+}
+
+/*!
+  \overload
+  Replaces the current data with the provided points in \a key and \a value pairs. Additionally the
+  negative value error of the data points are set to the values in \a valueErrorMinus, the positive
+  value error to \a valueErrorPlus.
+  For error bars to show appropriately, see \ref setErrorType.
+  The provided vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+*/
+void QCPGraph::setDataValueError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &valueErrorMinus, const QVector<double> &valueErrorPlus)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  n = qMin(n, valueErrorMinus.size());
+  n = qMin(n, valueErrorPlus.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    newData.valueErrorMinus = valueErrorMinus[i];
+    newData.valueErrorPlus = valueErrorPlus[i];
+    mData->insertMulti(key[i], newData);
+  }
+}
+
+/*!
+  Replaces the current data with the provided points in \a key and \a value pairs. Additionally the
+  symmetrical key error of the data points are set to the values in \a keyError.
+  For error bars to show appropriately, see \ref setErrorType.
+  The provided vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+  
+  For asymmetrical errors (plus different from minus), see the overloaded version of this function.
+*/
+void QCPGraph::setDataKeyError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyError)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  n = qMin(n, keyError.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    newData.keyErrorMinus = keyError[i];
+    newData.keyErrorPlus = keyError[i];
+    mData->insertMulti(key[i], newData);
+  }
+}
+
+/*!
+  \overload
+  Replaces the current data with the provided points in \a key and \a value pairs. Additionally the
+  negative key error of the data points are set to the values in \a keyErrorMinus, the positive
+  key error to \a keyErrorPlus.
+  For error bars to show appropriately, see \ref setErrorType.
+  The provided vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+*/
+void QCPGraph::setDataKeyError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyErrorMinus, const QVector<double> &keyErrorPlus)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  n = qMin(n, keyErrorMinus.size());
+  n = qMin(n, keyErrorPlus.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    newData.keyErrorMinus = keyErrorMinus[i];
+    newData.keyErrorPlus = keyErrorPlus[i];
+    mData->insertMulti(key[i], newData);
+  }
+}
+
+/*!
+  Replaces the current data with the provided points in \a key and \a value pairs. Additionally the
+  symmetrical key and value errors of the data points are set to the values in \a keyError and \a valueError.
+  For error bars to show appropriately, see \ref setErrorType.
+  The provided vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+  
+  For asymmetrical errors (plus different from minus), see the overloaded version of this function.
+*/
+void QCPGraph::setDataBothError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyError, const QVector<double> &valueError)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  n = qMin(n, valueError.size());
+  n = qMin(n, keyError.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    newData.keyErrorMinus = keyError[i];
