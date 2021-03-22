@@ -11050,3 +11050,259 @@ void QCPGraph::setDataBothError(const QVector<double> &key, const QVector<double
     newData.key = key[i];
     newData.value = value[i];
     newData.keyErrorMinus = keyError[i];
+    newData.keyErrorPlus = keyError[i];
+    newData.valueErrorMinus = valueError[i];
+    newData.valueErrorPlus = valueError[i];
+    mData->insertMulti(key[i], newData);
+  }
+}
+
+/*!
+  \overload
+  Replaces the current data with the provided points in \a key and \a value pairs. Additionally the
+  negative key and value errors of the data points are set to the values in \a keyErrorMinus and \a valueErrorMinus. The positive
+  key and value errors are set to the values in \a keyErrorPlus \a valueErrorPlus.
+  For error bars to show appropriately, see \ref setErrorType.
+  The provided vectors should have equal length. Else, the number of added points will be the size of the
+  smallest vector.
+*/
+void QCPGraph::setDataBothError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyErrorMinus, const QVector<double> &keyErrorPlus, const QVector<double> &valueErrorMinus, const QVector<double> &valueErrorPlus)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  n = qMin(n, valueErrorMinus.size());
+  n = qMin(n, valueErrorPlus.size());
+  n = qMin(n, keyErrorMinus.size());
+  n = qMin(n, keyErrorPlus.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    newData.keyErrorMinus = keyErrorMinus[i];
+    newData.keyErrorPlus = keyErrorPlus[i];
+    newData.valueErrorMinus = valueErrorMinus[i];
+    newData.valueErrorPlus = valueErrorPlus[i];
+    mData->insertMulti(key[i], newData);
+  }
+}
+
+
+/*!
+  Sets how the single data points are connected in the plot. For scatter-only plots, set \a ls to
+  \ref lsNone and \ref setScatterStyle to the desired scatter style.
+  
+  \see setScatterStyle
+*/
+void QCPGraph::setLineStyle(LineStyle ls)
+{
+  mLineStyle = ls;
+}
+
+/*! 
+  Sets the visual appearance of single data points in the plot. If set to \ref QCPScatterStyle::ssNone, no scatter points
+  are drawn (e.g. for line-only-plots with appropriate line style).
+  
+  \see QCPScatterStyle, setLineStyle
+*/
+void QCPGraph::setScatterStyle(const QCPScatterStyle &style)
+{
+  mScatterStyle = style;
+}
+
+/*!
+  Sets which kind of error bars (Key Error, Value Error or both) should be drawn on each data
+  point. If you set \a errorType to something other than \ref etNone, make sure to actually pass
+  error data via the specific setData functions along with the data points (e.g. \ref
+  setDataValueError, \ref setDataKeyError, \ref setDataBothError).
+
+  \see ErrorType
+*/
+void QCPGraph::setErrorType(ErrorType errorType)
+{
+  mErrorType = errorType;
+}
+
+/*!
+  Sets the pen with which the error bars will be drawn.
+  \see setErrorBarSize, setErrorType
+*/
+void QCPGraph::setErrorPen(const QPen &pen)
+{
+  mErrorPen = pen;
+}
+
+/*! 
+  Sets the width of the handles at both ends of an error bar in pixels.
+*/
+void QCPGraph::setErrorBarSize(double size)
+{
+  mErrorBarSize = size;
+}
+
+/*! 
+  If \a enabled is set to true, the error bar will not be drawn as a solid line under the scatter symbol but
+  leave some free space around the symbol.
+  
+  This feature uses the current scatter size (\ref QCPScatterStyle::setSize) to determine the size
+  of the area to leave blank. So when drawing Pixmaps as scatter points (\ref
+  QCPScatterStyle::ssPixmap), the scatter size must be set manually to a value corresponding to the
+  size of the Pixmap, if the error bars should leave gaps to its boundaries.
+  
+  \ref setErrorType, setErrorBarSize, setScatterStyle
+*/
+void QCPGraph::setErrorBarSkipSymbol(bool enabled)
+{
+  mErrorBarSkipSymbol = enabled;
+}
+
+/*! 
+  Sets the target graph for filling the area between this graph and \a targetGraph with the current
+  brush (\ref setBrush).
+  
+  When \a targetGraph is set to 0, a normal graph fill to the zero-value-line will be shown. To
+  disable any filling, set the brush to Qt::NoBrush.
+
+  \see setBrush
+*/
+void QCPGraph::setChannelFillGraph(QCPGraph *targetGraph)
+{
+  // prevent setting channel target to this graph itself:
+  if (targetGraph == this)
+  {
+    qDebug() << Q_FUNC_INFO << "targetGraph is this graph itself";
+    mChannelFillGraph = 0;
+    return;
+  }
+  // prevent setting channel target to a graph not in the plot:
+  if (targetGraph && targetGraph->mParentPlot != mParentPlot)
+  {
+    qDebug() << Q_FUNC_INFO << "targetGraph not in same plot";
+    mChannelFillGraph = 0;
+    return;
+  }
+  
+  mChannelFillGraph = targetGraph;
+}
+
+/*!
+  Adds the provided data points in \a dataMap to the current data.
+  \see removeData
+*/
+void QCPGraph::addData(const QCPDataMap &dataMap)
+{
+  mData->unite(dataMap);
+}
+
+/*! \overload
+  Adds the provided single data point in \a data to the current data.
+  \see removeData
+*/
+void QCPGraph::addData(const QCPData &data)
+{
+  mData->insertMulti(data.key, data);
+}
+
+/*! \overload
+  Adds the provided single data point as \a key and \a value pair to the current data.
+  \see removeData
+*/
+void QCPGraph::addData(double key, double value)
+{
+  QCPData newData;
+  newData.key = key;
+  newData.value = value;
+  mData->insertMulti(newData.key, newData);
+}
+
+/*! \overload
+  Adds the provided data points as \a key and \a value pairs to the current data.
+  \see removeData
+*/
+void QCPGraph::addData(const QVector<double> &keys, const QVector<double> &values)
+{
+  int n = qMin(keys.size(), values.size());
+  QCPData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = keys[i];
+    newData.value = values[i];
+    mData->insertMulti(newData.key, newData);
+  }
+}
+
+/*!
+  Removes all data points with keys smaller than \a key.
+  \see addData, clearData
+*/
+void QCPGraph::removeDataBefore(double key)
+{
+  QCPDataMap::iterator it = mData->begin();
+  while (it != mData->end() && it.key() < key)
+    it = mData->erase(it);
+}
+
+/*!
+  Removes all data points with keys greater than \a key.
+  \see addData, clearData
+*/
+void QCPGraph::removeDataAfter(double key)
+{
+  if (mData->isEmpty()) return;
+  QCPDataMap::iterator it = mData->upperBound(key);
+  while (it != mData->end())
+    it = mData->erase(it);
+}
+
+/*!
+  Removes all data points with keys between \a fromKey and \a toKey.
+  if \a fromKey is greater or equal to \a toKey, the function does nothing. To remove
+  a single data point with known key, use \ref removeData(double key).
+  
+  \see addData, clearData
+*/
+void QCPGraph::removeData(double fromKey, double toKey)
+{
+  if (fromKey >= toKey || mData->isEmpty()) return;
+  QCPDataMap::iterator it = mData->upperBound(fromKey);
+  QCPDataMap::iterator itEnd = mData->upperBound(toKey);
+  while (it != itEnd)
+    it = mData->erase(it);
+}
+
+/*! \overload
+  
+  Removes a single data point at \a key. If the position is not known with absolute precision,
+  consider using \ref removeData(double fromKey, double toKey) with a small fuzziness interval around
+  the suspected position, depeding on the precision with which the key is known.
+
+  \see addData, clearData
+*/
+void QCPGraph::removeData(double key)
+{
+  mData->remove(key);
+}
+
+/*!
+  Removes all data points.
+  \see removeData, removeDataAfter, removeDataBefore
+*/
+void QCPGraph::clearData()
+{
+  mData->clear();
+}
+
+/* inherits documentation from base class */
+double QCPGraph::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if ((onlySelectable && !mSelectable) || mData->isEmpty())
+    return -1;
+  
+  return pointDistance(pos);
+}
+
+/*! \overload
+  
+  Allows to define whether error bars are taken into consideration when determining the new axis
