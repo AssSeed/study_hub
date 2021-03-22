@@ -11306,3 +11306,290 @@ double QCPGraph::selectTest(const QPointF &pos, bool onlySelectable, QVariant *d
 /*! \overload
   
   Allows to define whether error bars are taken into consideration when determining the new axis
+  range.
+  
+  \see rescaleKeyAxis, rescaleValueAxis, QCPAbstractPlottable::rescaleAxes, QCustomPlot::rescaleAxes
+*/
+void QCPGraph::rescaleAxes(bool onlyEnlarge, bool includeErrorBars) const
+{
+  rescaleKeyAxis(onlyEnlarge, includeErrorBars);
+  rescaleValueAxis(onlyEnlarge, includeErrorBars);
+}
+
+/*! \overload
+  
+  Allows to define whether error bars (of kind \ref QCPGraph::etKey) are taken into consideration
+  when determining the new axis range.
+  
+  \see rescaleAxes, QCPAbstractPlottable::rescaleKeyAxis
+*/
+void QCPGraph::rescaleKeyAxis(bool onlyEnlarge, bool includeErrorBars) const
+{
+  // this code is a copy of QCPAbstractPlottable::rescaleKeyAxis with the only change
+  // that getKeyRange is passed the includeErrorBars value.
+  if (mData->isEmpty()) return;
+  
+  QCPAxis *keyAxis = mKeyAxis.data();
+  if (!keyAxis) { qDebug() << Q_FUNC_INFO << "invalid key axis"; return; }
+
+  SignDomain signDomain = sdBoth;
+  if (keyAxis->scaleType() == QCPAxis::stLogarithmic)
+    signDomain = (keyAxis->range().upper < 0 ? sdNegative : sdPositive);
+  
+  bool validRange;
+  QCPRange newRange = getKeyRange(validRange, signDomain, includeErrorBars);
+  
+  if (validRange)
+  {
+    if (onlyEnlarge)
+    {
+      if (keyAxis->range().lower < newRange.lower)
+        newRange.lower = keyAxis->range().lower;
+      if (keyAxis->range().upper > newRange.upper)
+        newRange.upper = keyAxis->range().upper;
+    }
+    keyAxis->setRange(newRange);
+  }
+}
+
+/*! \overload
+  
+  Allows to define whether error bars (of kind \ref QCPGraph::etValue) are taken into consideration
+  when determining the new axis range.
+  
+  \see rescaleAxes, QCPAbstractPlottable::rescaleValueAxis
+*/
+void QCPGraph::rescaleValueAxis(bool onlyEnlarge, bool includeErrorBars) const
+{
+  // this code is a copy of QCPAbstractPlottable::rescaleValueAxis with the only change
+  // is that getValueRange is passed the includeErrorBars value.
+  if (mData->isEmpty()) return;
+  
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!valueAxis) { qDebug() << Q_FUNC_INFO << "invalid value axis"; return; }
+
+  SignDomain signDomain = sdBoth;
+  if (valueAxis->scaleType() == QCPAxis::stLogarithmic)
+    signDomain = (valueAxis->range().upper < 0 ? sdNegative : sdPositive);
+  
+  bool validRange;
+  QCPRange newRange = getValueRange(validRange, signDomain, includeErrorBars);
+  
+  if (validRange)
+  {
+    if (onlyEnlarge)
+    {
+      if (valueAxis->range().lower < newRange.lower)
+        newRange.lower = valueAxis->range().lower;
+      if (valueAxis->range().upper > newRange.upper)
+        newRange.upper = valueAxis->range().upper;
+    }
+    valueAxis->setRange(newRange);
+  }
+}
+
+/* inherits documentation from base class */
+void QCPGraph::draw(QCPPainter *painter)
+{
+  if (!mKeyAxis || !mValueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (mKeyAxis.data()->range().size() <= 0 || mData->isEmpty()) return;
+  if (mLineStyle == lsNone && mScatterStyle.isNone()) return;
+  
+  // allocate line and (if necessary) point vectors:
+  QVector<QPointF> *lineData = new QVector<QPointF>;
+  QVector<QCPData> *pointData = 0;
+  if (!mScatterStyle.isNone())
+    pointData = new QVector<QCPData>;
+  
+  // fill vectors with data appropriate to plot style:
+  getPlotData(lineData, pointData);
+  
+  // check data validity if flag set:
+#ifdef QCUSTOMPLOT_CHECK_DATA
+  QCPDataMap::const_iterator it;
+  for (it = mData->constBegin(); it != mData->constEnd(); ++it)
+  {
+    if (QCP::isInvalidData(it.value().key, it.value().value) ||
+        QCP::isInvalidData(it.value().keyErrorPlus, it.value().keyErrorMinus) ||
+        QCP::isInvalidData(it.value().valueErrorPlus, it.value().valueErrorPlus))
+      qDebug() << Q_FUNC_INFO << "Data point at" << it.key() << "invalid." << "Plottable name:" << name();
+  }
+#endif
+
+  // draw fill of graph:
+  drawFill(painter, lineData);
+  
+  // draw line:
+  if (mLineStyle == lsImpulse)
+    drawImpulsePlot(painter, lineData);
+  else if (mLineStyle != lsNone)
+    drawLinePlot(painter, lineData); // also step plots can be drawn as a line plot
+  
+  // draw scatters:
+  if (pointData)
+    drawScatterPlot(painter, pointData);
+  
+  // free allocated line and point vectors:
+  delete lineData;
+  if (pointData)
+    delete pointData;
+}
+
+/* inherits documentation from base class */
+void QCPGraph::drawLegendIcon(QCPPainter *painter, const QRectF &rect) const
+{
+  // draw fill:
+  if (mBrush.style() != Qt::NoBrush)
+  {
+    applyFillAntialiasingHint(painter);
+    painter->fillRect(QRectF(rect.left(), rect.top()+rect.height()/2.0, rect.width(), rect.height()/3.0), mBrush);
+  }
+  // draw line vertically centered:
+  if (mLineStyle != lsNone)
+  {
+    applyDefaultAntialiasingHint(painter);
+    painter->setPen(mPen);
+    painter->drawLine(QLineF(rect.left(), rect.top()+rect.height()/2.0, rect.right()+5, rect.top()+rect.height()/2.0)); // +5 on x2 else last segment is missing from dashed/dotted pens
+  }
+  // draw scatter symbol:
+  if (!mScatterStyle.isNone())
+  {
+    applyScattersAntialiasingHint(painter);
+    // scale scatter pixmap if it's too large to fit in legend icon rect:
+    if (mScatterStyle.shape() == QCPScatterStyle::ssPixmap && (mScatterStyle.pixmap().size().width() > rect.width() || mScatterStyle.pixmap().size().height() > rect.height()))
+    {
+      QCPScatterStyle scaledStyle(mScatterStyle);
+      scaledStyle.setPixmap(scaledStyle.pixmap().scaled(rect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+      scaledStyle.applyTo(painter, mPen);
+      scaledStyle.drawShape(painter, QRectF(rect).center());
+    } else
+    {
+      mScatterStyle.applyTo(painter, mPen);
+      mScatterStyle.drawShape(painter, QRectF(rect).center());
+    }
+  }
+}
+
+/*! \internal
+
+  This function branches out to the line style specific "get(...)PlotData" functions, according to
+  the line style of the graph.
+  
+  \a lineData will be filled with raw points that will be drawn with the according draw functions,
+  e.g. \ref drawLinePlot and \ref drawImpulsePlot. These aren't necessarily the original data
+  points, since for step plots for example, additional points are needed for drawing lines that
+  make up steps. If the line style of the graph is \ref lsNone, the \a lineData vector will be left
+  untouched.
+  
+  \a pointData will be filled with the original data points so \ref drawScatterPlot can draw the
+  scatter symbols accordingly. If no scatters need to be drawn, i.e. the scatter style's shape is
+  \ref QCPScatterStyle::ssNone, pass 0 as \a pointData, and this step will be skipped.
+  
+  \see getScatterPlotData, getLinePlotData, getStepLeftPlotData, getStepRightPlotData,
+  getStepCenterPlotData, getImpulsePlotData
+*/
+void QCPGraph::getPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const
+{
+  switch(mLineStyle)
+  {
+    case lsNone: getScatterPlotData(pointData); break;
+    case lsLine: getLinePlotData(lineData, pointData); break;
+    case lsStepLeft: getStepLeftPlotData(lineData, pointData); break;
+    case lsStepRight: getStepRightPlotData(lineData, pointData); break;
+    case lsStepCenter: getStepCenterPlotData(lineData, pointData); break;
+    case lsImpulse: getImpulsePlotData(lineData, pointData); break;
+  }
+}
+
+/*! \internal
+  
+  If line style is \ref lsNone and the scatter style's shape is not \ref QCPScatterStyle::ssNone,
+  this function serves at providing the visible data points in \a pointData, so the \ref
+  drawScatterPlot function can draw the scatter points accordingly.
+  
+  If line style is not \ref lsNone, this function is not called and the data for the scatter points
+  are (if needed) calculated inside the corresponding other "get(...)PlotData" functions.
+  
+  \see drawScatterPlot
+*/
+void QCPGraph::getScatterPlotData(QVector<QCPData> *pointData) const
+{
+  if (!pointData) return;
+  QCPAxis *keyAxis = mKeyAxis.data();
+  if (!keyAxis) { qDebug() << Q_FUNC_INFO << "invalid key axis"; return; }
+  
+  // get visible data range:
+  QCPDataMap::const_iterator lower, upper;
+  int dataCount = 0;
+  getVisibleDataBounds(lower, upper, dataCount);
+  if (dataCount > 0)
+  {
+    // prepare vectors:
+    pointData->resize(dataCount);
+    
+    // position data points:
+    QCPDataMap::const_iterator it = lower;
+    QCPDataMap::const_iterator upperEnd = upper+1;
+    int i = 0;
+    while (it != upperEnd)
+    {
+      (*pointData)[i] = it.value();
+      ++i;
+      ++it;
+    }
+  }
+}
+
+/*! \internal
+  
+  Places the raw data points needed for a normal linearly connected graph in \a lineData.
+
+  As for all plot data retrieval functions, \a pointData just contains all unaltered data (scatter)
+  points that are visible for drawing scatter points, if necessary. If drawing scatter points is
+  disabled (i.e. the scatter style's shape is \ref QCPScatterStyle::ssNone), pass 0 as \a
+  pointData, and the function will skip filling the vector.
+  
+  \see drawLinePlot
+*/
+void QCPGraph::getLinePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (!lineData) { qDebug() << Q_FUNC_INFO << "null pointer passed as lineData"; return; }
+  
+  // get visible data range:
+  QCPDataMap::const_iterator lower, upper;
+  int dataCount = 0;
+  getVisibleDataBounds(lower, upper, dataCount);
+  if (dataCount > 0)
+  {
+    lineData->reserve(dataCount+2); // added 2 to reserve memory for lower/upper fill base points that might be needed for fill
+    lineData->resize(dataCount);
+    if (pointData)
+      pointData->resize(dataCount);
+    
+    // position data points:
+    QCPDataMap::const_iterator it = lower;
+    QCPDataMap::const_iterator upperEnd = upper+1;
+    int i = 0;
+    if (keyAxis->orientation() == Qt::Vertical)
+    {
+      while (it != upperEnd)
+      {
+        if (pointData)
+          (*pointData)[i] = it.value();
+        (*lineData)[i].setX(valueAxis->coordToPixel(it.value().value));
+        (*lineData)[i].setY(keyAxis->coordToPixel(it.key()));
+        ++i;
+        ++it;
+      }
+    } else // key axis is horizontal
+    {
+      while (it != upperEnd)
+      {
+        if (pointData)
+          (*pointData)[i] = it.value();
+        (*lineData)[i].setX(keyAxis->coordToPixel(it.key()));
+        (*lineData)[i].setY(valueAxis->coordToPixel(it.value().value));
+        ++i;
