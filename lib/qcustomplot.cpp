@@ -11593,3 +11593,235 @@ void QCPGraph::getLinePlotData(QVector<QPointF> *lineData, QVector<QCPData> *poi
         (*lineData)[i].setX(keyAxis->coordToPixel(it.key()));
         (*lineData)[i].setY(valueAxis->coordToPixel(it.value().value));
         ++i;
+        ++it;
+      }
+    }
+  }
+}
+
+/*! 
+  \internal
+  Places the raw data points needed for a step plot with left oriented steps in \a lineData.
+
+  As for all plot data retrieval functions, \a pointData just contains all unaltered data (scatter)
+  points that are visible for drawing scatter points, if necessary. If drawing scatter points is
+  disabled (i.e. the scatter style's shape is \ref QCPScatterStyle::ssNone), pass 0 as \a
+  pointData, and the function will skip filling the vector.
+  
+  \see drawLinePlot
+*/
+void QCPGraph::getStepLeftPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (!lineData) { qDebug() << Q_FUNC_INFO << "null pointer passed as lineData"; return; }
+  
+  // get visible data range:
+  QCPDataMap::const_iterator lower, upper;
+  int dataCount = 0;
+  getVisibleDataBounds(lower, upper, dataCount);
+  if (dataCount > 0)
+  {
+    lineData->reserve(dataCount*2+2); // added 2 to reserve memory for lower/upper fill base points that might be needed for fill
+    lineData->resize(dataCount*2); // multiplied by 2 because step plot needs two polyline points per one actual data point
+    if (pointData)
+      pointData->resize(dataCount);
+    
+    // position data points:
+    QCPDataMap::const_iterator it = lower;
+    QCPDataMap::const_iterator upperEnd = upper+1;
+    int i = 0;
+    int ipoint = 0;
+    if (keyAxis->orientation() == Qt::Vertical)
+    {
+      double lastValue = valueAxis->coordToPixel(it.value().value);
+      double key;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        key = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(lastValue);
+        (*lineData)[i].setY(key);
+        ++i;
+        lastValue = valueAxis->coordToPixel(it.value().value);
+        (*lineData)[i].setX(lastValue);
+        (*lineData)[i].setY(key);
+        ++i;
+        ++it;
+      }
+    } else // key axis is horizontal
+    {
+      double lastValue = valueAxis->coordToPixel(it.value().value);
+      double key;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        key = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(key);
+        (*lineData)[i].setY(lastValue);
+        ++i;
+        lastValue = valueAxis->coordToPixel(it.value().value);
+        (*lineData)[i].setX(key);
+        (*lineData)[i].setY(lastValue);
+        ++i;
+        ++it;
+      }
+    }
+  }
+}
+
+/*! 
+  \internal
+  Places the raw data points needed for a step plot with right oriented steps in \a lineData.
+
+  As for all plot data retrieval functions, \a pointData just contains all unaltered data (scatter)
+  points that are visible for drawing scatter points, if necessary. If drawing scatter points is
+  disabled (i.e. the scatter style's shape is \ref QCPScatterStyle::ssNone), pass 0 as \a
+  pointData, and the function will skip filling the vector.
+  
+  \see drawLinePlot
+*/
+void QCPGraph::getStepRightPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (!lineData) { qDebug() << Q_FUNC_INFO << "null pointer passed as lineData"; return; }
+  
+  // get visible data range:
+  QCPDataMap::const_iterator lower, upper;
+  int dataCount = 0;
+  getVisibleDataBounds(lower, upper, dataCount);
+  if (dataCount > 0)
+  {
+    lineData->reserve(dataCount*2+2); // added 2 to reserve memory for lower/upper fill base points that might be needed for fill
+    lineData->resize(dataCount*2); // multiplied by 2 because step plot needs two polyline points per one actual data point
+    if (pointData)
+      pointData->resize(dataCount);
+    
+    // position points:
+    QCPDataMap::const_iterator it = lower;
+    QCPDataMap::const_iterator upperEnd = upper+1;
+    int i = 0;
+    int ipoint = 0;
+    if (keyAxis->orientation() == Qt::Vertical)
+    {
+      double lastKey = keyAxis->coordToPixel(it.key());
+      double value;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        value = valueAxis->coordToPixel(it.value().value);
+        (*lineData)[i].setX(value);
+        (*lineData)[i].setY(lastKey);
+        ++i;
+        lastKey = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(value);
+        (*lineData)[i].setY(lastKey);
+        ++i;
+        ++it;
+      }
+    } else // key axis is horizontal
+    {
+      double lastKey = keyAxis->coordToPixel(it.key());
+      double value;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        value = valueAxis->coordToPixel(it.value().value);
+        (*lineData)[i].setX(lastKey);
+        (*lineData)[i].setY(value);
+        ++i;
+        lastKey = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(lastKey);
+        (*lineData)[i].setY(value);
+        ++i;
+        ++it;
+      }
+    }
+  }
+}
+
+/*! 
+  \internal
+  Places the raw data points needed for a step plot with centered steps in \a lineData.
+
+  As for all plot data retrieval functions, \a pointData just contains all unaltered data (scatter)
+  points that are visible for drawing scatter points, if necessary. If drawing scatter points is
+  disabled (i.e. the scatter style's shape is \ref QCPScatterStyle::ssNone), pass 0 as \a
+  pointData, and the function will skip filling the vector.
+  
+  \see drawLinePlot
+*/
+void QCPGraph::getStepCenterPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (!lineData) { qDebug() << Q_FUNC_INFO << "null pointer passed as lineData"; return; }
+  
+  // get visible data range:
+  QCPDataMap::const_iterator lower, upper;
+  int dataCount = 0;
+  getVisibleDataBounds(lower, upper, dataCount);
+  if (dataCount > 0)
+  {
+    // added 2 to reserve memory for lower/upper fill base points that might be needed for base fill
+    // multiplied by 2 because step plot needs two polyline points per one actual data point
+    lineData->reserve(dataCount*2+2);
+    lineData->resize(dataCount*2);
+    if (pointData)
+      pointData->resize(dataCount);
+    
+    // position points:
+    QCPDataMap::const_iterator it = lower;
+    QCPDataMap::const_iterator upperEnd = upper+1;
+    int i = 0;
+    int ipoint = 0;
+    if (keyAxis->orientation() == Qt::Vertical)
+    {
+      double lastKey = keyAxis->coordToPixel(it.key());
+      double lastValue = valueAxis->coordToPixel(it.value().value);
+      double key;
+      if (pointData)
+      {
+        (*pointData)[ipoint] = it.value();
+        ++ipoint;
+      }
+      (*lineData)[i].setX(lastValue);
+      (*lineData)[i].setY(lastKey);
+      ++it;
+      ++i;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        key = (keyAxis->coordToPixel(it.key())-lastKey)*0.5 + lastKey;
+        (*lineData)[i].setX(lastValue);
+        (*lineData)[i].setY(key);
+        ++i;
+        lastValue = valueAxis->coordToPixel(it.value().value);
+        lastKey = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(lastValue);
+        (*lineData)[i].setY(key);
+        ++it;
