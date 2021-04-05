@@ -11825,3 +11825,244 @@ void QCPGraph::getStepCenterPlotData(QVector<QPointF> *lineData, QVector<QCPData
         (*lineData)[i].setX(lastValue);
         (*lineData)[i].setY(key);
         ++it;
+        ++i;
+      }
+      (*lineData)[i].setX(lastValue);
+      (*lineData)[i].setY(lastKey);
+    } else // key axis is horizontal
+    {
+      double lastKey = keyAxis->coordToPixel(it.key());
+      double lastValue = valueAxis->coordToPixel(it.value().value);
+      double key;
+      if (pointData)
+      {
+        (*pointData)[ipoint] = it.value();
+        ++ipoint;
+      }
+      (*lineData)[i].setX(lastKey);
+      (*lineData)[i].setY(lastValue);
+      ++it;
+      ++i;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        key = (keyAxis->coordToPixel(it.key())-lastKey)*0.5 + lastKey;
+        (*lineData)[i].setX(key);
+        (*lineData)[i].setY(lastValue);
+        ++i;
+        lastValue = valueAxis->coordToPixel(it.value().value);
+        lastKey = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(key);
+        (*lineData)[i].setY(lastValue);
+        ++it;
+        ++i;
+      }
+      (*lineData)[i].setX(lastKey);
+      (*lineData)[i].setY(lastValue);
+    }
+  }
+}
+
+/*! 
+  \internal
+  Places the raw data points needed for an impulse plot in \a lineData.
+
+  As for all plot data retrieval functions, \a pointData just contains all unaltered data (scatter)
+  points that are visible for drawing scatter points, if necessary. If drawing scatter points is
+  disabled (i.e. the scatter style's shape is \ref QCPScatterStyle::ssNone), pass 0 as \a
+  pointData, and the function will skip filling the vector.
+  
+  \see drawImpulsePlot
+*/
+void QCPGraph::getImpulsePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (!lineData) { qDebug() << Q_FUNC_INFO << "null pointer passed as lineData"; return; }
+  
+  // get visible data range:
+  QCPDataMap::const_iterator lower, upper;
+  int dataCount = 0;
+  getVisibleDataBounds(lower, upper, dataCount);
+  if (dataCount > 0)
+  {
+    lineData->resize(dataCount*2); // no need to reserve 2 extra points, because there is no fill for impulse plot
+    if (pointData)
+      pointData->resize(dataCount);
+    
+    // position data points:
+    QCPDataMap::const_iterator it = lower;
+    QCPDataMap::const_iterator upperEnd = upper+1;
+    int i = 0;
+    int ipoint = 0;
+    if (keyAxis->orientation() == Qt::Vertical)
+    {
+      double zeroPointX = valueAxis->coordToPixel(0);
+      double key;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        key = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(zeroPointX);
+        (*lineData)[i].setY(key);
+        ++i;
+        (*lineData)[i].setX(valueAxis->coordToPixel(it.value().value));
+        (*lineData)[i].setY(key);
+        ++i;
+        ++it;
+      }
+    } else // key axis is horizontal
+    {
+      double zeroPointY = valueAxis->coordToPixel(0);
+      double key;
+      while (it != upperEnd)
+      {
+        if (pointData)
+        {
+          (*pointData)[ipoint] = it.value();
+          ++ipoint;
+        }
+        key = keyAxis->coordToPixel(it.key());
+        (*lineData)[i].setX(key);
+        (*lineData)[i].setY(zeroPointY);
+        ++i;
+        (*lineData)[i].setX(key);
+        (*lineData)[i].setY(valueAxis->coordToPixel(it.value().value));
+        ++i;
+        ++it;
+      }
+    }
+  }
+}
+
+/*! \internal
+  
+  Draws the fill of the graph with the specified brush.
+
+  If the fill is a normal fill towards the zero-value-line, only the \a lineData is required (and
+  two extra points at the zero-value-line, which are added by \ref addFillBasePoints and removed by
+  \ref removeFillBasePoints after the fill drawing is done).
+  
+  If the fill is a channel fill between this QCPGraph and another QCPGraph (mChannelFillGraph), the
+  more complex polygon is calculated with the \ref getChannelFillPolygon function.
+  
+  \see drawLinePlot
+*/
+void QCPGraph::drawFill(QCPPainter *painter, QVector<QPointF> *lineData) const
+{
+  if (mLineStyle == lsImpulse) return; // fill doesn't make sense for impulse plot
+  if (mainBrush().style() == Qt::NoBrush || mainBrush().color().alpha() == 0) return;
+  
+  applyFillAntialiasingHint(painter);
+  if (!mChannelFillGraph)
+  {
+    // draw base fill under graph, fill goes all the way to the zero-value-line:
+    addFillBasePoints(lineData);
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(mainBrush());
+    painter->drawPolygon(QPolygonF(*lineData));
+    removeFillBasePoints(lineData);
+  } else
+  {
+    // draw channel fill between this graph and mChannelFillGraph:
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(mainBrush());
+    painter->drawPolygon(getChannelFillPolygon(lineData));
+  }
+}
+
+/*! \internal
+  
+  Draws scatter symbols at every data point passed in \a pointData. scatter symbols are independent
+  of the line style and are always drawn if the scatter style's shape is not \ref
+  QCPScatterStyle::ssNone. Hence, the \a pointData vector is outputted by all "get(...)PlotData"
+  functions, together with the (line style dependent) line data.
+  
+  \see drawLinePlot, drawImpulsePlot
+*/
+void QCPGraph::drawScatterPlot(QCPPainter *painter, QVector<QCPData> *pointData) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  
+  // draw error bars:
+  if (mErrorType != etNone)
+  {
+    applyErrorBarsAntialiasingHint(painter);
+    painter->setPen(mErrorPen);
+    if (keyAxis->orientation() == Qt::Vertical)
+    {
+      for (int i=0; i<pointData->size(); ++i)
+        drawError(painter, valueAxis->coordToPixel(pointData->at(i).value), keyAxis->coordToPixel(pointData->at(i).key), pointData->at(i));
+    } else
+    {
+      for (int i=0; i<pointData->size(); ++i)
+        drawError(painter, keyAxis->coordToPixel(pointData->at(i).key), valueAxis->coordToPixel(pointData->at(i).value), pointData->at(i));
+    }
+  }
+  
+  // draw scatter point symbols:
+  applyScattersAntialiasingHint(painter);
+  mScatterStyle.applyTo(painter, mPen);
+  if (keyAxis->orientation() == Qt::Vertical)
+  {
+    for (int i=0; i<pointData->size(); ++i)
+      mScatterStyle.drawShape(painter, valueAxis->coordToPixel(pointData->at(i).value), keyAxis->coordToPixel(pointData->at(i).key));
+  } else
+  {
+    for (int i=0; i<pointData->size(); ++i)
+      mScatterStyle.drawShape(painter, keyAxis->coordToPixel(pointData->at(i).key), valueAxis->coordToPixel(pointData->at(i).value));
+  }
+}
+
+/*!  \internal
+  
+  Draws line graphs from the provided data. It connects all points in \a lineData, which was
+  created by one of the "get(...)PlotData" functions for line styles that require simple line
+  connections between the point vector they create. These are for example \ref getLinePlotData,
+  \ref getStepLeftPlotData, \ref getStepRightPlotData and \ref getStepCenterPlotData.
+  
+  \see drawScatterPlot, drawImpulsePlot
+*/
+void QCPGraph::drawLinePlot(QCPPainter *painter, QVector<QPointF> *lineData) const
+{
+  // draw line of graph:
+  if (mainPen().style() != Qt::NoPen && mainPen().color().alpha() != 0)
+  {
+    applyDefaultAntialiasingHint(painter);
+    painter->setPen(mainPen());
+    painter->setBrush(Qt::NoBrush);
+    
+    /* Draws polyline in batches, currently not used:
+    int p = 0;
+    while (p < lineData->size())
+    {
+      int batch = qMin(25, lineData->size()-p);
+      if (p != 0)
+      {
+        ++batch;
+        --p; // to draw the connection lines between two batches
+      }
+      painter->drawPolyline(lineData->constData()+p, batch);
+      p += batch;
+    }
+    */
+    
+    // if drawing solid line and not in PDF, use much faster line drawing instead of polyline:
+    if (mParentPlot->plottingHints().testFlag(QCP::phFastPolylines) &&
+        painter->pen().style() == Qt::SolidLine &&
+        !painter->modes().testFlag(QCPPainter::pmVectorized)&&
+        !painter->modes().testFlag(QCPPainter::pmNoCaching))
+    {
+      for (int i=1; i<lineData->size(); ++i)
+        painter->drawLine(lineData->at(i-1), lineData->at(i));
