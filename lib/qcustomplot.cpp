@@ -12066,3 +12066,260 @@ void QCPGraph::drawLinePlot(QCPPainter *painter, QVector<QPointF> *lineData) con
     {
       for (int i=1; i<lineData->size(); ++i)
         painter->drawLine(lineData->at(i-1), lineData->at(i));
+    } else
+    {  
+      painter->drawPolyline(QPolygonF(*lineData));
+    }
+  }
+}
+
+/*! \internal
+  
+  Draws impulses from the provided data, i.e. it connects all line pairs in \a lineData, which was
+  created by \ref getImpulsePlotData.
+  
+  \see drawScatterPlot, drawLinePlot
+*/
+void QCPGraph::drawImpulsePlot(QCPPainter *painter, QVector<QPointF> *lineData) const
+{
+  // draw impulses:
+  if (mainPen().style() != Qt::NoPen && mainPen().color().alpha() != 0)
+  {
+    applyDefaultAntialiasingHint(painter);
+    QPen pen = mainPen();
+    pen.setCapStyle(Qt::FlatCap); // so impulse line doesn't reach beyond zero-line
+    painter->setPen(pen);
+    painter->setBrush(Qt::NoBrush);
+    painter->drawLines(*lineData);
+  }
+}
+
+/*!  \internal
+  
+  called by the scatter drawing function (\ref drawScatterPlot) to draw the error bars on one data
+  point. \a x and \a y pixel positions of the data point are passed since they are already known in
+  pixel coordinates in the drawing function, so we save some extra coordToPixel transforms here. \a
+  data is therefore only used for the errors, not key and value.
+*/
+void QCPGraph::drawError(QCPPainter *painter, double x, double y, const QCPData &data) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  
+  double a, b; // positions of error bar bounds in pixels
+  double barWidthHalf = mErrorBarSize*0.5;
+  double skipSymbolMargin = mScatterStyle.size(); // pixels left blank per side, when mErrorBarSkipSymbol is true
+
+  if (keyAxis->orientation() == Qt::Vertical)
+  {
+    // draw key error vertically and value error horizontally
+    if (mErrorType == etKey || mErrorType == etBoth)
+    {
+      a = keyAxis->coordToPixel(data.key-data.keyErrorMinus);
+      b = keyAxis->coordToPixel(data.key+data.keyErrorPlus);
+      if (keyAxis->rangeReversed())
+        qSwap(a,b);
+      // draw spine:
+      if (mErrorBarSkipSymbol)
+      {
+        if (a-y > skipSymbolMargin) // don't draw spine if error is so small it's within skipSymbolmargin
+          painter->drawLine(QLineF(x, a, x, y+skipSymbolMargin));
+        if (y-b > skipSymbolMargin) 
+          painter->drawLine(QLineF(x, y-skipSymbolMargin, x, b));
+      } else
+        painter->drawLine(QLineF(x, a, x, b));
+      // draw handles:
+      painter->drawLine(QLineF(x-barWidthHalf, a, x+barWidthHalf, a));
+      painter->drawLine(QLineF(x-barWidthHalf, b, x+barWidthHalf, b));
+    }
+    if (mErrorType == etValue || mErrorType == etBoth)
+    {
+      a = valueAxis->coordToPixel(data.value-data.valueErrorMinus);
+      b = valueAxis->coordToPixel(data.value+data.valueErrorPlus);
+      if (valueAxis->rangeReversed())
+        qSwap(a,b);
+      // draw spine:
+      if (mErrorBarSkipSymbol)
+      {
+        if (x-a > skipSymbolMargin) // don't draw spine if error is so small it's within skipSymbolmargin
+          painter->drawLine(QLineF(a, y, x-skipSymbolMargin, y));
+        if (b-x > skipSymbolMargin)
+          painter->drawLine(QLineF(x+skipSymbolMargin, y, b, y));
+      } else
+        painter->drawLine(QLineF(a, y, b, y));
+      // draw handles:
+      painter->drawLine(QLineF(a, y-barWidthHalf, a, y+barWidthHalf));
+      painter->drawLine(QLineF(b, y-barWidthHalf, b, y+barWidthHalf));
+    }
+  } else // mKeyAxis->orientation() is Qt::Horizontal
+  {
+    // draw value error vertically and key error horizontally
+    if (mErrorType == etKey || mErrorType == etBoth)
+    {
+      a = keyAxis->coordToPixel(data.key-data.keyErrorMinus);
+      b = keyAxis->coordToPixel(data.key+data.keyErrorPlus);
+      if (keyAxis->rangeReversed())
+        qSwap(a,b);
+      // draw spine:
+      if (mErrorBarSkipSymbol)
+      {
+        if (x-a > skipSymbolMargin) // don't draw spine if error is so small it's within skipSymbolmargin
+          painter->drawLine(QLineF(a, y, x-skipSymbolMargin, y));
+        if (b-x > skipSymbolMargin)
+          painter->drawLine(QLineF(x+skipSymbolMargin, y, b, y));
+      } else
+        painter->drawLine(QLineF(a, y, b, y));
+      // draw handles:
+      painter->drawLine(QLineF(a, y-barWidthHalf, a, y+barWidthHalf));
+      painter->drawLine(QLineF(b, y-barWidthHalf, b, y+barWidthHalf));
+    }
+    if (mErrorType == etValue || mErrorType == etBoth)
+    {
+      a = valueAxis->coordToPixel(data.value-data.valueErrorMinus);
+      b = valueAxis->coordToPixel(data.value+data.valueErrorPlus);
+      if (valueAxis->rangeReversed())
+        qSwap(a,b);
+      // draw spine:
+      if (mErrorBarSkipSymbol)
+      {
+        if (a-y > skipSymbolMargin) // don't draw spine if error is so small it's within skipSymbolmargin
+          painter->drawLine(QLineF(x, a, x, y+skipSymbolMargin));
+        if (y-b > skipSymbolMargin)
+          painter->drawLine(QLineF(x, y-skipSymbolMargin, x, b));
+      } else
+        painter->drawLine(QLineF(x, a, x, b));
+      // draw handles:
+      painter->drawLine(QLineF(x-barWidthHalf, a, x+barWidthHalf, a));
+      painter->drawLine(QLineF(x-barWidthHalf, b, x+barWidthHalf, b));
+    }
+  }
+}
+
+/*!  \internal
+  
+  called by the specific plot data generating functions "get(...)PlotData" to determine which data
+  range is visible, so only that needs to be processed.
+  
+  \a lower returns an iterator to the lowest data point that needs to be taken into account when
+  plotting. Note that in order to get a clean plot all the way to the edge of the axes, \a lower
+  may still be outside the visible range.
+  
+  \a upper returns an iterator to the highest data point. Same as before, \a upper may also lie
+  outside of the visible range.
+  
+  \a count number of data points that need plotting, i.e. points between \a lower and \a upper,
+  including them. This is useful for allocating the array of <tt>QPointF</tt>s in the specific
+  drawing functions.
+  
+  if the graph contains no data, \a count is zero and both \a lower and \a upper point to constEnd.
+*/
+void QCPGraph::getVisibleDataBounds(QCPDataMap::const_iterator &lower, QCPDataMap::const_iterator &upper, int &count) const
+{
+  if (!mKeyAxis) { qDebug() << Q_FUNC_INFO << "invalid key axis"; return; }
+  if (mData->isEmpty())
+  {
+    lower = mData->constEnd();
+    upper = mData->constEnd();
+    count = 0;
+    return;
+  }
+  
+  // get visible data range as QMap iterators
+  QCPDataMap::const_iterator lbound = mData->lowerBound(mKeyAxis.data()->range().lower);
+  QCPDataMap::const_iterator ubound = mData->upperBound(mKeyAxis.data()->range().upper);
+  bool lowoutlier = lbound != mData->constBegin(); // indicates whether there exist points below axis range
+  bool highoutlier = ubound != mData->constEnd(); // indicates whether there exist points above axis range
+  
+  lower = (lowoutlier ? lbound-1 : lbound); // data point range that will be actually drawn
+  upper = (highoutlier ? ubound : ubound-1); // data point range that will be actually drawn
+  
+  // count number of points in range lower to upper (including them), so we can allocate array for them in draw functions:
+  QCPDataMap::const_iterator it = lower;
+  count = 1;
+  while (it != upper)
+  {
+    ++it;
+    ++count;
+  }
+}
+
+/*! \internal
+  
+  The line data vector generated by e.g. getLinePlotData contains only the line that connects the
+  data points. If the graph needs to be filled, two additional points need to be added at the
+  value-zero-line in the lower and upper key positions of the graph. This function calculates these
+  points and adds them to the end of \a lineData. Since the fill is typically drawn before the line
+  stroke, these added points need to be removed again after the fill is done, with the
+  removeFillBasePoints function.
+  
+  The expanding of \a lineData by two points will not cause unnecessary memory reallocations,
+  because the data vector generation functions (getLinePlotData etc.) reserve two extra points when
+  they allocate memory for \a lineData.
+  
+  \see removeFillBasePoints, lowerFillBasePoint, upperFillBasePoint
+*/
+void QCPGraph::addFillBasePoints(QVector<QPointF> *lineData) const
+{
+  if (!mKeyAxis) { qDebug() << Q_FUNC_INFO << "invalid key axis"; return; }
+  
+  // append points that close the polygon fill at the key axis:
+  if (mKeyAxis.data()->orientation() == Qt::Vertical)
+  {
+    *lineData << upperFillBasePoint(lineData->last().y());
+    *lineData << lowerFillBasePoint(lineData->first().y());
+  } else
+  {
+    *lineData << upperFillBasePoint(lineData->last().x());
+    *lineData << lowerFillBasePoint(lineData->first().x());
+  }
+}
+
+/*! \internal
+  
+  removes the two points from \a lineData that were added by \ref addFillBasePoints.
+  
+  \see addFillBasePoints, lowerFillBasePoint, upperFillBasePoint
+*/
+void QCPGraph::removeFillBasePoints(QVector<QPointF> *lineData) const
+{
+  lineData->remove(lineData->size()-2, 2);
+}
+
+/*! \internal
+  
+  called by \ref addFillBasePoints to conveniently assign the point which closes the fill polygon
+  on the lower side of the zero-value-line parallel to the key axis. The logarithmic axis scale
+  case is a bit special, since the zero-value-line in pixel coordinates is in positive or negative
+  infinity. So this case is handled separately by just closing the fill polygon on the axis which
+  lies in the direction towards the zero value.
+  
+  \a lowerKey will be the the key (in pixels) of the returned point. Depending on whether the key
+  axis is horizontal or vertical, \a lowerKey will end up as the x or y value of the returned
+  point, respectively.
+  
+  \see upperFillBasePoint, addFillBasePoints
+*/
+QPointF QCPGraph::lowerFillBasePoint(double lowerKey) const
+{
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return QPointF(); }
+  
+  QPointF point;
+  if (valueAxis->scaleType() == QCPAxis::stLinear)
+  {
+    if (keyAxis->axisType() == QCPAxis::atLeft)
+    {
+      point.setX(valueAxis->coordToPixel(0));
+      point.setY(lowerKey);
+    } else if (keyAxis->axisType() == QCPAxis::atRight)
+    {
+      point.setX(valueAxis->coordToPixel(0));
+      point.setY(lowerKey);
+    } else if (keyAxis->axisType() == QCPAxis::atTop)
+    {
+      point.setX(lowerKey);
+      point.setY(valueAxis->coordToPixel(0));
+    } else if (keyAxis->axisType() == QCPAxis::atBottom)
+    {
