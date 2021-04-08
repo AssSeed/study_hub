@@ -12559,3 +12559,218 @@ const QPolygonF QCPGraph::getChannelFillPolygon(const QVector<QPointF> *lineData
     thisData << otherData.at(i);
   return QPolygonF(thisData);
 }
+
+/*! \internal
+  
+  Finds the smallest index of \a data, whose points x value is just above \a x. Assumes x values in
+  \a data points are ordered ascending, as is the case when plotting with horizontal key axis.
+
+  Used to calculate the channel fill polygon, see \ref getChannelFillPolygon.
+*/
+int QCPGraph::findIndexAboveX(const QVector<QPointF> *data, double x) const
+{
+  for (int i=data->size()-1; i>=0; --i)
+  {
+    if (data->at(i).x() < x)
+    {
+      if (i<data->size()-1)
+        return i+1;
+      else
+        return data->size()-1;
+    }
+  }
+  return -1;
+}
+
+/*! \internal
+  
+  Finds the highest index of \a data, whose points x value is just below \a x. Assumes x values in
+  \a data points are ordered ascending, as is the case when plotting with horizontal key axis.
+  
+  Used to calculate the channel fill polygon, see \ref getChannelFillPolygon.
+*/
+int QCPGraph::findIndexBelowX(const QVector<QPointF> *data, double x) const
+{
+  for (int i=0; i<data->size(); ++i)
+  {
+    if (data->at(i).x() > x)
+    {
+      if (i>0)
+        return i-1;
+      else
+        return 0;
+    }
+  }
+  return -1;
+}
+
+/*! \internal
+  
+  Finds the smallest index of \a data, whose points y value is just above \a y. Assumes y values in
+  \a data points are ordered descending, as is the case when plotting with vertical key axis.
+  
+  Used to calculate the channel fill polygon, see \ref getChannelFillPolygon.
+*/
+int QCPGraph::findIndexAboveY(const QVector<QPointF> *data, double y) const
+{
+  for (int i=0; i<data->size(); ++i)
+  {
+    if (data->at(i).y() < y)
+    {
+      if (i>0)
+        return i-1;
+      else
+        return 0;
+    }
+  }
+  return -1;
+}
+
+/*! \internal 
+  
+  Calculates the (minimum) distance (in pixels) the graph's representation has from the given \a
+  pixelPoint in pixels. This is used to determine whether the graph was clicked or not, e.g. in
+  \ref selectTest.
+  
+  If either the graph has no data or if the line style is \ref lsNone and the scatter style's shape
+  is \ref QCPScatterStyle::ssNone (i.e. there is no visual representation of the graph), returns
+  500.
+*/
+double QCPGraph::pointDistance(const QPointF &pixelPoint) const
+{
+  if (mData->isEmpty())
+  {
+    qDebug() << Q_FUNC_INFO << "requested point distance on graph" << mName << "without data";
+    return 500;
+  }
+  if (mData->size() == 1)
+  {
+    QPointF dataPoint = coordsToPixels(mData->constBegin().key(), mData->constBegin().value().value);
+    return QVector2D(dataPoint-pixelPoint).length();
+  }
+  
+  if (mLineStyle == lsNone && mScatterStyle.isNone())
+    return 500;
+  
+  // calculate minimum distances to graph representation:
+  if (mLineStyle == lsNone)
+  {
+    // no line displayed, only calculate distance to scatter points:
+    QVector<QCPData> *pointData = new QVector<QCPData>;
+    getScatterPlotData(pointData);
+    double minDistSqr = std::numeric_limits<double>::max();
+    QPointF ptA;
+    QPointF ptB = coordsToPixels(pointData->at(0).key, pointData->at(0).value); // getScatterPlotData returns in plot coordinates, so transform to pixels
+    for (int i=1; i<pointData->size(); ++i)
+    {
+      ptA = ptB;
+      ptB = coordsToPixels(pointData->at(i).key, pointData->at(i).value);
+      double currentDistSqr = distSqrToLine(ptA, ptB, pixelPoint);
+      if (currentDistSqr < minDistSqr)
+        minDistSqr = currentDistSqr;
+    }
+    delete pointData;
+    return sqrt(minDistSqr);
+  } else
+  {
+    // line displayed calculate distance to line segments:
+    QVector<QPointF> *lineData = new QVector<QPointF>;
+    getPlotData(lineData, 0); // unlike with getScatterPlotData we get pixel coordinates here
+    double minDistSqr = std::numeric_limits<double>::max();
+    if (mLineStyle == lsImpulse)
+    {
+      // impulse plot differs from other line styles in that the lineData points are only pairwise connected:
+      for (int i=0; i<lineData->size()-1; i+=2) // iterate pairs
+      {
+        double currentDistSqr = distSqrToLine(lineData->at(i), lineData->at(i+1), pixelPoint);
+        if (currentDistSqr < minDistSqr)
+          minDistSqr = currentDistSqr;
+      }
+    } else 
+    {
+      // all other line plots (line and step) connect points directly:
+      for (int i=0; i<lineData->size()-1; ++i)
+      {
+        double currentDistSqr = distSqrToLine(lineData->at(i), lineData->at(i+1), pixelPoint);
+        if (currentDistSqr < minDistSqr)
+          minDistSqr = currentDistSqr;
+      }
+    }
+    delete lineData;
+    return sqrt(minDistSqr);
+  }
+}
+
+/*! \internal
+  
+  Finds the highest index of \a data, whose points y value is just below \a y. Assumes y values in
+  \a data points are ordered descending, as is the case when plotting with vertical key axis (since
+  keys are ordered ascending).
+
+  Used to calculate the channel fill polygon, see \ref getChannelFillPolygon.
+*/
+int QCPGraph::findIndexBelowY(const QVector<QPointF> *data, double y) const
+{
+  for (int i=data->size()-1; i>=0; --i)
+  {
+    if (data->at(i).y() > y)
+    {
+      if (i<data->size()-1)
+        return i+1;
+      else
+        return data->size()-1;
+    }
+  }
+  return -1;
+}
+
+/* inherits documentation from base class */
+QCPRange QCPGraph::getKeyRange(bool &validRange, SignDomain inSignDomain) const
+{
+  // just call the specialized version which takes an additional argument whether error bars
+  // should also be taken into consideration for range calculation. We set this to true here.
+  return getKeyRange(validRange, inSignDomain, true);
+}
+
+/* inherits documentation from base class */
+QCPRange QCPGraph::getValueRange(bool &validRange, SignDomain inSignDomain) const
+{
+  // just call the specialized version which takes an additional argument whether error bars
+  // should also be taken into consideration for range calculation. We set this to true here.
+  return getValueRange(validRange, inSignDomain, true);
+}
+
+/*! \overload
+  
+  Allows to specify whether the error bars should be included in the range calculation.
+  
+  \see getKeyRange(bool &validRange, SignDomain inSignDomain)
+*/
+QCPRange QCPGraph::getKeyRange(bool &validRange, SignDomain inSignDomain, bool includeErrors) const
+{
+  QCPRange range;
+  bool haveLower = false;
+  bool haveUpper = false;
+  
+  double current, currentErrorMinus, currentErrorPlus;
+  
+  if (inSignDomain == sdBoth) // range may be anywhere
+  {
+    QCPDataMap::const_iterator it = mData->constBegin();
+    while (it != mData->constEnd())
+    {
+      current = it.value().key;
+      currentErrorMinus = (includeErrors ? it.value().keyErrorMinus : 0);
+      currentErrorPlus = (includeErrors ? it.value().keyErrorPlus : 0);
+      if (current-currentErrorMinus < range.lower || !haveLower)
+      {
+        range.lower = current-currentErrorMinus;
+        haveLower = true;
+      }
+      if (current+currentErrorPlus > range.upper || !haveUpper)
+      {
+        range.upper = current+currentErrorPlus;
+        haveUpper = true;
+      }
+      ++it;
+    }
