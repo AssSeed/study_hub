@@ -12774,3 +12774,213 @@ QCPRange QCPGraph::getKeyRange(bool &validRange, SignDomain inSignDomain, bool i
       }
       ++it;
     }
+  } else if (inSignDomain == sdNegative) // range may only be in the negative sign domain
+  {
+    QCPDataMap::const_iterator it = mData->constBegin();
+    while (it != mData->constEnd())
+    {
+      current = it.value().key;
+      currentErrorMinus = (includeErrors ? it.value().keyErrorMinus : 0);
+      currentErrorPlus = (includeErrors ? it.value().keyErrorPlus : 0);
+      if ((current-currentErrorMinus < range.lower || !haveLower) && current-currentErrorMinus < 0)
+      {
+        range.lower = current-currentErrorMinus;
+        haveLower = true;
+      }
+      if ((current+currentErrorPlus > range.upper || !haveUpper) && current+currentErrorPlus < 0)
+      {
+        range.upper = current+currentErrorPlus;
+        haveUpper = true;
+      }
+      if (includeErrors) // in case point is in valid sign domain but errobars stretch beyond it, we still want to geht that point.
+      {
+        if ((current < range.lower || !haveLower) && current < 0)
+        {
+          range.lower = current;
+          haveLower = true;
+        }
+        if ((current > range.upper || !haveUpper) && current < 0)
+        {
+          range.upper = current;
+          haveUpper = true;
+        }
+      }
+      ++it;
+    }
+  } else if (inSignDomain == sdPositive) // range may only be in the positive sign domain
+  {
+    QCPDataMap::const_iterator it = mData->constBegin();
+    while (it != mData->constEnd())
+    {
+      current = it.value().key;
+      currentErrorMinus = (includeErrors ? it.value().keyErrorMinus : 0);
+      currentErrorPlus = (includeErrors ? it.value().keyErrorPlus : 0);
+      if ((current-currentErrorMinus < range.lower || !haveLower) && current-currentErrorMinus > 0)
+      {
+        range.lower = current-currentErrorMinus;
+        haveLower = true;
+      }
+      if ((current+currentErrorPlus > range.upper || !haveUpper) && current+currentErrorPlus > 0)
+      {
+        range.upper = current+currentErrorPlus;
+        haveUpper = true;
+      }
+      if (includeErrors) // in case point is in valid sign domain but errobars stretch beyond it, we still want to get that point.
+      {
+        if ((current < range.lower || !haveLower) && current > 0)
+        {
+          range.lower = current;
+          haveLower = true;
+        }
+        if ((current > range.upper || !haveUpper) && current > 0)
+        {
+          range.upper = current;
+          haveUpper = true;
+        }
+      }
+      ++it;
+    }
+  }
+  
+  validRange = haveLower && haveUpper;
+  return range;
+}
+
+/*! \overload
+  
+  Allows to specify whether the error bars should be included in the range calculation.
+  
+  \see getValueRange(bool &validRange, SignDomain inSignDomain)
+*/
+QCPRange QCPGraph::getValueRange(bool &validRange, SignDomain inSignDomain, bool includeErrors) const
+{
+  QCPRange range;
+  bool haveLower = false;
+  bool haveUpper = false;
+  
+  double current, currentErrorMinus, currentErrorPlus;
+  
+  if (inSignDomain == sdBoth) // range may be anywhere
+  {
+    QCPDataMap::const_iterator it = mData->constBegin();
+    while (it != mData->constEnd())
+    {
+      current = it.value().value;
+      currentErrorMinus = (includeErrors ? it.value().valueErrorMinus : 0);
+      currentErrorPlus = (includeErrors ? it.value().valueErrorPlus : 0);
+      if (current-currentErrorMinus < range.lower || !haveLower)
+      {
+        range.lower = current-currentErrorMinus;
+        haveLower = true;
+      }
+      if (current+currentErrorPlus > range.upper || !haveUpper)
+      {
+        range.upper = current+currentErrorPlus;
+        haveUpper = true;
+      }
+      ++it;
+    }
+  } else if (inSignDomain == sdNegative) // range may only be in the negative sign domain
+  {
+    QCPDataMap::const_iterator it = mData->constBegin();
+    while (it != mData->constEnd())
+    {
+      current = it.value().value;
+      currentErrorMinus = (includeErrors ? it.value().valueErrorMinus : 0);
+      currentErrorPlus = (includeErrors ? it.value().valueErrorPlus : 0);
+      if ((current-currentErrorMinus < range.lower || !haveLower) && current-currentErrorMinus < 0)
+      {
+        range.lower = current-currentErrorMinus;
+        haveLower = true;
+      }
+      if ((current+currentErrorPlus > range.upper || !haveUpper) && current+currentErrorPlus < 0)
+      {
+        range.upper = current+currentErrorPlus;
+        haveUpper = true;
+      }
+      if (includeErrors) // in case point is in valid sign domain but errobars stretch beyond it, we still want to get that point.
+      {
+        if ((current < range.lower || !haveLower) && current < 0)
+        {
+          range.lower = current;
+          haveLower = true;
+        }
+        if ((current > range.upper || !haveUpper) && current < 0)
+        {
+          range.upper = current;
+          haveUpper = true;
+        }
+      }
+      ++it;
+    }
+  } else if (inSignDomain == sdPositive) // range may only be in the positive sign domain
+  {
+    QCPDataMap::const_iterator it = mData->constBegin();
+    while (it != mData->constEnd())
+    {
+      current = it.value().value;
+      currentErrorMinus = (includeErrors ? it.value().valueErrorMinus : 0);
+      currentErrorPlus = (includeErrors ? it.value().valueErrorPlus : 0);
+      if ((current-currentErrorMinus < range.lower || !haveLower) && current-currentErrorMinus > 0)
+      {
+        range.lower = current-currentErrorMinus;
+        haveLower = true;
+      }
+      if ((current+currentErrorPlus > range.upper || !haveUpper) && current+currentErrorPlus > 0)
+      {
+        range.upper = current+currentErrorPlus;
+        haveUpper = true;
+      }
+      if (includeErrors) // in case point is in valid sign domain but errobars stretch beyond it, we still want to geht that point.
+      {
+        if ((current < range.lower || !haveLower) && current > 0)
+        {
+          range.lower = current;
+          haveLower = true;
+        }
+        if ((current > range.upper || !haveUpper) && current > 0)
+        {
+          range.upper = current;
+          haveUpper = true;
+        }
+      }
+      ++it;
+    }
+  }
+  
+  validRange = haveLower && haveUpper;
+  return range;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPCurveData
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPCurveData
+  \brief Holds the data of one single data point for QCPCurve.
+  
+  The container for storing multiple data points is \ref QCPCurveDataMap.
+  
+  The stored data is:
+  \li \a t: the free parameter of the curve at this curve point (cp. the mathematical vector <em>(x(t), y(t))</em>)
+  \li \a key: coordinate on the key axis of this curve point
+  \li \a value: coordinate on the value axis of this curve point
+  
+  \see QCPCurveDataMap
+*/
+
+/*!
+  Constructs a curve data point with t, key and value set to zero.
+*/
+QCPCurveData::QCPCurveData() :
+  t(0),
+  key(0),
+  value(0)
+{
+}
+
+/*!
+  Constructs a curve data point with the specified \a t, \a key and \a value.
+*/
+QCPCurveData::QCPCurveData(double t, double key, double value) :
