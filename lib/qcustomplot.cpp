@@ -13452,3 +13452,275 @@ void QCPCurve::getCurveData(QVector<QPointF> *lineData) const
       if (y > RTop)
         currentRegion = 4;
       else if (y < RBottom)
+        currentRegion = 6;
+      else
+        currentRegion = 5;
+    }
+    
+    /*
+      Watch out, the next part is very tricky. It modifies the curve such that it seems like the
+      whole thing is still drawn, but actually the points outside the axisRect are simplified
+      ("optimized") greatly. There are some subtle special cases when line segments are large and
+      thereby each subsequent point may be in a different region or even skip some.
+    */
+    // determine whether to keep current point:
+    if (currentRegion == 5 || (firstPoint && mBrush.style() != Qt::NoBrush)) // current is in R, add current and last if it wasn't added already
+    {
+      if (!addedLastAlready) // in case curve just entered R, make sure the last point outside R is also drawn correctly
+        lineData->append(coordsToPixels((it-1).value().key, (it-1).value().value)); // add last point to vector
+      else if (lastRegion != 5) // added last already. If that's the case, we probably added it at optimized position. So go back and make sure it's at original position (else the angle changes under which this segment enters R)
+      {
+        if (!firstPoint) // because on firstPoint, currentRegion is 5 and addedLastAlready is true, although there is no last point
+          lineData->replace(lineData->size()-1, coordsToPixels((it-1).value().key, (it-1).value().value));
+      }
+      lineData->append(coordsToPixels(it.value().key, it.value().value)); // add current point to vector
+      addedLastAlready = true; // so in next iteration, we don't add this point twice
+    } else if (currentRegion != lastRegion) // changed region, add current and last if not added already
+    {
+      // using outsideCoordsToPixels instead of coorsToPixels for optimized point placement (places points just outside axisRect instead of potentially far away)
+      
+      // if we're coming from R or we skip diagonally over the corner regions (so line might still be visible in R), we can't place points optimized
+      if (lastRegion == 5 || // coming from R
+          ((lastRegion==2 && currentRegion==4) || (lastRegion==4 && currentRegion==2)) || // skip top left diagonal
+          ((lastRegion==4 && currentRegion==8) || (lastRegion==8 && currentRegion==4)) || // skip top right diagonal
+          ((lastRegion==8 && currentRegion==6) || (lastRegion==6 && currentRegion==8)) || // skip bottom right diagonal
+          ((lastRegion==6 && currentRegion==2) || (lastRegion==2 && currentRegion==6))    // skip bottom left diagonal
+          )
+      {
+        // always add last point if not added already, original:
+        if (!addedLastAlready)
+          lineData->append(coordsToPixels((it-1).value().key, (it-1).value().value));
+        // add current point, original:
+        lineData->append(coordsToPixels(it.value().key, it.value().value));
+      } else // no special case that forbids optimized point placement, so do it:
+      {
+        // always add last point if not added already, optimized:
+        if (!addedLastAlready)
+          lineData->append(outsideCoordsToPixels((it-1).value().key, (it-1).value().value, currentRegion, axisRect));
+        // add current point, optimized:
+        lineData->append(outsideCoordsToPixels(it.value().key, it.value().value, currentRegion, axisRect));
+      }
+      addedLastAlready = true; // so that if next point enters 5, or crosses another region boundary, we don't add this point twice
+    } else // neither in R, nor crossed a region boundary, skip current point
+    {
+      addedLastAlready = false;
+    }
+    lastRegion = currentRegion;
+    firstPoint = false;
+  }
+  // If curve ends outside R, we want to add very last point so the fill looks like it should when the curve started inside R:
+  if (lastRegion != 5 && mBrush.style() != Qt::NoBrush && !mData->isEmpty())
+    lineData->append(coordsToPixels((mData->constEnd()-1).value().key, (mData->constEnd()-1).value().value));
+}
+
+/*! \internal 
+  
+  Calculates the (minimum) distance (in pixels) the curve's representation has from the given \a
+  pixelPoint in pixels. This is used to determine whether the curve was clicked or not, e.g. in
+  \ref selectTest.
+*/
+double QCPCurve::pointDistance(const QPointF &pixelPoint) const
+{
+  if (mData->isEmpty())
+  {
+    qDebug() << Q_FUNC_INFO << "requested point distance on curve" << mName << "without data";
+    return 500;
+  }
+  if (mData->size() == 1)
+  {
+    QPointF dataPoint = coordsToPixels(mData->constBegin().key(), mData->constBegin().value().value);
+    return QVector2D(dataPoint-pixelPoint).length();
+  }
+  
+  // calculate minimum distance to line segments:
+  QVector<QPointF> *lineData = new QVector<QPointF>;
+  getCurveData(lineData);
+  double minDistSqr = std::numeric_limits<double>::max();
+  for (int i=0; i<lineData->size()-1; ++i)
+  {
+    double currentDistSqr = distSqrToLine(lineData->at(i), lineData->at(i+1), pixelPoint);
+    if (currentDistSqr < minDistSqr)
+      minDistSqr = currentDistSqr;
+  }
+  delete lineData;
+  return sqrt(minDistSqr);
+}
+
+/*! \internal
+  
+  This is a specialized \ref coordsToPixels function for points that are outside the visible
+  axisRect and just crossing a boundary (since \ref getCurveData reduces non-visible curve segments
+  to those line segments that cross region boundaries, see documentation there). It only uses the
+  coordinate parallel to the region boundary of the axisRect. The other coordinate is picked just
+  outside the axisRect (how far is determined by the scatter size and the line width). Together
+  with the optimization in \ref getCurveData this improves performance for large curves (or zoomed
+  in ones) significantly while keeping the illusion the whole curve and its filling is still being
+  drawn for the viewer.
+*/
+QPointF QCPCurve::outsideCoordsToPixels(double key, double value, int region, QRect axisRect) const
+{
+  int margin = qCeil(qMax(mScatterStyle.size(), (double)mPen.widthF())) + 2;
+  QPointF result = coordsToPixels(key, value);
+  switch (region)
+  {
+    case 2: result.setX(axisRect.left()-margin); break; // left
+    case 8: result.setX(axisRect.right()+margin); break; // right
+    case 4: result.setY(axisRect.top()-margin); break; // top
+    case 6: result.setY(axisRect.bottom()+margin); break; // bottom
+    case 1: result.setX(axisRect.left()-margin);
+            result.setY(axisRect.top()-margin); break; // top left
+    case 7: result.setX(axisRect.right()+margin);
+            result.setY(axisRect.top()-margin); break; // top right
+    case 9: result.setX(axisRect.right()+margin);
+            result.setY(axisRect.bottom()+margin); break; // bottom right
+    case 3: result.setX(axisRect.left()-margin);
+            result.setY(axisRect.bottom()+margin); break; // bottom left
+  }
+  return result;
+}
+
+/* inherits documentation from base class */
+QCPRange QCPCurve::getKeyRange(bool &validRange, SignDomain inSignDomain) const
+{
+  QCPRange range;
+  bool haveLower = false;
+  bool haveUpper = false;
+  
+  double current;
+  
+  QCPCurveDataMap::const_iterator it = mData->constBegin();
+  while (it != mData->constEnd())
+  {
+    current = it.value().key;
+    if (inSignDomain == sdBoth || (inSignDomain == sdNegative && current < 0) || (inSignDomain == sdPositive && current > 0))
+    {
+      if (current < range.lower || !haveLower)
+      {
+        range.lower = current;
+        haveLower = true;
+      }
+      if (current > range.upper || !haveUpper)
+      {
+        range.upper = current;
+        haveUpper = true;
+      }
+    }
+    ++it;
+  }
+  
+  validRange = haveLower && haveUpper;
+  return range;
+}
+
+/* inherits documentation from base class */
+QCPRange QCPCurve::getValueRange(bool &validRange, SignDomain inSignDomain) const
+{
+  QCPRange range;
+  bool haveLower = false;
+  bool haveUpper = false;
+  
+  double current;
+  
+  QCPCurveDataMap::const_iterator it = mData->constBegin();
+  while (it != mData->constEnd())
+  {
+    current = it.value().value;
+    if (inSignDomain == sdBoth || (inSignDomain == sdNegative && current < 0) || (inSignDomain == sdPositive && current > 0))
+    {
+      if (current < range.lower || !haveLower)
+      {
+        range.lower = current;
+        haveLower = true;
+      }
+      if (current > range.upper || !haveUpper)
+      {
+        range.upper = current;
+        haveUpper = true;
+      }
+    }
+    ++it;
+  }
+  
+  validRange = haveLower && haveUpper;
+  return range;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPBarData
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPBarData
+  \brief Holds the data of one single data point (one bar) for QCPBars.
+  
+  The container for storing multiple data points is \ref QCPBarDataMap.
+  
+  The stored data is:
+  \li \a key: coordinate on the key axis of this bar
+  \li \a value: height coordinate on the value axis of this bar
+  
+  \see QCPBarDataaMap
+*/
+
+/*!
+  Constructs a bar data point with key and value set to zero.
+*/
+QCPBarData::QCPBarData() :
+  key(0),
+  value(0)
+{
+}
+
+/*!
+  Constructs a bar data point with the specified \a key and \a value.
+*/
+QCPBarData::QCPBarData(double key, double value) :
+  key(key),
+  value(value)
+{
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPBars
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPBars
+  \brief A plottable representing a bar chart in a plot.
+
+  \image html QCPBars.png
+  
+  To plot data, assign it with the \ref setData or \ref addData functions.
+  
+  \section appearance Changing the appearance
+  
+  The appearance of the bars is determined by the pen and the brush (\ref setPen, \ref setBrush).
+  
+  Bar charts are stackable. This means, Two QCPBars plottables can be placed on top of each other
+  (see \ref QCPBars::moveAbove). Then, when two bars are at the same key position, they will appear
+  stacked.
+  
+  \section usage Usage
+  
+  Like all data representing objects in QCustomPlot, the QCPBars is a plottable
+  (QCPAbstractPlottable). So the plottable-interface of QCustomPlot applies
+  (QCustomPlot::plottable, QCustomPlot::addPlottable, QCustomPlot::removePlottable, etc.)
+  
+  Usually, you first create an instance:
+  \code
+  QCPBars *newBars = new QCPBars(customPlot->xAxis, customPlot->yAxis);\endcode
+  add it to the customPlot with QCustomPlot::addPlottable:
+  \code
+  customPlot->addPlottable(newBars);\endcode
+  and then modify the properties of the newly created plottable, e.g.:
+  \code
+  newBars->setName("Country population");
+  newBars->setData(xData, yData);\endcode
+*/
+
+/*! \fn QCPBars *QCPBars::barBelow() const
+  Returns the bars plottable that is directly below this bars plottable.
+  If there is no such plottable, returns 0.
+  
+  \see barAbove, moveBelow, moveAbove
+*/
