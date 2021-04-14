@@ -13222,3 +13222,233 @@ void QCPCurve::removeDataBefore(double t)
   QCPCurveDataMap::iterator it = mData->begin();
   while (it != mData->end() && it.key() < t)
     it = mData->erase(it);
+}
+
+/*!
+  Removes all data points with curve parameter t greater than \a t.
+  \see addData, clearData
+*/
+void QCPCurve::removeDataAfter(double t)
+{
+  if (mData->isEmpty()) return;
+  QCPCurveDataMap::iterator it = mData->upperBound(t);
+  while (it != mData->end())
+    it = mData->erase(it);
+}
+
+/*!
+  Removes all data points with curve parameter t between \a fromt and \a tot. if \a fromt is
+  greater or equal to \a tot, the function does nothing. To remove a single data point with known
+  t, use \ref removeData(double t).
+  
+  \see addData, clearData
+*/
+void QCPCurve::removeData(double fromt, double tot)
+{
+  if (fromt >= tot || mData->isEmpty()) return;
+  QCPCurveDataMap::iterator it = mData->upperBound(fromt);
+  QCPCurveDataMap::iterator itEnd = mData->upperBound(tot);
+  while (it != itEnd)
+    it = mData->erase(it);
+}
+
+/*! \overload
+  
+  Removes a single data point at curve parameter \a t. If the position is not known with absolute
+  precision, consider using \ref removeData(double fromt, double tot) with a small fuzziness
+  interval around the suspected position, depeding on the precision with which the curve parameter
+  is known.
+  
+  \see addData, clearData
+*/
+void QCPCurve::removeData(double t)
+{
+  mData->remove(t);
+}
+
+/*!
+  Removes all data points.
+  \see removeData, removeDataAfter, removeDataBefore
+*/
+void QCPCurve::clearData()
+{
+  mData->clear();
+}
+
+/* inherits documentation from base class */
+double QCPCurve::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if ((onlySelectable && !mSelectable) || mData->isEmpty())
+    return -1;
+  
+  return pointDistance(pos);
+}
+
+/* inherits documentation from base class */
+void QCPCurve::draw(QCPPainter *painter)
+{
+  if (mData->isEmpty()) return;
+  
+  // allocate line vector:
+  QVector<QPointF> *lineData = new QVector<QPointF>;
+  
+  // fill with curve data:
+  getCurveData(lineData);
+  
+  // check data validity if flag set:
+#ifdef QCUSTOMPLOT_CHECK_DATA
+  QCPCurveDataMap::const_iterator it;
+  for (it = mData->constBegin(); it != mData->constEnd(); ++it)
+  {
+    if (QCP::isInvalidData(it.value().t) ||
+        QCP::isInvalidData(it.value().key, it.value().value))
+      qDebug() << Q_FUNC_INFO << "Data point at" << it.key() << "invalid." << "Plottable name:" << name();
+  }
+#endif
+  
+  // draw curve fill:
+  if (mainBrush().style() != Qt::NoBrush && mainBrush().color().alpha() != 0)
+  {
+    applyFillAntialiasingHint(painter);
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(mainBrush());
+    painter->drawPolygon(QPolygonF(*lineData));
+  }
+  
+  // draw curve line:
+  if (mLineStyle != lsNone && mainPen().style() != Qt::NoPen && mainPen().color().alpha() != 0)
+  {
+    applyDefaultAntialiasingHint(painter);
+    painter->setPen(mainPen());
+    painter->setBrush(Qt::NoBrush);
+    // if drawing solid line and not in PDF, use much faster line drawing instead of polyline:
+    if (mParentPlot->plottingHints().testFlag(QCP::phFastPolylines) &&
+        painter->pen().style() == Qt::SolidLine &&
+        !painter->modes().testFlag(QCPPainter::pmVectorized) &&
+        !painter->modes().testFlag(QCPPainter::pmNoCaching))
+    {
+      for (int i=1; i<lineData->size(); ++i)
+        painter->drawLine(lineData->at(i-1), lineData->at(i));
+    } else
+    {  
+      painter->drawPolyline(QPolygonF(*lineData));
+    }
+  }
+  
+  // draw scatters:
+  if (!mScatterStyle.isNone())
+    drawScatterPlot(painter, lineData);
+  
+  // free allocated line data:
+  delete lineData;
+}
+
+/* inherits documentation from base class */
+void QCPCurve::drawLegendIcon(QCPPainter *painter, const QRectF &rect) const
+{
+  // draw fill:
+  if (mBrush.style() != Qt::NoBrush)
+  {
+    applyFillAntialiasingHint(painter);
+    painter->fillRect(QRectF(rect.left(), rect.top()+rect.height()/2.0, rect.width(), rect.height()/3.0), mBrush);
+  }
+  // draw line vertically centered:
+  if (mLineStyle != lsNone)
+  {
+    applyDefaultAntialiasingHint(painter);
+    painter->setPen(mPen);
+    painter->drawLine(QLineF(rect.left(), rect.top()+rect.height()/2.0, rect.right()+5, rect.top()+rect.height()/2.0)); // +5 on x2 else last segment is missing from dashed/dotted pens
+  }
+  // draw scatter symbol:
+  if (!mScatterStyle.isNone())
+  {
+    applyScattersAntialiasingHint(painter);
+    // scale scatter pixmap if it's too large to fit in legend icon rect:
+    if (mScatterStyle.shape() == QCPScatterStyle::ssPixmap && (mScatterStyle.pixmap().size().width() > rect.width() || mScatterStyle.pixmap().size().height() > rect.height()))
+    {
+      QCPScatterStyle scaledStyle(mScatterStyle);
+      scaledStyle.setPixmap(scaledStyle.pixmap().scaled(rect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+      scaledStyle.applyTo(painter, mPen);
+      scaledStyle.drawShape(painter, QRectF(rect).center());
+    } else
+    {
+      mScatterStyle.applyTo(painter, mPen);
+      mScatterStyle.drawShape(painter, QRectF(rect).center());
+    }
+  }
+}
+
+/*! \internal
+  
+  Draws scatter symbols at every data point passed in \a pointData. scatter symbols are independent of
+  the line style and are always drawn if scatter shape is not \ref QCPScatterStyle::ssNone.
+*/
+void QCPCurve::drawScatterPlot(QCPPainter *painter, const QVector<QPointF> *pointData) const
+{
+  // draw scatter point symbols:
+  applyScattersAntialiasingHint(painter);
+  mScatterStyle.applyTo(painter, mPen);
+  for (int i=0; i<pointData->size(); ++i)
+    mScatterStyle.drawShape(painter,  pointData->at(i));
+}
+
+/*! \internal
+  
+  called by QCPCurve::draw to generate a point vector (pixels) which represents the line of the
+  curve. Line segments that aren't visible in the current axis rect are handled in an optimized
+  way.
+*/
+void QCPCurve::getCurveData(QVector<QPointF> *lineData) const
+{
+  /* Extended sides of axis rect R divide space into 9 regions:
+     1__|_4_|__7  
+     2__|_R_|__8
+     3  | 6 |  9 
+     General idea: If the two points of a line segment are in the same region (that is not R), the line segment corner is removed.
+     Curves outside R become straight lines closely outside of R which greatly reduces drawing time, yet keeps the look of lines and
+     fills inside R consistent.
+     The region R has index 5.
+  */
+  QCPAxis *keyAxis = mKeyAxis.data();
+  QCPAxis *valueAxis = mValueAxis.data();
+  if (!keyAxis || !valueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  
+  QRect axisRect = mKeyAxis.data()->axisRect()->rect() & mValueAxis.data()->axisRect()->rect();
+  lineData->reserve(mData->size());
+  QCPCurveDataMap::const_iterator it;
+  int lastRegion = 5;
+  int currentRegion = 5;
+  double RLeft = keyAxis->range().lower;
+  double RRight = keyAxis->range().upper;
+  double RBottom = valueAxis->range().lower;
+  double RTop = valueAxis->range().upper;
+  double x, y; // current key/value
+  bool addedLastAlready = true;
+  bool firstPoint = true; // first point must always be drawn, to make sure fill works correctly
+  for (it = mData->constBegin(); it != mData->constEnd(); ++it)
+  {
+    x = it.value().key;
+    y = it.value().value;
+    // determine current region:
+    if (x < RLeft) // region 123
+    {
+      if (y > RTop)
+        currentRegion = 1;
+      else if (y < RBottom)
+        currentRegion = 3;
+      else
+        currentRegion = 2;
+    } else if (x > RRight) // region 789
+    {
+      if (y > RTop)
+        currentRegion = 7;
+      else if (y < RBottom)
+        currentRegion = 9;
+      else
+        currentRegion = 8;
+    } else // region 456
+    {
+      if (y > RTop)
+        currentRegion = 4;
+      else if (y < RBottom)
