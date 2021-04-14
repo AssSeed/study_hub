@@ -12984,3 +12984,241 @@ QCPCurveData::QCPCurveData() :
   Constructs a curve data point with the specified \a t, \a key and \a value.
 */
 QCPCurveData::QCPCurveData(double t, double key, double value) :
+  t(t),
+  key(key),
+  value(value)
+{
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPCurve
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPCurve
+  \brief A plottable representing a parametric curve in a plot.
+  
+  \image html QCPCurve.png
+  
+  Unlike QCPGraph, plottables of this type may have multiple points with the same key coordinate,
+  so their visual representation can have \a loops. This is realized by introducing a third
+  coordinate \a t, which defines the order of the points described by the other two coordinates \a
+  x and \a y.
+
+  To plot data, assign it with the \ref setData or \ref addData functions.
+  
+  \section appearance Changing the appearance
+  
+  The appearance of the curve is determined by the pen and the brush (\ref setPen, \ref setBrush).
+  \section usage Usage
+  
+  Like all data representing objects in QCustomPlot, the QCPCurve is a plottable (QCPAbstractPlottable). So
+  the plottable-interface of QCustomPlot applies (QCustomPlot::plottable, QCustomPlot::addPlottable, QCustomPlot::removePlottable, etc.) 
+  
+  Usually, you first create an instance:
+  \code
+  QCPCurve *newCurve = new QCPCurve(customPlot->xAxis, customPlot->yAxis);\endcode
+  add it to the customPlot with QCustomPlot::addPlottable:
+  \code
+  customPlot->addPlottable(newCurve);\endcode
+  and then modify the properties of the newly created plottable, e.g.:
+  \code
+  newCurve->setName("Fermat's Spiral");
+  newCurve->setData(tData, xData, yData);\endcode
+*/
+
+/*!
+  Constructs a curve which uses \a keyAxis as its key axis ("x") and \a valueAxis as its value
+  axis ("y"). \a keyAxis and \a valueAxis must reside in the same QCustomPlot instance and not have
+  the same orientation. If either of these restrictions is violated, a corresponding message is
+  printed to the debug output (qDebug), the construction is not aborted, though.
+  
+  The constructed QCPCurve can be added to the plot with QCustomPlot::addPlottable, QCustomPlot
+  then takes ownership of the graph.
+*/
+QCPCurve::QCPCurve(QCPAxis *keyAxis, QCPAxis *valueAxis) :
+  QCPAbstractPlottable(keyAxis, valueAxis)
+{
+  mData = new QCPCurveDataMap;
+  mPen.setColor(Qt::blue);
+  mPen.setStyle(Qt::SolidLine);
+  mBrush.setColor(Qt::blue);
+  mBrush.setStyle(Qt::NoBrush);
+  mSelectedPen = mPen;
+  mSelectedPen.setWidthF(2.5);
+  mSelectedPen.setColor(QColor(80, 80, 255)); // lighter than Qt::blue of mPen
+  mSelectedBrush = mBrush;
+  
+  setScatterStyle(QCPScatterStyle());
+  setLineStyle(lsLine);
+}
+
+QCPCurve::~QCPCurve()
+{
+  delete mData;
+}
+
+/*!
+  Replaces the current data with the provided \a data.
+  
+  If \a copy is set to true, data points in \a data will only be copied. if false, the plottable
+  takes ownership of the passed data and replaces the internal data pointer with it. This is
+  significantly faster than copying for large datasets.
+*/
+void QCPCurve::setData(QCPCurveDataMap *data, bool copy)
+{
+  if (copy)
+  {
+    *mData = *data;
+  } else
+  {
+    delete mData;
+    mData = data;
+  }
+}
+
+/*! \overload
+  
+  Replaces the current data with the provided points in \a t, \a key and \a value tuples. The
+  provided vectors should have equal length. Else, the number of added points will be the size of
+  the smallest vector.
+*/
+void QCPCurve::setData(const QVector<double> &t, const QVector<double> &key, const QVector<double> &value)
+{
+  mData->clear();
+  int n = t.size();
+  n = qMin(n, key.size());
+  n = qMin(n, value.size());
+  QCPCurveData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.t = t[i];
+    newData.key = key[i];
+    newData.value = value[i];
+    mData->insertMulti(newData.t, newData);
+  }
+}
+
+/*! \overload
+  
+  Replaces the current data with the provided \a key and \a value pairs. The t parameter
+  of each data point will be set to the integer index of the respective key/value pair.
+*/
+void QCPCurve::setData(const QVector<double> &key, const QVector<double> &value)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  QCPCurveData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.t = i; // no t vector given, so we assign t the index of the key/value pair
+    newData.key = key[i];
+    newData.value = value[i];
+    mData->insertMulti(newData.t, newData);
+  }
+}
+
+/*! 
+  Sets the visual appearance of single data points in the plot. If set to \ref
+  QCPScatterStyle::ssNone, no scatter points are drawn (e.g. for line-only plots with appropriate
+  line style).
+  
+  \see QCPScatterStyle, setLineStyle
+*/
+void QCPCurve::setScatterStyle(const QCPScatterStyle &style)
+{
+  mScatterStyle = style;
+}
+
+/*!
+  Sets how the single data points are connected in the plot or how they are represented visually
+  apart from the scatter symbol. For scatter-only plots, set \a style to \ref lsNone and \ref
+  setScatterStyle to the desired scatter style.
+  
+  \see setScatterStyle
+*/
+void QCPCurve::setLineStyle(QCPCurve::LineStyle style)
+{
+  mLineStyle = style;
+}
+
+/*!
+  Adds the provided data points in \a dataMap to the current data.
+  \see removeData
+*/
+void QCPCurve::addData(const QCPCurveDataMap &dataMap)
+{
+  mData->unite(dataMap);
+}
+
+/*! \overload
+  Adds the provided single data point in \a data to the current data.
+  \see removeData
+*/
+void QCPCurve::addData(const QCPCurveData &data)
+{
+  mData->insertMulti(data.t, data);
+}
+
+/*! \overload
+  Adds the provided single data point as \a t, \a key and \a value tuple to the current data
+  \see removeData
+*/
+void QCPCurve::addData(double t, double key, double value)
+{
+  QCPCurveData newData;
+  newData.t = t;
+  newData.key = key;
+  newData.value = value;
+  mData->insertMulti(newData.t, newData);
+}
+
+/*! \overload
+  
+  Adds the provided single data point as \a key and \a value pair to the current data The t
+  parameter of the data point is set to the t of the last data point plus 1. If there is no last
+  data point, t will be set to 0.
+  
+  \see removeData
+*/
+void QCPCurve::addData(double key, double value)
+{
+  QCPCurveData newData;
+  if (!mData->isEmpty())
+    newData.t = (mData->constEnd()-1).key()+1;
+  else
+    newData.t = 0;
+  newData.key = key;
+  newData.value = value;
+  mData->insertMulti(newData.t, newData);
+}
+
+/*! \overload
+  Adds the provided data points as \a t, \a key and \a value tuples to the current data.
+  \see removeData
+*/
+void QCPCurve::addData(const QVector<double> &ts, const QVector<double> &keys, const QVector<double> &values)
+{
+  int n = ts.size();
+  n = qMin(n, keys.size());
+  n = qMin(n, values.size());
+  QCPCurveData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.t = ts[i];
+    newData.key = keys[i];
+    newData.value = values[i];
+    mData->insertMulti(newData.t, newData);
+  }
+}
+
+/*!
+  Removes all data points with curve parameter t smaller than \a t.
+  \see addData, clearData
+*/
+void QCPCurve::removeDataBefore(double t)
+{
+  QCPCurveDataMap::iterator it = mData->begin();
+  while (it != mData->end() && it.key() < t)
+    it = mData->erase(it);
