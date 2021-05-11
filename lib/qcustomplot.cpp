@@ -13970,3 +13970,251 @@ void QCPBars::removeData(double fromKey, double toKey)
   around the suspected position, depeding on the precision with which the key is known.
   
   \see addData, clearData
+*/
+void QCPBars::removeData(double key)
+{
+  mData->remove(key);
+}
+
+/*!
+  Removes all data points.
+  \see removeData, removeDataAfter, removeDataBefore
+*/
+void QCPBars::clearData()
+{
+  mData->clear();
+}
+
+/* inherits documentation from base class */
+double QCPBars::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (onlySelectable && !mSelectable)
+    return -1;
+  
+  QCPBarDataMap::ConstIterator it;
+  double posKey, posValue;
+  pixelsToCoords(pos, posKey, posValue);
+  for (it = mData->constBegin(); it != mData->constEnd(); ++it)
+  {
+    double baseValue = getBaseValue(it.key(), it.value().value >=0);
+    QCPRange keyRange(it.key()-mWidth*0.5, it.key()+mWidth*0.5);
+    QCPRange valueRange(baseValue, baseValue+it.value().value);
+    if (keyRange.contains(posKey) && valueRange.contains(posValue))
+      return mParentPlot->selectionTolerance()*0.99;
+  }
+  return -1;
+}
+
+/* inherits documentation from base class */
+void QCPBars::draw(QCPPainter *painter)
+{
+  if (!mKeyAxis || !mValueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+  if (mData->isEmpty()) return;
+  
+  QCPBarDataMap::const_iterator it;
+  for (it = mData->constBegin(); it != mData->constEnd(); ++it)
+  {
+    // skip bar if not visible in key axis range:
+    if (it.key()+mWidth*0.5 < mKeyAxis.data()->range().lower || it.key()-mWidth*0.5 > mKeyAxis.data()->range().upper)
+      continue;
+    // check data validity if flag set:
+#ifdef QCUSTOMPLOT_CHECK_DATA
+    if (QCP::isInvalidData(it.value().key, it.value().value))
+      qDebug() << Q_FUNC_INFO << "Data point at" << it.key() << "of drawn range invalid." << "Plottable name:" << name();
+#endif
+    QPolygonF barPolygon = getBarPolygon(it.key(), it.value().value);
+    // draw bar fill:
+    if (mainBrush().style() != Qt::NoBrush && mainBrush().color().alpha() != 0)
+    {
+      applyFillAntialiasingHint(painter);
+      painter->setPen(Qt::NoPen);
+      painter->setBrush(mainBrush());
+      painter->drawPolygon(barPolygon);
+    }
+    // draw bar line:
+    if (mainPen().style() != Qt::NoPen && mainPen().color().alpha() != 0)
+    {
+      applyDefaultAntialiasingHint(painter);
+      painter->setPen(mainPen());
+      painter->setBrush(Qt::NoBrush);
+      painter->drawPolyline(barPolygon);
+    }
+  }
+}
+
+/* inherits documentation from base class */
+void QCPBars::drawLegendIcon(QCPPainter *painter, const QRectF &rect) const
+{
+  // draw filled rect:
+  applyDefaultAntialiasingHint(painter);
+  painter->setBrush(mBrush);
+  painter->setPen(mPen);
+  QRectF r = QRectF(0, 0, rect.width()*0.67, rect.height()*0.67);
+  r.moveCenter(rect.center());
+  painter->drawRect(r);
+}
+
+/*! \internal
+  
+  Returns the polygon of a single bar with \a key and \a value. The Polygon is open at the bottom
+  and shifted according to the bar stacking (see \ref moveAbove).
+*/
+QPolygonF QCPBars::getBarPolygon(double key, double value) const
+{
+  QPolygonF result;
+  double baseValue = getBaseValue(key, value >= 0);
+  result << coordsToPixels(key-mWidth*0.5, baseValue);
+  result << coordsToPixels(key-mWidth*0.5, baseValue+value);
+  result << coordsToPixels(key+mWidth*0.5, baseValue+value);
+  result << coordsToPixels(key+mWidth*0.5, baseValue);
+  return result;
+}
+
+/*! \internal
+  
+  This function is called to find at which value to start drawing the base of a bar at \a key, when
+  it is stacked on top of another QCPBars (e.g. with \ref moveAbove).
+  
+  positive and negative bars are separated per stack (positive are stacked above 0-value upwards,
+  negative are stacked below 0-value downwards). This can be indicated with \a positive. So if the
+  bar for which we need the base value is negative, set \a positive to false.
+*/
+double QCPBars::getBaseValue(double key, bool positive) const
+{
+  if (mBarBelow)
+  {
+    double max = 0;
+    // find bars of mBarBelow that are approximately at key and find largest one:
+    QCPBarDataMap::const_iterator it = mBarBelow.data()->mData->lowerBound(key-mWidth*0.1);
+    QCPBarDataMap::const_iterator itEnd = mBarBelow.data()->mData->upperBound(key+mWidth*0.1);
+    while (it != itEnd)
+    {
+      if ((positive && it.value().value > max) ||
+          (!positive && it.value().value < max))
+        max = it.value().value;
+      ++it;
+    }
+    // recurse down the bar-stack to find the total height:
+    return max + mBarBelow.data()->getBaseValue(key, positive);
+  } else
+    return 0;
+}
+
+/*! \internal
+
+  Connects \a below and \a above to each other via their mBarAbove/mBarBelow properties.
+  The bar(s) currently below lower and upper will become disconnected to lower/upper.
+  
+  If lower is zero, upper will be disconnected at the bottom.
+  If upper is zero, lower will be disconnected at the top.
+*/
+void QCPBars::connectBars(QCPBars *lower, QCPBars *upper)
+{
+  if (!lower && !upper) return;
+  
+  if (!lower) // disconnect upper at bottom
+  {
+    // disconnect old bar below upper:
+    if (upper->mBarBelow && upper->mBarBelow.data()->mBarAbove.data() == upper)
+      upper->mBarBelow.data()->mBarAbove = 0;
+    upper->mBarBelow = 0;
+  } else if (!upper) // disconnect lower at top
+  {
+    // disconnect old bar above lower:
+    if (lower->mBarAbove && lower->mBarAbove.data()->mBarBelow.data() == lower)
+      lower->mBarAbove.data()->mBarBelow = 0;
+    lower->mBarAbove = 0;
+  } else // connect lower and upper
+  {
+    // disconnect old bar above lower:
+    if (lower->mBarAbove && lower->mBarAbove.data()->mBarBelow.data() == lower)
+      lower->mBarAbove.data()->mBarBelow = 0;
+    // disconnect old bar below upper:
+    if (upper->mBarBelow && upper->mBarBelow.data()->mBarAbove.data() == upper)
+      upper->mBarBelow.data()->mBarAbove = 0;
+    lower->mBarAbove = upper;
+    upper->mBarBelow = lower;
+  }
+}
+
+/* inherits documentation from base class */
+QCPRange QCPBars::getKeyRange(bool &validRange, SignDomain inSignDomain) const
+{
+  QCPRange range;
+  bool haveLower = false;
+  bool haveUpper = false;
+  
+  double current;
+  double barWidthHalf = mWidth*0.5;
+  QCPBarDataMap::const_iterator it = mData->constBegin();
+  while (it != mData->constEnd())
+  {
+    current = it.value().key;
+    if (inSignDomain == sdBoth || (inSignDomain == sdNegative && current+barWidthHalf < 0) || (inSignDomain == sdPositive && current-barWidthHalf > 0))
+    {
+      if (current-barWidthHalf < range.lower || !haveLower)
+      {
+        range.lower = current-barWidthHalf;
+        haveLower = true;
+      }
+      if (current+barWidthHalf > range.upper || !haveUpper)
+      {
+        range.upper = current+barWidthHalf;
+        haveUpper = true;
+      }
+    }
+    ++it;
+  }
+  
+  validRange = haveLower && haveUpper;
+  return range;
+}
+
+/* inherits documentation from base class */
+QCPRange QCPBars::getValueRange(bool &validRange, SignDomain inSignDomain) const
+{
+  QCPRange range;
+  bool haveLower = true; // set to true, because 0 should always be visible in bar charts
+  bool haveUpper = true; // set to true, because 0 should always be visible in bar charts
+  
+  double current;
+  
+  QCPBarDataMap::const_iterator it = mData->constBegin();
+  while (it != mData->constEnd())
+  {
+    current = it.value().value + getBaseValue(it.value().key, it.value().value >= 0);
+    if (inSignDomain == sdBoth || (inSignDomain == sdNegative && current < 0) || (inSignDomain == sdPositive && current > 0))
+    {
+      if (current < range.lower || !haveLower)
+      {
+        range.lower = current;
+        haveLower = true;
+      }
+      if (current > range.upper || !haveUpper)
+      {
+        range.upper = current;
+        haveUpper = true;
+      }
+    }
+    ++it;
+  }
+  
+  validRange = range.lower < range.upper;
+  return range;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPStatisticalBox
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPStatisticalBox
+  \brief A plottable representing a single statistical box in a plot.
+
+  \image html QCPStatisticalBox.png
+  
+  To plot data, assign it with the individual parameter functions or use \ref setData to set all
+  parameters at once. The individual funcions are:
+  \li \ref setMinimum
+  \li \ref setLowerQuartile
