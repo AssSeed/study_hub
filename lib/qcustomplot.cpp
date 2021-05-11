@@ -14218,3 +14218,242 @@ QCPRange QCPBars::getValueRange(bool &validRange, SignDomain inSignDomain) const
   parameters at once. The individual funcions are:
   \li \ref setMinimum
   \li \ref setLowerQuartile
+  \li \ref setMedian
+  \li \ref setUpperQuartile
+  \li \ref setMaximum
+  
+  Additionally you can define a list of outliers, drawn as circle datapoints:
+  \li \ref setOutliers
+  
+  \section appearance Changing the appearance
+  
+  The appearance of the box itself is controlled via \ref setPen and \ref setBrush. You may change
+  the width of the box with \ref setWidth in plot coordinates (not pixels).
+
+  Analog functions exist for the minimum/maximum-whiskers: \ref setWhiskerPen, \ref
+  setWhiskerBarPen, \ref setWhiskerWidth. The whisker width is the width of the bar at the top
+  (maximum) and bottom (minimum).
+  
+  The median indicator line has its own pen, \ref setMedianPen.
+  
+  If the whisker backbone pen is changed, make sure to set the capStyle to Qt::FlatCap. Else, the
+  backbone line might exceed the whisker bars by a few pixels due to the pen cap being not
+  perfectly flat.
+  
+  The Outlier data points are drawn as normal scatter points. Their look can be controlled with
+  \ref setOutlierStyle
+  
+  \section usage Usage
+  
+  Like all data representing objects in QCustomPlot, the QCPStatisticalBox is a plottable
+  (QCPAbstractPlottable). So the plottable-interface of QCustomPlot applies
+  (QCustomPlot::plottable, QCustomPlot::addPlottable, QCustomPlot::removePlottable, etc.)
+  
+  Usually, you first create an instance:
+  \code
+  QCPStatisticalBox *newBox = new QCPStatisticalBox(customPlot->xAxis, customPlot->yAxis);\endcode
+  add it to the customPlot with QCustomPlot::addPlottable:
+  \code
+  customPlot->addPlottable(newBox);\endcode
+  and then modify the properties of the newly created plottable, e.g.:
+  \code
+  newBox->setName("Measurement Series 1");
+  newBox->setData(1, 3, 4, 5, 7);
+  newBox->setOutliers(QVector<double>() << 0.5 << 0.64 << 7.2 << 7.42);\endcode
+*/
+
+/*!
+  Constructs a statistical box which uses \a keyAxis as its key axis ("x") and \a valueAxis as its
+  value axis ("y"). \a keyAxis and \a valueAxis must reside in the same QCustomPlot instance and
+  not have the same orientation. If either of these restrictions is violated, a corresponding
+  message is printed to the debug output (qDebug), the construction is not aborted, though.
+  
+  The constructed statistical box can be added to the plot with QCustomPlot::addPlottable,
+  QCustomPlot then takes ownership of the statistical box.
+*/
+QCPStatisticalBox::QCPStatisticalBox(QCPAxis *keyAxis, QCPAxis *valueAxis) :
+  QCPAbstractPlottable(keyAxis, valueAxis),
+  mKey(0),
+  mMinimum(0),
+  mLowerQuartile(0),
+  mMedian(0),
+  mUpperQuartile(0),
+  mMaximum(0)
+{
+  setOutlierStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, Qt::blue, 6));
+  setWhiskerWidth(0.2);
+  setWidth(0.5);
+  
+  setPen(QPen(Qt::black));
+  setSelectedPen(QPen(Qt::blue, 2.5));
+  setMedianPen(QPen(Qt::black, 3, Qt::SolidLine, Qt::FlatCap));
+  setWhiskerPen(QPen(Qt::black, 0, Qt::DashLine, Qt::FlatCap));
+  setWhiskerBarPen(QPen(Qt::black));
+  setBrush(Qt::NoBrush);
+  setSelectedBrush(Qt::NoBrush);
+}
+
+/*!
+  Sets the key coordinate of the statistical box.
+*/
+void QCPStatisticalBox::setKey(double key)
+{
+  mKey = key;
+}
+
+/*!
+  Sets the parameter "minimum" of the statistical box plot. This is the position of the lower
+  whisker, typically the minimum measurement of the sample that's not considered an outlier.
+  
+  \see setMaximum, setWhiskerPen, setWhiskerBarPen, setWhiskerWidth
+*/
+void QCPStatisticalBox::setMinimum(double value)
+{
+  mMinimum = value;
+}
+
+/*!
+  Sets the parameter "lower Quartile" of the statistical box plot. This is the lower end of the
+  box. The lower and the upper quartiles are the two statistical quartiles around the median of the
+  sample, they contain 50% of the sample data.
+  
+  \see setUpperQuartile, setPen, setBrush, setWidth
+*/
+void QCPStatisticalBox::setLowerQuartile(double value)
+{
+  mLowerQuartile = value;
+}
+
+/*!
+  Sets the parameter "median" of the statistical box plot. This is the value of the median mark
+  inside the quartile box. The median separates the sample data in half (50% of the sample data is
+  below/above the median).
+  
+  \see setMedianPen
+*/
+void QCPStatisticalBox::setMedian(double value)
+{
+  mMedian = value;
+}
+
+/*!
+  Sets the parameter "upper Quartile" of the statistical box plot. This is the upper end of the
+  box. The lower and the upper quartiles are the two statistical quartiles around the median of the
+  sample, they contain 50% of the sample data.
+  
+  \see setLowerQuartile, setPen, setBrush, setWidth
+*/
+void QCPStatisticalBox::setUpperQuartile(double value)
+{
+  mUpperQuartile = value;
+}
+
+/*!
+  Sets the parameter "maximum" of the statistical box plot. This is the position of the upper
+  whisker, typically the maximum measurement of the sample that's not considered an outlier.
+  
+  \see setMinimum, setWhiskerPen, setWhiskerBarPen, setWhiskerWidth
+*/
+void QCPStatisticalBox::setMaximum(double value)
+{
+  mMaximum = value;
+}
+
+/*!
+  Sets a vector of outlier values that will be drawn as circles. Any data points in the sample that
+  are not within the whiskers (\ref setMinimum, \ref setMaximum) should be considered outliers and
+  displayed as such.
+  
+  \see setOutlierStyle
+*/
+void QCPStatisticalBox::setOutliers(const QVector<double> &values)
+{
+  mOutliers = values;
+}
+
+/*!
+  Sets all parameters of the statistical box plot at once.
+  
+  \see setKey, setMinimum, setLowerQuartile, setMedian, setUpperQuartile, setMaximum
+*/
+void QCPStatisticalBox::setData(double key, double minimum, double lowerQuartile, double median, double upperQuartile, double maximum)
+{
+  setKey(key);
+  setMinimum(minimum);
+  setLowerQuartile(lowerQuartile);
+  setMedian(median);
+  setUpperQuartile(upperQuartile);
+  setMaximum(maximum);
+}
+
+/*!
+  Sets the width of the box in key coordinates.
+  
+  \see setWhiskerWidth
+*/
+void QCPStatisticalBox::setWidth(double width)
+{
+  mWidth = width;
+}
+
+/*!
+  Sets the width of the whiskers (\ref setMinimum, \ref setMaximum) in key coordinates.
+  
+  \see setWidth
+*/
+void QCPStatisticalBox::setWhiskerWidth(double width)
+{
+  mWhiskerWidth = width;
+}
+
+/*!
+  Sets the pen used for drawing the whisker backbone (That's the line parallel to the value axis).
+  
+  Make sure to set the \a pen capStyle to Qt::FlatCap to prevent the whisker backbone from reaching
+  a few pixels past the whisker bars, when using a non-zero pen width.
+  
+  \see setWhiskerBarPen
+*/
+void QCPStatisticalBox::setWhiskerPen(const QPen &pen)
+{
+  mWhiskerPen = pen;
+}
+
+/*!
+  Sets the pen used for drawing the whisker bars (Those are the lines parallel to the key axis at
+  each end of the whisker backbone).
+  
+  \see setWhiskerPen
+*/
+void QCPStatisticalBox::setWhiskerBarPen(const QPen &pen)
+{
+  mWhiskerBarPen = pen;
+}
+
+/*!
+  Sets the pen used for drawing the median indicator line inside the statistical box.
+*/
+void QCPStatisticalBox::setMedianPen(const QPen &pen)
+{
+  mMedianPen = pen;
+}
+
+/*!
+  Sets the appearance of the outlier data points.
+  
+  \see setOutliers
+*/
+void QCPStatisticalBox::setOutlierStyle(const QCPScatterStyle &style)
+{
+  mOutlierStyle = style;
+}
+
+/* inherits documentation from base class */
+void QCPStatisticalBox::clearData()
+{
+  setOutliers(QVector<double>());
+  setKey(0);
+  setMinimum(0);
+  setLowerQuartile(0);
+  setMedian(0);
+  setUpperQuartile(0);
