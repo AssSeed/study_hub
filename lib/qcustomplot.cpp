@@ -13724,3 +13724,249 @@ QCPBarData::QCPBarData(double key, double value) :
   
   \see barAbove, moveBelow, moveAbove
 */
+
+/*! \fn QCPBars *QCPBars::barAbove() const
+  Returns the bars plottable that is directly above this bars plottable.
+  If there is no such plottable, returns 0.
+  
+  \see barBelow, moveBelow, moveAbove
+*/
+
+/*!
+  Constructs a bar chart which uses \a keyAxis as its key axis ("x") and \a valueAxis as its value
+  axis ("y"). \a keyAxis and \a valueAxis must reside in the same QCustomPlot instance and not have
+  the same orientation. If either of these restrictions is violated, a corresponding message is
+  printed to the debug output (qDebug), the construction is not aborted, though.
+  
+  The constructed QCPBars can be added to the plot with QCustomPlot::addPlottable, QCustomPlot
+  then takes ownership of the bar chart.
+*/
+QCPBars::QCPBars(QCPAxis *keyAxis, QCPAxis *valueAxis) :
+  QCPAbstractPlottable(keyAxis, valueAxis)
+{
+  mData = new QCPBarDataMap;
+  mPen.setColor(Qt::blue);
+  mPen.setStyle(Qt::SolidLine);
+  mBrush.setColor(QColor(40, 50, 255, 30));
+  mBrush.setStyle(Qt::SolidPattern);
+  mSelectedPen = mPen;
+  mSelectedPen.setWidthF(2.5);
+  mSelectedPen.setColor(QColor(80, 80, 255)); // lighter than Qt::blue of mPen
+  mSelectedBrush = mBrush;
+  
+  mWidth = 0.75;
+}
+
+QCPBars::~QCPBars()
+{
+  if (mBarBelow || mBarAbove)
+    connectBars(mBarBelow.data(), mBarAbove.data()); // take this bar out of any stacking
+  delete mData;
+}
+
+/*!
+  Sets the width of the bars in plot (key) coordinates.
+*/
+void QCPBars::setWidth(double width)
+{
+  mWidth = width;
+}
+
+/*!
+  Replaces the current data with the provided \a data.
+  
+  If \a copy is set to true, data points in \a data will only be copied. if false, the plottable
+  takes ownership of the passed data and replaces the internal data pointer with it. This is
+  significantly faster than copying for large datasets.
+*/
+void QCPBars::setData(QCPBarDataMap *data, bool copy)
+{
+  if (copy)
+  {
+    *mData = *data;
+  } else
+  {
+    delete mData;
+    mData = data;
+  }
+}
+
+/*! \overload
+  
+  Replaces the current data with the provided points in \a key and \a value tuples. The
+  provided vectors should have equal length. Else, the number of added points will be the size of
+  the smallest vector.
+*/
+void QCPBars::setData(const QVector<double> &key, const QVector<double> &value)
+{
+  mData->clear();
+  int n = key.size();
+  n = qMin(n, value.size());
+  QCPBarData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = key[i];
+    newData.value = value[i];
+    mData->insertMulti(newData.key, newData);
+  }
+}
+
+/*!
+  Moves this bars plottable below \a bars. In other words, the bars of this plottable will appear
+  below the bars of \a bars. The move target \a bars must use the same key and value axis as this
+  plottable.
+  
+  Inserting into and removing from existing bar stacking is handled gracefully. If \a bars already
+  has a bars object below itself, this bars object is inserted between the two. If this bars object
+  is already between two other bars, the two other bars will be stacked on top of each other after
+  the operation.
+  
+  To remove this bars plottable from any stacking, set \a bars to 0.
+  
+  \see moveBelow, barAbove, barBelow
+*/
+void QCPBars::moveBelow(QCPBars *bars)
+{
+  if (bars == this) return;
+  if (bars && (bars->keyAxis() != mKeyAxis.data() || bars->valueAxis() != mValueAxis.data()))
+  {
+    qDebug() << Q_FUNC_INFO << "passed QCPBars* doesn't have same key and value axis as this QCPBars";
+    return;
+  }
+  // remove from stacking:
+  connectBars(mBarBelow.data(), mBarAbove.data()); // Note: also works if one (or both) of them is 0
+  // if new bar given, insert this bar below it:
+  if (bars)
+  {
+    if (bars->mBarBelow)
+      connectBars(bars->mBarBelow.data(), this);
+    connectBars(this, bars);
+  }
+}
+
+/*!
+  Moves this bars plottable above \a bars. In other words, the bars of this plottable will appear
+  above the bars of \a bars. The move target \a bars must use the same key and value axis as this
+  plottable.
+  
+  Inserting into and removing from existing bar stacking is handled gracefully. If \a bars already
+  has a bars object below itself, this bars object is inserted between the two. If this bars object
+  is already between two other bars, the two other bars will be stacked on top of each other after
+  the operation.
+  
+  To remove this bars plottable from any stacking, set \a bars to 0.
+  
+  \see moveBelow, barBelow, barAbove
+*/
+void QCPBars::moveAbove(QCPBars *bars)
+{
+  if (bars == this) return;
+  if (bars && (bars->keyAxis() != mKeyAxis.data() || bars->valueAxis() != mValueAxis.data()))
+  {
+    qDebug() << Q_FUNC_INFO << "passed QCPBars* doesn't have same key and value axis as this QCPBars";
+    return;
+  }
+  // remove from stacking:
+  connectBars(mBarBelow.data(), mBarAbove.data()); // Note: also works if one (or both) of them is 0
+  // if new bar given, insert this bar above it:
+  if (bars)
+  {
+    if (bars->mBarAbove)
+      connectBars(this, bars->mBarAbove.data());
+    connectBars(bars, this);
+  }
+}
+
+/*!
+  Adds the provided data points in \a dataMap to the current data.
+  \see removeData
+*/
+void QCPBars::addData(const QCPBarDataMap &dataMap)
+{
+  mData->unite(dataMap);
+}
+
+/*! \overload
+  Adds the provided single data point in \a data to the current data.
+  \see removeData
+*/
+void QCPBars::addData(const QCPBarData &data)
+{
+  mData->insertMulti(data.key, data);
+}
+
+/*! \overload
+  Adds the provided single data point as \a key and \a value tuple to the current data
+  \see removeData
+*/
+void QCPBars::addData(double key, double value)
+{
+  QCPBarData newData;
+  newData.key = key;
+  newData.value = value;
+  mData->insertMulti(newData.key, newData);
+}
+
+/*! \overload
+  Adds the provided data points as \a key and \a value tuples to the current data.
+  \see removeData
+*/
+void QCPBars::addData(const QVector<double> &keys, const QVector<double> &values)
+{
+  int n = keys.size();
+  n = qMin(n, values.size());
+  QCPBarData newData;
+  for (int i=0; i<n; ++i)
+  {
+    newData.key = keys[i];
+    newData.value = values[i];
+    mData->insertMulti(newData.key, newData);
+  }
+}
+
+/*!
+  Removes all data points with key smaller than \a key.
+  \see addData, clearData
+*/
+void QCPBars::removeDataBefore(double key)
+{
+  QCPBarDataMap::iterator it = mData->begin();
+  while (it != mData->end() && it.key() < key)
+    it = mData->erase(it);
+}
+
+/*!
+  Removes all data points with key greater than \a key.
+  \see addData, clearData
+*/
+void QCPBars::removeDataAfter(double key)
+{
+  if (mData->isEmpty()) return;
+  QCPBarDataMap::iterator it = mData->upperBound(key);
+  while (it != mData->end())
+    it = mData->erase(it);
+}
+
+/*!
+  Removes all data points with key between \a fromKey and \a toKey. if \a fromKey is
+  greater or equal to \a toKey, the function does nothing. To remove a single data point with known
+  key, use \ref removeData(double key).
+  
+  \see addData, clearData
+*/
+void QCPBars::removeData(double fromKey, double toKey)
+{
+  if (fromKey >= toKey || mData->isEmpty()) return;
+  QCPBarDataMap::iterator it = mData->upperBound(fromKey);
+  QCPBarDataMap::iterator itEnd = mData->upperBound(toKey);
+  while (it != itEnd)
+    it = mData->erase(it);
+}
+
+/*! \overload
+  
+  Removes a single data point at \a key. If the position is not known with absolute precision,
+  consider using \ref removeData(double fromKey, double toKey) with a small fuzziness interval
+  around the suspected position, depeding on the precision with which the key is known.
+  
+  \see addData, clearData
