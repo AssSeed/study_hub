@@ -14457,3 +14457,240 @@ void QCPStatisticalBox::clearData()
   setLowerQuartile(0);
   setMedian(0);
   setUpperQuartile(0);
+  setMaximum(0);
+}
+
+/* inherits documentation from base class */
+double QCPStatisticalBox::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (onlySelectable && !mSelectable)
+    return -1;
+  if (!mKeyAxis || !mValueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return -1; }
+  
+  double posKey, posValue;
+  pixelsToCoords(pos, posKey, posValue);
+  // quartile box:
+  QCPRange keyRange(mKey-mWidth*0.5, mKey+mWidth*0.5);
+  QCPRange valueRange(mLowerQuartile, mUpperQuartile);
+  if (keyRange.contains(posKey) && valueRange.contains(posValue))
+    return mParentPlot->selectionTolerance()*0.99;
+  
+  // min/max whiskers:
+  if (QCPRange(mMinimum, mMaximum).contains(posValue))
+    return qAbs(mKeyAxis.data()->coordToPixel(mKey)-mKeyAxis.data()->coordToPixel(posKey));
+  
+  return -1;
+}
+
+/* inherits documentation from base class */
+void QCPStatisticalBox::draw(QCPPainter *painter)
+{
+  if (!mKeyAxis || !mValueAxis) { qDebug() << Q_FUNC_INFO << "invalid key or value axis"; return; }
+
+  // check data validity if flag set:
+#ifdef QCUSTOMPLOT_CHECK_DATA
+  if (QCP::isInvalidData(mKey, mMedian) ||
+      QCP::isInvalidData(mLowerQuartile, mUpperQuartile) ||
+      QCP::isInvalidData(mMinimum, mMaximum))
+    qDebug() << Q_FUNC_INFO << "Data point at" << mKey << "of drawn range has invalid data." << "Plottable name:" << name();
+  for (int i=0; i<mOutliers.size(); ++i)
+    if (QCP::isInvalidData(mOutliers.at(i)))
+      qDebug() << Q_FUNC_INFO << "Data point outlier at" << mKey << "of drawn range invalid." << "Plottable name:" << name();
+#endif
+  
+  QRectF quartileBox;
+  drawQuartileBox(painter, &quartileBox);
+  
+  painter->save();
+  painter->setClipRect(quartileBox, Qt::IntersectClip);
+  drawMedian(painter);
+  painter->restore();
+  
+  drawWhiskers(painter);
+  drawOutliers(painter);
+}
+
+/* inherits documentation from base class */
+void QCPStatisticalBox::drawLegendIcon(QCPPainter *painter, const QRectF &rect) const
+{
+  // draw filled rect:
+  applyDefaultAntialiasingHint(painter);
+  painter->setPen(mPen);
+  painter->setBrush(mBrush);
+  QRectF r = QRectF(0, 0, rect.width()*0.67, rect.height()*0.67);
+  r.moveCenter(rect.center());
+  painter->drawRect(r);
+}
+
+/*! \internal
+  
+  Draws the quartile box. \a box is an output parameter that returns the quartile box (in pixel
+  coordinates) which is used to set the clip rect of the painter before calling \ref drawMedian (so
+  the median doesn't draw outside the quartile box).
+*/
+void QCPStatisticalBox::drawQuartileBox(QCPPainter *painter, QRectF *quartileBox) const
+{
+  QRectF box;
+  box.setTopLeft(coordsToPixels(mKey-mWidth*0.5, mUpperQuartile));
+  box.setBottomRight(coordsToPixels(mKey+mWidth*0.5, mLowerQuartile));
+  applyDefaultAntialiasingHint(painter);
+  painter->setPen(mainPen());
+  painter->setBrush(mainBrush());
+  painter->drawRect(box);
+  if (quartileBox)
+    *quartileBox = box;
+}
+
+/*! \internal
+  
+  Draws the median line inside the quartile box.
+*/
+void QCPStatisticalBox::drawMedian(QCPPainter *painter) const
+{
+  QLineF medianLine;
+  medianLine.setP1(coordsToPixels(mKey-mWidth*0.5, mMedian));
+  medianLine.setP2(coordsToPixels(mKey+mWidth*0.5, mMedian));
+  applyDefaultAntialiasingHint(painter);
+  painter->setPen(mMedianPen);
+  painter->drawLine(medianLine);
+}
+
+/*! \internal
+  
+  Draws both whisker backbones and bars.
+*/
+void QCPStatisticalBox::drawWhiskers(QCPPainter *painter) const
+{
+  QLineF backboneMin, backboneMax, barMin, barMax;
+  backboneMax.setPoints(coordsToPixels(mKey, mUpperQuartile), coordsToPixels(mKey, mMaximum));
+  backboneMin.setPoints(coordsToPixels(mKey, mLowerQuartile), coordsToPixels(mKey, mMinimum));
+  barMax.setPoints(coordsToPixels(mKey-mWhiskerWidth*0.5, mMaximum), coordsToPixels(mKey+mWhiskerWidth*0.5, mMaximum));
+  barMin.setPoints(coordsToPixels(mKey-mWhiskerWidth*0.5, mMinimum), coordsToPixels(mKey+mWhiskerWidth*0.5, mMinimum));
+  applyErrorBarsAntialiasingHint(painter);
+  painter->setPen(mWhiskerPen);
+  painter->drawLine(backboneMin);
+  painter->drawLine(backboneMax);
+  painter->setPen(mWhiskerBarPen);
+  painter->drawLine(barMin);
+  painter->drawLine(barMax);
+}
+
+/*! \internal
+  
+  Draws the outlier scatter points.
+*/
+void QCPStatisticalBox::drawOutliers(QCPPainter *painter) const
+{
+  applyScattersAntialiasingHint(painter);
+  mOutlierStyle.applyTo(painter, mPen);
+  for (int i=0; i<mOutliers.size(); ++i)
+    mOutlierStyle.drawShape(painter, coordsToPixels(mKey, mOutliers.at(i)));
+}
+
+/* inherits documentation from base class */
+QCPRange QCPStatisticalBox::getKeyRange(bool &validRange, SignDomain inSignDomain) const
+{
+  validRange = mWidth > 0;
+  if (inSignDomain == sdBoth)
+  {
+    return QCPRange(mKey-mWidth*0.5, mKey+mWidth*0.5);
+  } else if (inSignDomain == sdNegative)
+  {
+    if (mKey+mWidth*0.5 < 0)
+      return QCPRange(mKey-mWidth*0.5, mKey+mWidth*0.5);
+    else if (mKey < 0)
+      return QCPRange(mKey-mWidth*0.5, mKey);
+    else
+    {
+      validRange = false;
+      return QCPRange();
+    }
+  } else if (inSignDomain == sdPositive)
+  {
+    if (mKey-mWidth*0.5 > 0)
+      return QCPRange(mKey-mWidth*0.5, mKey+mWidth*0.5);
+    else if (mKey > 0)
+      return QCPRange(mKey, mKey+mWidth*0.5);
+    else
+    {
+      validRange = false;
+      return QCPRange();
+    }
+  }
+  validRange = false;
+  return QCPRange();
+}
+
+/* inherits documentation from base class */
+QCPRange QCPStatisticalBox::getValueRange(bool &validRange, SignDomain inSignDomain) const
+{
+  if (inSignDomain == sdBoth)
+  {
+    double lower = qMin(mMinimum, qMin(mMedian, mLowerQuartile));
+    double upper = qMax(mMaximum, qMax(mMedian, mUpperQuartile));
+    for (int i=0; i<mOutliers.size(); ++i)
+    {
+      if (mOutliers.at(i) < lower)
+        lower = mOutliers.at(i);
+      if (mOutliers.at(i) > upper)
+        upper = mOutliers.at(i);
+    }
+    validRange = upper > lower;
+    return QCPRange(lower, upper);
+  } else
+  {
+    QVector<double> values; // values that must be considered (i.e. all outliers and the five box-parameters)
+    values.reserve(mOutliers.size() + 5);
+    values << mMaximum << mUpperQuartile << mMedian << mLowerQuartile << mMinimum;
+    values << mOutliers;
+    // go through values and find the ones in legal range:
+    bool haveUpper = false;
+    bool haveLower = false;
+    double upper = 0;
+    double lower = 0;
+    for (int i=0; i<values.size(); ++i)
+    {
+      if ((inSignDomain == sdNegative && values.at(i) < 0) ||
+          (inSignDomain == sdPositive && values.at(i) > 0))
+      {
+        if (values.at(i) > upper || !haveUpper)
+        {
+          upper = values.at(i);
+          haveUpper = true;
+        }
+        if (values.at(i) < lower || !haveLower)
+        {
+          lower = values.at(i);
+          haveLower = true;
+        }
+      }
+    }
+    // return the bounds if we found some sensible values:
+    if (haveLower && haveUpper && lower < upper)
+    {
+      validRange = true;
+      return QCPRange(lower, upper);
+    } else
+    {
+      validRange = false;
+      return QCPRange();
+    }
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPItemStraightLine
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPItemStraightLine
+  \brief A straight line that spans infinitely in both directions
+
+  \image html QCPItemStraightLine.png "Straight line example. Blue dotted circles are anchors, solid blue discs are positions."
+
+  It has two positions, \a point1 and \a point2, which define the straight line.
+*/
+
+/*!
+  Creates a straight line item and sets default values.
