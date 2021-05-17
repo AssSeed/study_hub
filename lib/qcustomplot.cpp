@@ -15176,3 +15176,257 @@ void QCPItemCurve::setHead(const QCPLineEnding &head)
 /*!
   Sets the line ending style of the tail. The tail corresponds to the \a start position.
   
+  Note that due to the overloaded QCPLineEnding constructor, you may directly specify
+  a QCPLineEnding::EndingStyle here, e.g. \code setTail(QCPLineEnding::esSpikeArrow) \endcode
+  
+  \see setHead
+*/
+void QCPItemCurve::setTail(const QCPLineEnding &tail)
+{
+  mTail = tail;
+}
+
+/* inherits documentation from base class */
+double QCPItemCurve::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (onlySelectable && !mSelectable)
+    return -1;
+  
+  QPointF startVec(start->pixelPoint());
+  QPointF startDirVec(startDir->pixelPoint());
+  QPointF endDirVec(endDir->pixelPoint());
+  QPointF endVec(end->pixelPoint());
+
+  QPainterPath cubicPath(startVec);
+  cubicPath.cubicTo(startDirVec, endDirVec, endVec);
+  
+  QPolygonF polygon = cubicPath.toSubpathPolygons().first();
+  double minDistSqr = std::numeric_limits<double>::max();
+  for (int i=1; i<polygon.size(); ++i)
+  {
+    double distSqr = distSqrToLine(polygon.at(i-1), polygon.at(i), pos);
+    if (distSqr < minDistSqr)
+      minDistSqr = distSqr;
+  }
+  return qSqrt(minDistSqr);
+}
+
+/* inherits documentation from base class */
+void QCPItemCurve::draw(QCPPainter *painter)
+{
+  QPointF startVec(start->pixelPoint());
+  QPointF startDirVec(startDir->pixelPoint());
+  QPointF endDirVec(endDir->pixelPoint());
+  QPointF endVec(end->pixelPoint());
+  if (QVector2D(endVec-startVec).length() > 1e10) // too large curves cause crash
+    return;
+
+  QPainterPath cubicPath(startVec);
+  cubicPath.cubicTo(startDirVec, endDirVec, endVec);
+
+  // paint visible segment, if existent:
+  QRect clip = clipRect().adjusted(-mainPen().widthF(), -mainPen().widthF(), mainPen().widthF(), mainPen().widthF());
+  QRect cubicRect = cubicPath.controlPointRect().toRect();
+  if (cubicRect.isEmpty()) // may happen when start and end exactly on same x or y position
+    cubicRect.adjust(0, 0, 1, 1);
+  if (clip.intersects(cubicRect))
+  {
+    painter->setPen(mainPen());
+    painter->drawPath(cubicPath);
+    painter->setBrush(Qt::SolidPattern);
+    if (mTail.style() != QCPLineEnding::esNone)
+      mTail.draw(painter, QVector2D(startVec), M_PI-cubicPath.angleAtPercent(0)/180.0*M_PI);
+    if (mHead.style() != QCPLineEnding::esNone)
+      mHead.draw(painter, QVector2D(endVec), -cubicPath.angleAtPercent(1)/180.0*M_PI);
+  }
+}
+
+/*! \internal
+
+  Returns the pen that should be used for drawing lines. Returns mPen when the
+  item is not selected and mSelectedPen when it is.
+*/
+QPen QCPItemCurve::mainPen() const
+{
+  return mSelected ? mSelectedPen : mPen;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPItemRect
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPItemRect
+  \brief A rectangle
+
+  \image html QCPItemRect.png "Rectangle example. Blue dotted circles are anchors, solid blue discs are positions."
+
+  It has two positions, \a topLeft and \a bottomRight, which define the rectangle.
+*/
+
+/*!
+  Creates a rectangle item and sets default values.
+  
+  The constructed item can be added to the plot with QCustomPlot::addItem.
+*/
+QCPItemRect::QCPItemRect(QCustomPlot *parentPlot) :
+  QCPAbstractItem(parentPlot),
+  topLeft(createPosition("topLeft")),
+  bottomRight(createPosition("bottomRight")),
+  top(createAnchor("top", aiTop)),
+  topRight(createAnchor("topRight", aiTopRight)),
+  right(createAnchor("right", aiRight)),
+  bottom(createAnchor("bottom", aiBottom)),
+  bottomLeft(createAnchor("bottomLeft", aiBottomLeft)),
+  left(createAnchor("left", aiLeft))
+{
+  topLeft->setCoords(0, 1);
+  bottomRight->setCoords(1, 0);
+  
+  setPen(QPen(Qt::black));
+  setSelectedPen(QPen(Qt::blue,2));
+  setBrush(Qt::NoBrush);
+  setSelectedBrush(Qt::NoBrush);
+}
+
+QCPItemRect::~QCPItemRect()
+{
+}
+
+/*!
+  Sets the pen that will be used to draw the line of the rectangle
+  
+  \see setSelectedPen, setBrush
+*/
+void QCPItemRect::setPen(const QPen &pen)
+{
+  mPen = pen;
+}
+
+/*!
+  Sets the pen that will be used to draw the line of the rectangle when selected
+  
+  \see setPen, setSelected
+*/
+void QCPItemRect::setSelectedPen(const QPen &pen)
+{
+  mSelectedPen = pen;
+}
+
+/*!
+  Sets the brush that will be used to fill the rectangle. To disable filling, set \a brush to
+  Qt::NoBrush.
+  
+  \see setSelectedBrush, setPen
+*/
+void QCPItemRect::setBrush(const QBrush &brush)
+{
+  mBrush = brush;
+}
+
+/*!
+  Sets the brush that will be used to fill the rectangle when selected. To disable filling, set \a
+  brush to Qt::NoBrush.
+  
+  \see setBrush
+*/
+void QCPItemRect::setSelectedBrush(const QBrush &brush)
+{
+  mSelectedBrush = brush;
+}
+
+/* inherits documentation from base class */
+double QCPItemRect::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (onlySelectable && !mSelectable)
+    return -1;
+  
+  QRectF rect = QRectF(topLeft->pixelPoint(), bottomRight->pixelPoint()).normalized();
+  bool filledRect = mBrush.style() != Qt::NoBrush && mBrush.color().alpha() != 0;
+  return rectSelectTest(rect, pos, filledRect);
+}
+
+/* inherits documentation from base class */
+void QCPItemRect::draw(QCPPainter *painter)
+{
+  QPointF p1 = topLeft->pixelPoint();
+  QPointF p2 = bottomRight->pixelPoint();
+  if (p1.toPoint() == p2.toPoint())
+    return;
+  QRectF rect = QRectF(p1, p2).normalized();
+  double clipPad = mainPen().widthF();
+  QRectF boundingRect = rect.adjusted(-clipPad, -clipPad, clipPad, clipPad);
+  if (boundingRect.intersects(clipRect())) // only draw if bounding rect of rect item is visible in cliprect
+  {
+    painter->setPen(mainPen());
+    painter->setBrush(mainBrush());
+    painter->drawRect(rect);
+  }
+}
+
+/* inherits documentation from base class */
+QPointF QCPItemRect::anchorPixelPoint(int anchorId) const
+{
+  QRectF rect = QRectF(topLeft->pixelPoint(), bottomRight->pixelPoint());
+  switch (anchorId)
+  {
+    case aiTop:         return (rect.topLeft()+rect.topRight())*0.5;
+    case aiTopRight:    return rect.topRight();
+    case aiRight:       return (rect.topRight()+rect.bottomRight())*0.5;
+    case aiBottom:      return (rect.bottomLeft()+rect.bottomRight())*0.5;
+    case aiBottomLeft:  return rect.bottomLeft();
+    case aiLeft:        return (rect.topLeft()+rect.bottomLeft())*0.5;
+  }
+  
+  qDebug() << Q_FUNC_INFO << "invalid anchorId" << anchorId;
+  return QPointF();
+}
+
+/*! \internal
+
+  Returns the pen that should be used for drawing lines. Returns mPen when the item is not selected
+  and mSelectedPen when it is.
+*/
+QPen QCPItemRect::mainPen() const
+{
+  return mSelected ? mSelectedPen : mPen;
+}
+
+/*! \internal
+
+  Returns the brush that should be used for drawing fills of the item. Returns mBrush when the item
+  is not selected and mSelectedBrush when it is.
+*/
+QBrush QCPItemRect::mainBrush() const
+{
+  return mSelected ? mSelectedBrush : mBrush;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPItemText
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPItemText
+  \brief A text label
+
+  \image html QCPItemText.png "Text example. Blue dotted circles are anchors, solid blue discs are positions."
+
+  Its position is defined by the member \a position and the setting of \ref setPositionAlignment.
+  The latter controls which part of the text rect shall be aligned with \a position.
+  
+  The text alignment itself (i.e. left, center, right) can be controlled with \ref
+  setTextAlignment.
+  
+  The text may be rotated around the \a position point with \ref setRotation.
+*/
+
+/*!
+  Creates a text item and sets default values.
+  
+  The constructed item can be added to the plot with QCustomPlot::addItem.
+*/
+QCPItemText::QCPItemText(QCustomPlot *parentPlot) :
+  QCPAbstractItem(parentPlot),
