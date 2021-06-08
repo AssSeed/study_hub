@@ -16766,3 +16766,230 @@ QPen QCPItemBracket::mainPen() const
   Initially QCustomPlot has one axis rect, accessible via QCustomPlot::axisRect(). However, the
   layout system allows to have multiple axis rects, e.g. arranged in a grid layout
   (QCustomPlot::plotLayout).
+  
+  By default, QCPAxisRect comes with four axes, at bottom, top, left and right. They can be
+  accessed via \ref axis by providing the respective axis type (\ref QCPAxis::AxisType) and index.
+  If you need all axes in the axis rect, use \ref axes. The top and right axes are set to be
+  invisible initially (QCPAxis::setVisible). To add more axes to a side, use \ref addAxis or \ref
+  addAxes. To remove an axis, use \ref removeAxis.
+  
+  The axis rect layerable itself only draws a background pixmap or color, if specified (\ref
+  setBackground). It is placed on the "background" layer initially (see \ref QCPLayer for an
+  explanation of the QCustomPlot layer system). The axes that are held by the axis rect can be
+  placed on other layers, independently of the axis rect.
+  
+  Every axis rect has a child layout of type \ref QCPLayoutInset. It is accessible via \ref
+  insetLayout and can be used to have other layout elements (or even other layouts with multiple
+  elements) hovering inside the axis rect.
+  
+  If an axis rect is clicked and dragged, it processes this by moving certain axis ranges. The
+  behaviour can be controlled with \ref setRangeDrag and \ref setRangeDragAxes. If the mouse wheel
+  is scrolled while the cursor is on the axis rect, certain axes are scaled. This is controllable
+  via \ref setRangeZoom, \ref setRangeZoomAxes and \ref setRangeZoomFactor. These interactions are
+  only enabled if \ref QCustomPlot::setInteractions contains \ref QCP::iRangeDrag and \ref
+  QCP::iRangeZoom.
+  
+  \image html AxisRectSpacingOverview.png
+  <center>Overview of the spacings and paddings that define the geometry of an axis. The dashed
+  line on the far left indicates the viewport/widget border.</center>
+*/
+
+/* start documentation of inline functions */
+
+/*! \fn QCPLayoutInset *QCPAxisRect::insetLayout() const
+  
+  Returns the inset layout of this axis rect. It can be used to place other layout elements (or
+  even layouts with multiple other elements) inside/on top of an axis rect.
+  
+  \see QCPLayoutInset
+*/
+
+/*! \fn int QCPAxisRect::left() const
+  
+  Returns the pixel position of the left border of this axis rect. Margins are not taken into
+  account here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn int QCPAxisRect::right() const
+  
+  Returns the pixel position of the right border of this axis rect. Margins are not taken into
+  account here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn int QCPAxisRect::top() const
+  
+  Returns the pixel position of the top border of this axis rect. Margins are not taken into
+  account here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn int QCPAxisRect::bottom() const
+  
+  Returns the pixel position of the bottom border of this axis rect. Margins are not taken into
+  account here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn int QCPAxisRect::width() const
+  
+  Returns the pixel width of this axis rect. Margins are not taken into account here, so the
+  returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn int QCPAxisRect::height() const
+  
+  Returns the pixel height of this axis rect. Margins are not taken into account here, so the
+  returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn QSize QCPAxisRect::size() const
+  
+  Returns the pixel size of this axis rect. Margins are not taken into account here, so the
+  returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn QPoint QCPAxisRect::topLeft() const
+  
+  Returns the top left corner of this axis rect in pixels. Margins are not taken into account here,
+  so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn QPoint QCPAxisRect::topRight() const
+  
+  Returns the top right corner of this axis rect in pixels. Margins are not taken into account
+  here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn QPoint QCPAxisRect::bottomLeft() const
+  
+  Returns the bottom left corner of this axis rect in pixels. Margins are not taken into account
+  here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn QPoint QCPAxisRect::bottomRight() const
+  
+  Returns the bottom right corner of this axis rect in pixels. Margins are not taken into account
+  here, so the returned value is with respect to the inner \ref rect.
+*/
+
+/*! \fn QPoint QCPAxisRect::center() const
+  
+  Returns the center of this axis rect in pixels. Margins are not taken into account here, so the
+  returned value is with respect to the inner \ref rect.
+*/
+
+/* end documentation of inline functions */
+
+/*!
+  Creates a QCPAxisRect instance and sets default values. An axis is added for each of the four
+  sides, the top and right axes are set invisible initially.
+*/
+QCPAxisRect::QCPAxisRect(QCustomPlot *parentPlot, bool setupDefaultAxes) :
+  QCPLayoutElement(parentPlot),
+  mBackgroundBrush(Qt::NoBrush),
+  mBackgroundScaled(true),
+  mBackgroundScaledMode(Qt::KeepAspectRatioByExpanding),
+  mInsetLayout(new QCPLayoutInset),
+  mRangeDrag(Qt::Horizontal|Qt::Vertical),
+  mRangeZoom(Qt::Horizontal|Qt::Vertical),
+  mRangeZoomFactorHorz(0.85),
+  mRangeZoomFactorVert(0.85),
+  mDragging(false)
+{
+  mInsetLayout->initializeParentPlot(mParentPlot);
+  mInsetLayout->setParentLayerable(this);
+  mInsetLayout->setParent(this);
+  
+  setMinimumSize(50, 50);
+  setMinimumMargins(QMargins(15, 15, 15, 15));
+  mAxes.insert(QCPAxis::atLeft, QList<QCPAxis*>());
+  mAxes.insert(QCPAxis::atRight, QList<QCPAxis*>());
+  mAxes.insert(QCPAxis::atTop, QList<QCPAxis*>());
+  mAxes.insert(QCPAxis::atBottom, QList<QCPAxis*>());
+  
+  if (setupDefaultAxes)
+  {
+    QCPAxis *xAxis = addAxis(QCPAxis::atBottom);
+    QCPAxis *yAxis = addAxis(QCPAxis::atLeft);
+    QCPAxis *xAxis2 = addAxis(QCPAxis::atTop);
+    QCPAxis *yAxis2 = addAxis(QCPAxis::atRight);
+    setRangeDragAxes(xAxis, yAxis);
+    setRangeZoomAxes(xAxis, yAxis);
+    xAxis2->setVisible(false);
+    yAxis2->setVisible(false);
+    xAxis->grid()->setVisible(true);
+    yAxis->grid()->setVisible(true);
+    xAxis2->grid()->setVisible(false);
+    yAxis2->grid()->setVisible(false);
+    xAxis2->grid()->setZeroLinePen(Qt::NoPen);
+    yAxis2->grid()->setZeroLinePen(Qt::NoPen);
+    xAxis2->grid()->setVisible(false);
+    yAxis2->grid()->setVisible(false);
+  }
+}
+
+QCPAxisRect::~QCPAxisRect()
+{
+  delete mInsetLayout;
+  mInsetLayout = 0;
+  
+  QList<QCPAxis*> axesList = axes();
+  for (int i=0; i<axesList.size(); ++i)
+    removeAxis(axesList.at(i));
+}
+
+/*!
+  Returns the number of axes on the axis rect side specified with \a type.
+  
+  \see axis
+*/
+int QCPAxisRect::axisCount(QCPAxis::AxisType type) const
+{
+  return mAxes.value(type).size();
+}
+
+/*!
+  Returns the axis with the given \a index on the axis rect side specified with \a type.
+  
+  \see axisCount, axes
+*/
+QCPAxis *QCPAxisRect::axis(QCPAxis::AxisType type, int index) const
+{
+  QList<QCPAxis*> ax(mAxes.value(type));
+  if (index >= 0 && index < ax.size())
+  {
+    return ax.at(index);
+  } else
+  {
+    qDebug() << Q_FUNC_INFO << "Axis index out of bounds:" << index;
+    return 0;
+  }
+}
+
+/*!
+  Returns all axes on the axis rect sides specified with \a types.
+  
+  \a types may be a single \ref QCPAxis::AxisType or an <tt>or</tt>-combination, to get the axes of
+  multiple sides.
+  
+  \see axis
+*/
+QList<QCPAxis*> QCPAxisRect::axes(QCPAxis::AxisTypes types) const
+{
+  QList<QCPAxis*> result;
+  if (types.testFlag(QCPAxis::atLeft))
+    result << mAxes.value(QCPAxis::atLeft);
+  if (types.testFlag(QCPAxis::atRight))
+    result << mAxes.value(QCPAxis::atRight);
+  if (types.testFlag(QCPAxis::atTop))
+    result << mAxes.value(QCPAxis::atTop);
+  if (types.testFlag(QCPAxis::atBottom))
+    result << mAxes.value(QCPAxis::atBottom);
+  return result;
+}
+
+/*! \overload
+  
+  Returns all axes of this axis rect.
+*/
+QList<QCPAxis*> QCPAxisRect::axes() const
+{
+  QList<QCPAxis*> result;
