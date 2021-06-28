@@ -18014,3 +18014,241 @@ QSize QCPPlottableLegendItem::minimumSizeHint() const
   layout of the main axis rect (\ref QCPAxisRect::insetLayout). To move the legend to another
   position inside the axis rect, use the methods of the \ref QCPLayoutInset. To move the legend
   outside of the axis rect, place it anywhere else with the QCPLayout/QCPLayoutElement interface.
+*/
+
+/* start of documentation of signals */
+
+/*! \fn void QCPLegend::selectionChanged(QCPLegend::SelectableParts selection);
+
+  This signal is emitted when the selection state of this legend has changed.
+  
+  \see setSelectedParts, setSelectableParts
+*/
+
+/* end of documentation of signals */
+
+/*!
+  Constructs a new QCPLegend instance with \a parentPlot as the containing plot and default values.
+  
+  Note that by default, QCustomPlot already contains a legend ready to be used as
+  QCustomPlot::legend
+*/
+QCPLegend::QCPLegend()
+{
+  setRowSpacing(0);
+  setColumnSpacing(10);
+  setMargins(QMargins(2, 3, 2, 2));
+  setAntialiased(false);
+  setIconSize(32, 18);
+  
+  setIconTextPadding(7);
+  
+  setSelectableParts(spLegendBox | spItems);
+  setSelectedParts(spNone);
+  
+  setBorderPen(QPen(Qt::black));
+  setSelectedBorderPen(QPen(Qt::blue, 2));
+  setIconBorderPen(Qt::NoPen);
+  setSelectedIconBorderPen(QPen(Qt::blue, 2));
+  setBrush(Qt::white);
+  setSelectedBrush(Qt::white);
+  setTextColor(Qt::black);
+  setSelectedTextColor(Qt::blue);
+}
+
+QCPLegend::~QCPLegend()
+{
+  clearItems();
+  if (mParentPlot)
+    mParentPlot->legendRemoved(this);
+}
+
+/* no doc for getter, see setSelectedParts */
+QCPLegend::SelectableParts QCPLegend::selectedParts() const
+{
+  // check whether any legend elements selected, if yes, add spItems to return value
+  bool hasSelectedItems = false;
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (item(i) && item(i)->selected())
+    {
+      hasSelectedItems = true;
+      break;
+    }
+  }
+  if (hasSelectedItems)
+    return mSelectedParts | spItems;
+  else
+    return mSelectedParts & ~spItems;
+}
+
+/*!
+  Sets the pen, the border of the entire legend is drawn with.
+*/
+void QCPLegend::setBorderPen(const QPen &pen)
+{
+  mBorderPen = pen;
+}
+
+/*!
+  Sets the brush of the legend background.
+*/
+void QCPLegend::setBrush(const QBrush &brush)
+{
+  mBrush = brush;
+}
+
+/*!
+  Sets the default font of legend text. Legend items that draw text (e.g. the name of a graph) will
+  use this font by default. However, a different font can be specified on a per-item-basis by
+  accessing the specific legend item.
+  
+  This function will also set \a font on all already existing legend items.
+  
+  \see QCPAbstractLegendItem::setFont
+*/
+void QCPLegend::setFont(const QFont &font)
+{
+  mFont = font;
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (item(i))
+      item(i)->setFont(mFont);
+  }
+}
+
+/*!
+  Sets the default color of legend text. Legend items that draw text (e.g. the name of a graph)
+  will use this color by default. However, a different colors can be specified on a per-item-basis
+  by accessing the specific legend item.
+  
+  This function will also set \a color on all already existing legend items.
+  
+  \see QCPAbstractLegendItem::setTextColor
+*/
+void QCPLegend::setTextColor(const QColor &color)
+{
+  mTextColor = color;
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (item(i))
+      item(i)->setTextColor(color);
+  }
+}
+
+/*!
+  Sets the size of legend icons. Legend items that draw an icon (e.g. a visual
+  representation of the graph) will use this size by default.
+*/
+void QCPLegend::setIconSize(const QSize &size)
+{
+  mIconSize = size;
+}
+
+/*! \overload
+*/
+void QCPLegend::setIconSize(int width, int height)
+{
+  mIconSize.setWidth(width);
+  mIconSize.setHeight(height);
+}
+
+/*!
+  Sets the horizontal space in pixels between the legend icon and the text next to it.
+  Legend items that draw an icon (e.g. a visual representation of the graph) and text (e.g. the
+  name of the graph) will use this space by default.
+*/
+void QCPLegend::setIconTextPadding(int padding)
+{
+  mIconTextPadding = padding;
+}
+
+/*!
+  Sets the pen used to draw a border around each legend icon. Legend items that draw an
+  icon (e.g. a visual representation of the graph) will use this pen by default.
+  
+  If no border is wanted, set this to \a Qt::NoPen.
+*/
+void QCPLegend::setIconBorderPen(const QPen &pen)
+{
+  mIconBorderPen = pen;
+}
+
+/*!
+  Sets whether the user can (de-)select the parts in \a selectable by clicking on the QCustomPlot surface.
+  (When \ref QCustomPlot::setInteractions contains iSelectLegend.)
+  
+  However, even when \a selectable is set to a value not allowing the selection of a specific part,
+  it is still possible to set the selection of this part manually, by calling \ref setSelectedParts
+  directly.
+  
+  \see SelectablePart, setSelectedParts
+*/
+void QCPLegend::setSelectableParts(const SelectableParts &selectable)
+{
+  mSelectableParts = selectable;
+}
+
+/*!
+  Sets the selected state of the respective legend parts described by \ref SelectablePart. When a part
+  is selected, it uses a different pen/font and brush. If some legend items are selected and \a selected
+  doesn't contain \ref spItems, those items become deselected.
+  
+  The entire selection mechanism is handled automatically when \ref QCustomPlot::setInteractions
+  contains iSelectLegend. You only need to call this function when you wish to change the selection
+  state manually.
+  
+  This function can change the selection state of a part even when \ref setSelectableParts was set to a
+  value that actually excludes the part.
+  
+  emits the \ref selectionChanged signal when \a selected is different from the previous selection state.
+  
+  Note that it doesn't make sense to set the selected state \ref spItems here when it wasn't set
+  before, because there's no way to specify which exact items to newly select. Do this by calling
+  \ref QCPAbstractLegendItem::setSelected directly on the legend item you wish to select.
+  
+  \see SelectablePart, setSelectableParts, selectTest, setSelectedBorderPen, setSelectedIconBorderPen, setSelectedBrush,
+  setSelectedFont
+*/
+void QCPLegend::setSelectedParts(const SelectableParts &selected)
+{
+  SelectableParts newSelected = selected;
+  mSelectedParts = this->selectedParts(); // update mSelectedParts in case item selection changed
+
+  if (mSelectedParts != newSelected)
+  {
+    if (!mSelectedParts.testFlag(spItems) && newSelected.testFlag(spItems)) // attempt to set spItems flag (can't do that)
+    {
+      qDebug() << Q_FUNC_INFO << "spItems flag can not be set, it can only be unset with this function";
+      newSelected &= ~spItems;
+    }
+    if (mSelectedParts.testFlag(spItems) && !newSelected.testFlag(spItems)) // spItems flag was unset, so clear item selection
+    {
+      for (int i=0; i<itemCount(); ++i)
+      {
+        if (item(i))
+          item(i)->setSelected(false);
+      }
+    }
+    mSelectedParts = newSelected;
+    emit selectionChanged(mSelectedParts);
+  }
+}
+
+/*!
+  When the legend box is selected, this pen is used to draw the border instead of the normal pen
+  set via \ref setBorderPen.
+
+  \see setSelectedParts, setSelectableParts, setSelectedBrush
+*/
+void QCPLegend::setSelectedBorderPen(const QPen &pen)
+{
+  mSelectedBorderPen = pen;
+}
+
+/*!
+  Sets the pen legend items will use to draw their icon borders, when they are selected.
+
+  \see setSelectedParts, setSelectableParts, setSelectedFont
+*/
+void QCPLegend::setSelectedIconBorderPen(const QPen &pen)
