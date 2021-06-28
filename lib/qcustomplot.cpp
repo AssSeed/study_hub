@@ -17258,3 +17258,256 @@ QList<QCPLayoutElement*> QCPAxisRect::elements(bool recursive) const
   {
     result << mInsetLayout;
     if (recursive)
+      result << mInsetLayout->elements(recursive);
+  }
+  return result;
+}
+
+/* inherits documentation from base class */
+void QCPAxisRect::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  painter->setAntialiasing(false);
+}
+
+/* inherits documentation from base class */
+void QCPAxisRect::draw(QCPPainter *painter)
+{
+  drawBackground(painter);
+}
+
+/*!
+  Sets \a pm as the axis background pixmap. The axis background pixmap will be drawn inside the
+  axis rect. Since axis rects place themselves on the "background" layer by default, the axis rect
+  backgrounds are usually drawn below everything else.
+
+  For cases where the provided pixmap doesn't have the same size as the axis rect, scaling can be
+  enabled with \ref setBackgroundScaled and the scaling mode (i.e. whether and how the aspect ratio
+  is preserved) can be set with \ref setBackgroundScaledMode. To set all these options in one call,
+  consider using the overloaded version of this function.
+
+  Below the pixmap, the axis rect may be optionally filled with a brush, if specified with \ref
+  setBackground(const QBrush &brush).
+  
+  \see setBackgroundScaled, setBackgroundScaledMode, setBackground(const QBrush &brush)
+*/
+void QCPAxisRect::setBackground(const QPixmap &pm)
+{
+  mBackgroundPixmap = pm;
+  mScaledBackgroundPixmap = QPixmap();
+}
+
+/*! \overload
+  
+  Sets \a brush as the background brush. The axis rect background will be filled with this brush.
+  Since axis rects place themselves on the "background" layer by default, the axis rect backgrounds
+  are usually drawn below everything else.
+
+  The brush will be drawn before (under) any background pixmap, which may be specified with \ref
+  setBackground(const QPixmap &pm).
+
+  To disable drawing of a background brush, set \a brush to Qt::NoBrush.
+  
+  \see setBackground(const QPixmap &pm)
+*/
+void QCPAxisRect::setBackground(const QBrush &brush)
+{
+  mBackgroundBrush = brush;
+}
+
+/*! \overload
+  
+  Allows setting the background pixmap of the axis rect, whether it shall be scaled and how it
+  shall be scaled in one call.
+
+  \see setBackground(const QPixmap &pm), setBackgroundScaled, setBackgroundScaledMode
+*/
+void QCPAxisRect::setBackground(const QPixmap &pm, bool scaled, Qt::AspectRatioMode mode)
+{
+  mBackgroundPixmap = pm;
+  mScaledBackgroundPixmap = QPixmap();
+  mBackgroundScaled = scaled;
+  mBackgroundScaledMode = mode;
+}
+
+/*!
+  Sets whether the axis background pixmap shall be scaled to fit the axis rect or not. If \a scaled
+  is set to true, you may control whether and how the aspect ratio of the original pixmap is
+  preserved with \ref setBackgroundScaledMode.
+  
+  Note that the scaled version of the original pixmap is buffered, so there is no performance
+  penalty on replots. (Except when the axis rect dimensions are changed continuously.)
+  
+  \see setBackground, setBackgroundScaledMode
+*/
+void QCPAxisRect::setBackgroundScaled(bool scaled)
+{
+  mBackgroundScaled = scaled;
+}
+
+/*!
+  If scaling of the axis background pixmap is enabled (\ref setBackgroundScaled), use this function to
+  define whether and how the aspect ratio of the original pixmap passed to \ref setBackground is preserved.
+  \see setBackground, setBackgroundScaled
+*/
+void QCPAxisRect::setBackgroundScaledMode(Qt::AspectRatioMode mode)
+{
+  mBackgroundScaledMode = mode;
+}
+
+/*!
+  Returns the range drag axis of the \a orientation provided.
+  
+  \see setRangeDragAxes
+*/
+QCPAxis *QCPAxisRect::rangeDragAxis(Qt::Orientation orientation)
+{
+  return (orientation == Qt::Horizontal ? mRangeDragHorzAxis.data() : mRangeDragVertAxis.data());
+}
+
+/*!
+  Returns the range zoom axis of the \a orientation provided.
+  
+  \see setRangeZoomAxes
+*/
+QCPAxis *QCPAxisRect::rangeZoomAxis(Qt::Orientation orientation)
+{
+  return (orientation == Qt::Horizontal ? mRangeZoomHorzAxis.data() : mRangeZoomVertAxis.data());
+}
+
+/*!
+  Returns the range zoom factor of the \a orientation provided.
+  
+  \see setRangeZoomFactor
+*/
+double QCPAxisRect::rangeZoomFactor(Qt::Orientation orientation)
+{
+  return (orientation == Qt::Horizontal ? mRangeZoomFactorHorz : mRangeZoomFactorVert);
+}
+
+/*!
+  Sets which axis orientation may be range dragged by the user with mouse interaction.
+  What orientation corresponds to which specific axis can be set with
+  \ref setRangeDragAxes(QCPAxis *horizontal, QCPAxis *vertical). By
+  default, the horizontal axis is the bottom axis (xAxis) and the vertical axis
+  is the left axis (yAxis).
+  
+  To disable range dragging entirely, pass 0 as \a orientations or remove \ref QCP::iRangeDrag from \ref
+  QCustomPlot::setInteractions. To enable range dragging for both directions, pass <tt>Qt::Horizontal |
+  Qt::Vertical</tt> as \a orientations.
+  
+  In addition to setting \a orientations to a non-zero value, make sure \ref QCustomPlot::setInteractions
+  contains \ref QCP::iRangeDrag to enable the range dragging interaction.
+  
+  \see setRangeZoom, setRangeDragAxes, setNoAntialiasingOnDrag
+*/
+void QCPAxisRect::setRangeDrag(Qt::Orientations orientations)
+{
+  mRangeDrag = orientations;
+}
+
+/*!
+  Sets which axis orientation may be zoomed by the user with the mouse wheel. What orientation
+  corresponds to which specific axis can be set with \ref setRangeZoomAxes(QCPAxis *horizontal,
+  QCPAxis *vertical). By default, the horizontal axis is the bottom axis (xAxis) and the vertical
+  axis is the left axis (yAxis).
+
+  To disable range zooming entirely, pass 0 as \a orientations or remove \ref QCP::iRangeZoom from \ref
+  QCustomPlot::setInteractions. To enable range zooming for both directions, pass <tt>Qt::Horizontal |
+  Qt::Vertical</tt> as \a orientations.
+  
+  In addition to setting \a orientations to a non-zero value, make sure \ref QCustomPlot::setInteractions
+  contains \ref QCP::iRangeZoom to enable the range zooming interaction.
+  
+  \see setRangeZoomFactor, setRangeZoomAxes, setRangeDrag
+*/
+void QCPAxisRect::setRangeZoom(Qt::Orientations orientations)
+{
+  mRangeZoom = orientations;
+}
+
+/*!
+  Sets the axes whose range will be dragged when \ref setRangeDrag enables mouse range dragging
+  on the QCustomPlot widget.
+  
+  \see setRangeZoomAxes
+*/
+void QCPAxisRect::setRangeDragAxes(QCPAxis *horizontal, QCPAxis *vertical)
+{
+  mRangeDragHorzAxis = horizontal;
+  mRangeDragVertAxis = vertical;
+}
+
+/*!
+  Sets the axes whose range will be zoomed when \ref setRangeZoom enables mouse wheel zooming on the
+  QCustomPlot widget. The two axes can be zoomed with different strengths, when different factors
+  are passed to \ref setRangeZoomFactor(double horizontalFactor, double verticalFactor).
+  
+  \see setRangeDragAxes
+*/
+void QCPAxisRect::setRangeZoomAxes(QCPAxis *horizontal, QCPAxis *vertical)
+{
+  mRangeZoomHorzAxis = horizontal;
+  mRangeZoomVertAxis = vertical;
+}
+
+/*!
+  Sets how strong one rotation step of the mouse wheel zooms, when range zoom was activated with
+  \ref setRangeZoom. The two parameters \a horizontalFactor and \a verticalFactor provide a way to
+  let the horizontal axis zoom at different rates than the vertical axis. Which axis is horizontal
+  and which is vertical, can be set with \ref setRangeZoomAxes.
+
+  When the zoom factor is greater than one, scrolling the mouse wheel backwards (towards the user)
+  will zoom in (make the currently visible range smaller). For zoom factors smaller than one, the
+  same scrolling direction will zoom out.
+*/
+void QCPAxisRect::setRangeZoomFactor(double horizontalFactor, double verticalFactor)
+{
+  mRangeZoomFactorHorz = horizontalFactor;
+  mRangeZoomFactorVert = verticalFactor;
+}
+
+/*! \overload
+  
+  Sets both the horizontal and vertical zoom \a factor.
+*/
+void QCPAxisRect::setRangeZoomFactor(double factor)
+{
+  mRangeZoomFactorHorz = factor;
+  mRangeZoomFactorVert = factor;
+}
+
+/*! \internal
+  
+  Draws the background of this axis rect. It may consist of a background fill (a QBrush) and a
+  pixmap.
+  
+  If a brush was given via \ref setBackground(const QBrush &brush), this function first draws an
+  according filling inside the axis rect with the provided \a painter.
+  
+  Then, if a pixmap was provided via \ref setBackground, this function buffers the scaled version
+  depending on \ref setBackgroundScaled and \ref setBackgroundScaledMode and then draws it inside
+  the axis rect with the provided \a painter. The scaled version is buffered in
+  mScaledBackgroundPixmap to prevent expensive rescaling at every redraw. It is only updated, when
+  the axis rect has changed in a way that requires a rescale of the background pixmap (this is
+  dependant on the \ref setBackgroundScaledMode), or when a differend axis backgroud pixmap was
+  set.
+  
+  \see setBackground, setBackgroundScaled, setBackgroundScaledMode
+*/
+void QCPAxisRect::drawBackground(QCPPainter *painter)
+{
+  // draw background fill:
+  if (mBackgroundBrush != Qt::NoBrush)
+    painter->fillRect(mRect, mBackgroundBrush);
+  
+  // draw background pixmap (on top of fill, if brush specified):
+  if (!mBackgroundPixmap.isNull())
+  {
+    if (mBackgroundScaled)
+    {
+      // check whether mScaledBackground needs to be updated:
+      QSize scaledSize(mBackgroundPixmap.size());
+      scaledSize.scale(mRect.size(), mBackgroundScaledMode);
+      if (mScaledBackgroundPixmap.size() != scaledSize)
+        mScaledBackgroundPixmap = mBackgroundPixmap.scaled(mRect.size(), mBackgroundScaledMode, Qt::SmoothTransformation);
+      painter->drawPixmap(mRect.topLeft(), mScaledBackgroundPixmap, QRect(0, 0, mRect.width(), mRect.height()) & mScaledBackgroundPixmap.rect());
