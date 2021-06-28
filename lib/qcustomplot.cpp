@@ -17773,3 +17773,244 @@ void QCPAbstractLegendItem::setTextColor(const QColor &color)
 */
 void QCPAbstractLegendItem::setSelectedFont(const QFont &font)
 {
+  mSelectedFont = font;
+}
+
+/*!
+  When this legend item is selected, \a color is used to draw generic text, instead of the normal
+  color set with \ref setTextColor.
+  
+  \see setTextColor, QCPLegend::setSelectedTextColor
+*/
+void QCPAbstractLegendItem::setSelectedTextColor(const QColor &color)
+{
+  mSelectedTextColor = color;
+}
+
+/*!
+  Sets whether this specific legend item is selectable.
+  
+  \see setSelectedParts, QCustomPlot::setInteractions
+*/
+void QCPAbstractLegendItem::setSelectable(bool selectable)
+{
+  mSelectable = selectable;
+}
+
+/*!
+  Sets whether this specific legend item is selected.
+  
+  It is possible to set the selection state of this item by calling this function directly, even if
+  setSelectable is set to false.
+  
+  \see setSelectableParts, QCustomPlot::setInteractions
+*/
+void QCPAbstractLegendItem::setSelected(bool selected)
+{
+  if (mSelected != selected)
+  {
+    mSelected = selected;
+    emit selectionChanged(mSelected);
+  }
+}
+
+/* inherits documentation from base class */
+double QCPAbstractLegendItem::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (!mParentPlot) return -1;
+  if (onlySelectable && (!mSelectable || !mParentLegend->selectableParts().testFlag(QCPLegend::spItems)))
+    return -1;
+  
+  if (mRect.contains(pos.toPoint()))
+    return mParentPlot->selectionTolerance()*0.99;
+  else
+    return -1;
+}
+
+/* inherits documentation from base class */
+void QCPAbstractLegendItem::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiased, QCP::aeLegendItems);
+}
+
+/* inherits documentation from base class */
+QRect QCPAbstractLegendItem::clipRect() const
+{
+  return mOuterRect;
+}
+
+/* inherits documentation from base class */
+void QCPAbstractLegendItem::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
+{
+  Q_UNUSED(event)
+  Q_UNUSED(details)
+  if (mSelectable && mParentLegend->selectableParts().testFlag(QCPLegend::spItems))
+  {
+    bool selBefore = mSelected;
+    setSelected(additive ? !mSelected : true);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+void QCPAbstractLegendItem::deselectEvent(bool *selectionStateChanged)
+{
+  if (mSelectable && mParentLegend->selectableParts().testFlag(QCPLegend::spItems))
+  {
+    bool selBefore = mSelected;
+    setSelected(false);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPPlottableLegendItem
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPPlottableLegendItem
+  \brief A legend item representing a plottable with an icon and the plottable name.
+  
+  This is the standard legend item for plottables. It displays an icon of the plottable next to the
+  plottable name. The icon is drawn by the respective plottable itself (\ref
+  QCPAbstractPlottable::drawLegendIcon), and tries to give an intuitive symbol for the plottable.
+  For example, the QCPGraph draws a centered horizontal line and/or a single scatter point in the
+  middle.
+  
+  Legend items of this type are always associated with one plottable (retrievable via the
+  plottable() function and settable with the constructor). You may change the font of the plottable
+  name with \ref setFont. Icon padding and border pen is taken from the parent QCPLegend, see \ref
+  QCPLegend::setIconBorderPen and \ref QCPLegend::setIconTextPadding.
+
+  The function \ref QCPAbstractPlottable::addToLegend/\ref QCPAbstractPlottable::removeFromLegend
+  creates/removes legend items of this type in the default implementation. However, these functions
+  may be reimplemented such that a different kind of legend item (e.g a direct subclass of
+  QCPAbstractLegendItem) is used for that plottable.
+  
+  Since QCPLegend is based on QCPLayoutGrid, a legend item itself is just a subclass of
+  QCPLayoutElement. While it could be added to a legend (or any other layout) via the normal layout
+  interface, QCPLegend has specialized functions for handling legend items conveniently, see the
+  documentation of \ref QCPLegend.
+*/
+
+/*!
+  Creates a new legend item associated with \a plottable.
+  
+  Once it's created, it can be added to the legend via \ref QCPLegend::addItem.
+  
+  A more convenient way of adding/removing a plottable to/from the legend is via the functions \ref
+  QCPAbstractPlottable::addToLegend and \ref QCPAbstractPlottable::removeFromLegend.
+*/
+QCPPlottableLegendItem::QCPPlottableLegendItem(QCPLegend *parent, QCPAbstractPlottable *plottable) :
+  QCPAbstractLegendItem(parent),
+  mPlottable(plottable)
+{
+}
+
+/*! \internal
+  
+  Returns the pen that shall be used to draw the icon border, taking into account the selection
+  state of this item.
+*/
+QPen QCPPlottableLegendItem::getIconBorderPen() const
+{
+  return mSelected ? mParentLegend->selectedIconBorderPen() : mParentLegend->iconBorderPen();
+}
+
+/*! \internal
+  
+  Returns the text color that shall be used to draw text, taking into account the selection state
+  of this item.
+*/
+QColor QCPPlottableLegendItem::getTextColor() const
+{
+  return mSelected ? mSelectedTextColor : mTextColor;
+}
+
+/*! \internal
+  
+  Returns the font that shall be used to draw text, taking into account the selection state of this
+  item.
+*/
+QFont QCPPlottableLegendItem::getFont() const
+{
+  return mSelected ? mSelectedFont : mFont;
+}
+
+/*! \internal
+  
+  Draws the item with \a painter. The size and position of the drawn legend item is defined by the
+  parent layout (typically a \ref QCPLegend) and the \ref minimumSizeHint and \ref maximumSizeHint
+  of this legend item.
+*/
+void QCPPlottableLegendItem::draw(QCPPainter *painter)
+{
+  if (!mPlottable) return;
+  painter->setFont(getFont());
+  painter->setPen(QPen(getTextColor()));
+  QSizeF iconSize = mParentLegend->iconSize();
+  QRectF textRect = painter->fontMetrics().boundingRect(0, 0, 0, iconSize.height(), Qt::TextDontClip, mPlottable->name());
+  QRectF iconRect(mRect.topLeft(), iconSize);
+  int textHeight = qMax(textRect.height(), iconSize.height());  // if text has smaller height than icon, center text vertically in icon height, else align tops
+  painter->drawText(mRect.x()+iconSize.width()+mParentLegend->iconTextPadding(), mRect.y(), textRect.width(), textHeight, Qt::TextDontClip, mPlottable->name());
+  // draw icon:
+  painter->save();
+  painter->setClipRect(iconRect, Qt::IntersectClip);
+  mPlottable->drawLegendIcon(painter, iconRect);
+  painter->restore();
+  // draw icon border:
+  if (getIconBorderPen().style() != Qt::NoPen)
+  {
+    painter->setPen(getIconBorderPen());
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(iconRect);
+  }
+}
+
+/*! \internal
+  
+  Calculates and returns the size of this item. This includes the icon, the text and the padding in
+  between.
+*/
+QSize QCPPlottableLegendItem::minimumSizeHint() const
+{
+  if (!mPlottable) return QSize();
+  QSize result(0, 0);
+  QRect textRect;
+  QFontMetrics fontMetrics(getFont());
+  QSize iconSize = mParentLegend->iconSize();
+  textRect = fontMetrics.boundingRect(0, 0, 0, iconSize.height(), Qt::TextDontClip, mPlottable->name());
+  result.setWidth(iconSize.width() + mParentLegend->iconTextPadding() + textRect.width() + mMargins.left() + mMargins.right());
+  result.setHeight(qMax(textRect.height(), iconSize.height()) + mMargins.top() + mMargins.bottom());
+  return result;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPLegend
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPLegend
+  \brief Manages a legend inside a QCustomPlot.
+
+  A legend is a small box somewhere in the plot which lists plottables with their name and icon.
+  
+  Normally, the legend is populated by calling \ref QCPAbstractPlottable::addToLegend. The
+  respective legend item can be removed with \ref QCPAbstractPlottable::removeFromLegend. However,
+  QCPLegend also offers an interface to add and manipulate legend items directly: \ref item, \ref
+  itemWithPlottable, \ref itemCount, \ref addItem, \ref removeItem, etc.
+  
+  The QCPLegend derives from QCPLayoutGrid and as such can be placed in any position a
+  QCPLayoutElement may be positioned. The legend items are themselves QCPLayoutElements which are
+  placed in the grid layout of the legend. QCPLegend only adds an interface specialized for
+  handling child elements of type QCPAbstractLegendItem, as mentioned above. In principle, any
+  other layout elements may also be added to a legend via the normal \ref QCPLayoutGrid interface.
+  However, the QCPAbstractLegendItem-Interface will ignore those elements (e.g. \ref itemCount will
+  only return the number of items with QCPAbstractLegendItems type).
+
+  By default, every QCustomPlot has one legend (QCustomPlot::legend) which is placed in the inset
+  layout of the main axis rect (\ref QCPAxisRect::insetLayout). To move the legend to another
+  position inside the axis rect, use the methods of the \ref QCPLayoutInset. To move the legend
+  outside of the axis rect, place it anywhere else with the QCPLayout/QCPLayoutElement interface.
