@@ -17511,3 +17511,265 @@ void QCPAxisRect::drawBackground(QCPPainter *painter)
       if (mScaledBackgroundPixmap.size() != scaledSize)
         mScaledBackgroundPixmap = mBackgroundPixmap.scaled(mRect.size(), mBackgroundScaledMode, Qt::SmoothTransformation);
       painter->drawPixmap(mRect.topLeft(), mScaledBackgroundPixmap, QRect(0, 0, mRect.width(), mRect.height()) & mScaledBackgroundPixmap.rect());
+    } else
+    {
+      painter->drawPixmap(mRect.topLeft(), mBackgroundPixmap, QRect(0, 0, mRect.width(), mRect.height()));
+    }
+  }
+}
+
+/*! \internal
+  
+  This function makes sure multiple axes on the side specified with \a type don't collide, but are
+  distributed according to their respective space requirement (QCPAxis::calculateMargin).
+  
+  It does this by setting an appropriate offset (\ref QCPAxis::setOffset) on all axes except the
+  one with index zero.
+  
+  This function is called by \ref calculateAutoMargin.
+*/
+void QCPAxisRect::updateAxesOffset(QCPAxis::AxisType type)
+{
+  const QList<QCPAxis*> axesList = mAxes.value(type);
+  for (int i=1; i<axesList.size(); ++i)
+    axesList.at(i)->setOffset(axesList.at(i-1)->offset() + axesList.at(i-1)->calculateMargin() + axesList.at(i)->tickLengthIn());
+}
+
+/* inherits documentation from base class */
+int QCPAxisRect::calculateAutoMargin(QCP::MarginSide side)
+{
+  if (!mAutoMargins.testFlag(side))
+    qDebug() << Q_FUNC_INFO << "Called with side that isn't specified as auto margin";
+  
+  updateAxesOffset(QCPAxis::marginSideToAxisType(side));
+  
+  // note: only need to look at the last (outer most) axis to determine the total margin, due to updateAxisOffset call
+  const QList<QCPAxis*> axesList = mAxes.value(QCPAxis::marginSideToAxisType(side));
+  if (axesList.size() > 0)
+    return axesList.last()->offset() + axesList.last()->calculateMargin();
+  else
+    return 0;
+}
+
+/*! \internal
+  
+  Event handler for when a mouse button is pressed on the axis rect. If the left mouse button is
+  pressed, the range dragging interaction is initialized (the actual range manipulation happens in
+  the \ref mouseMoveEvent).
+
+  The mDragging flag is set to true and some anchor points are set that are needed to determine the
+  distance the mouse was dragged in the mouse move/release events later.
+  
+  \see mouseMoveEvent, mouseReleaseEvent
+*/
+void QCPAxisRect::mousePressEvent(QMouseEvent *event)
+{
+  mDragStart = event->pos(); // need this even when not LeftButton is pressed, to determine in releaseEvent whether it was a full click (no position change between press and release)
+  if (event->buttons() & Qt::LeftButton)
+  {
+    mDragging = true;
+    // initialize antialiasing backup in case we start dragging:
+    if (mParentPlot->noAntialiasingOnDrag())
+    {
+      mAADragBackup = mParentPlot->antialiasedElements();
+      mNotAADragBackup = mParentPlot->notAntialiasedElements();
+    }
+    // Mouse range dragging interaction:
+    if (mParentPlot->interactions().testFlag(QCP::iRangeDrag))
+    {
+      if (mRangeDragHorzAxis)
+        mDragStartHorzRange = mRangeDragHorzAxis.data()->range();
+      if (mRangeDragVertAxis)
+        mDragStartVertRange = mRangeDragVertAxis.data()->range();
+    }
+  }
+}
+
+/*! \internal
+  
+  Event handler for when the mouse is moved on the axis rect. If range dragging was activated in a
+  preceding \ref mousePressEvent, the range is moved accordingly.
+  
+  \see mousePressEvent, mouseReleaseEvent
+*/
+void QCPAxisRect::mouseMoveEvent(QMouseEvent *event)
+{
+  // Mouse range dragging interaction:
+  if (mDragging && mParentPlot->interactions().testFlag(QCP::iRangeDrag))
+  {
+    if (mRangeDrag.testFlag(Qt::Horizontal))
+    {
+      if (QCPAxis *rangeDragHorzAxis = mRangeDragHorzAxis.data())
+      {
+        if (rangeDragHorzAxis->mScaleType == QCPAxis::stLinear)
+        {
+          double diff = rangeDragHorzAxis->pixelToCoord(mDragStart.x()) - rangeDragHorzAxis->pixelToCoord(event->pos().x());
+          rangeDragHorzAxis->setRange(mDragStartHorzRange.lower+diff, mDragStartHorzRange.upper+diff);
+        } else if (rangeDragHorzAxis->mScaleType == QCPAxis::stLogarithmic)
+        {
+          double diff = rangeDragHorzAxis->pixelToCoord(mDragStart.x()) / rangeDragHorzAxis->pixelToCoord(event->pos().x());
+          rangeDragHorzAxis->setRange(mDragStartHorzRange.lower*diff, mDragStartHorzRange.upper*diff);
+        }
+      }
+    }
+    if (mRangeDrag.testFlag(Qt::Vertical))
+    {
+      if (QCPAxis *rangeDragVertAxis = mRangeDragVertAxis.data())
+      {
+        if (rangeDragVertAxis->mScaleType == QCPAxis::stLinear)
+        {
+          double diff = rangeDragVertAxis->pixelToCoord(mDragStart.y()) - rangeDragVertAxis->pixelToCoord(event->pos().y());
+          rangeDragVertAxis->setRange(mDragStartVertRange.lower+diff, mDragStartVertRange.upper+diff);
+        } else if (rangeDragVertAxis->mScaleType == QCPAxis::stLogarithmic)
+        {
+          double diff = rangeDragVertAxis->pixelToCoord(mDragStart.y()) / rangeDragVertAxis->pixelToCoord(event->pos().y());
+          rangeDragVertAxis->setRange(mDragStartVertRange.lower*diff, mDragStartVertRange.upper*diff);
+        }
+      }
+    }
+    if (mRangeDrag != 0) // if either vertical or horizontal drag was enabled, do a replot
+    {
+      if (mParentPlot->noAntialiasingOnDrag())
+        mParentPlot->setNotAntialiasedElements(QCP::aeAll);
+      mParentPlot->replot();
+    }
+  }
+}
+
+/* inherits documentation from base class */
+void QCPAxisRect::mouseReleaseEvent(QMouseEvent *event)
+{
+  Q_UNUSED(event)
+  mDragging = false;
+  if (mParentPlot->noAntialiasingOnDrag())
+  {
+    mParentPlot->setAntialiasedElements(mAADragBackup);
+    mParentPlot->setNotAntialiasedElements(mNotAADragBackup);
+  }
+}
+
+/*! \internal
+  
+  Event handler for mouse wheel events. If rangeZoom is Qt::Horizontal, Qt::Vertical or both, the
+  ranges of the axes defined as rangeZoomHorzAxis and rangeZoomVertAxis are scaled. The center of
+  the scaling operation is the current cursor position inside the axis rect. The scaling factor is
+  dependant on the mouse wheel delta (which direction the wheel was rotated) to provide a natural
+  zooming feel. The Strength of the zoom can be controlled via \ref setRangeZoomFactor.
+  
+  Note, that event->delta() is usually +/-120 for single rotation steps. However, if the mouse
+  wheel is turned rapidly, many steps may bunch up to one event, so the event->delta() may then be
+  multiples of 120. This is taken into account here, by calculating \a wheelSteps and using it as
+  exponent of the range zoom factor. This takes care of the wheel direction automatically, by
+  inverting the factor, when the wheel step is negative (f^-1 = 1/f).
+*/
+void QCPAxisRect::wheelEvent(QWheelEvent *event)
+{
+  // Mouse range zooming interaction:
+  if (mParentPlot->interactions().testFlag(QCP::iRangeZoom))
+  {
+    if (mRangeZoom != 0)
+    {
+      double factor;
+      double wheelSteps = event->delta()/120.0; // a single step delta is +/-120 usually
+      if (mRangeZoom.testFlag(Qt::Horizontal))
+      {
+        factor = pow(mRangeZoomFactorHorz, wheelSteps);
+        if (mRangeZoomHorzAxis.data())
+          mRangeZoomHorzAxis.data()->scaleRange(factor, mRangeZoomHorzAxis.data()->pixelToCoord(event->pos().x()));
+      }
+      if (mRangeZoom.testFlag(Qt::Vertical))
+      {
+        factor = pow(mRangeZoomFactorVert, wheelSteps);
+        if (mRangeZoomVertAxis.data())
+          mRangeZoomVertAxis.data()->scaleRange(factor, mRangeZoomVertAxis.data()->pixelToCoord(event->pos().y()));
+      }
+      mParentPlot->replot();
+    }
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPAbstractLegendItem
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPAbstractLegendItem
+  \brief The abstract base class for all entries in a QCPLegend.
+  
+  It defines a very basic interface for entries in a QCPLegend. For representing plottables in the
+  legend, the subclass \ref QCPPlottableLegendItem is more suitable.
+  
+  Only derive directly from this class when you need absolute freedom (e.g. a custom legend entry
+  that's not even associated with a plottable).
+
+  You must implement the following pure virtual functions:
+  \li \ref draw (from QCPLayerable)
+  
+  You inherit the following members you may use:
+  <table>
+    <tr>
+      <td>QCPLegend *\b mParentLegend</td>
+      <td>A pointer to the parent QCPLegend.</td>
+    </tr><tr>
+      <td>QFont \b mFont</td>
+      <td>The generic font of the item. You should use this font for all or at least the most prominent text of the item.</td>
+    </tr>
+  </table>
+*/
+
+/* start of documentation of signals */
+
+/*! \fn void QCPAbstractLegendItem::selectionChanged(bool selected)
+  
+  This signal is emitted when the selection state of this legend item has changed, either by user
+  interaction or by a direct call to \ref setSelected.
+*/
+
+/* end of documentation of signals */
+
+/*!
+  Constructs a QCPAbstractLegendItem and associates it with the QCPLegend \a parent. This does not
+  cause the item to be added to \a parent, so \ref QCPLegend::addItem must be called separately.
+*/
+QCPAbstractLegendItem::QCPAbstractLegendItem(QCPLegend *parent) : 
+  QCPLayoutElement(parent->parentPlot()),
+  mParentLegend(parent),
+  mFont(parent->font()),
+  mTextColor(parent->textColor()),
+  mSelectedFont(parent->selectedFont()),
+  mSelectedTextColor(parent->selectedTextColor()),
+  mSelectable(true),
+  mSelected(false)
+{
+  setLayer("legend");
+  setMargins(QMargins(8, 2, 8, 2));
+}
+
+/*!
+  Sets the default font of this specific legend item to \a font.
+  
+  \see setTextColor, QCPLegend::setFont
+*/
+void QCPAbstractLegendItem::setFont(const QFont &font)
+{
+  mFont = font;
+}
+
+/*!
+  Sets the default text color of this specific legend item to \a color.
+  
+  \see setFont, QCPLegend::setTextColor
+*/
+void QCPAbstractLegendItem::setTextColor(const QColor &color)
+{
+  mTextColor = color;
+}
+
+/*!
+  When this legend item is selected, \a font is used to draw generic text, instead of the normal
+  font set with \ref setFont.
+  
+  \see setFont, QCPLegend::setSelectedFont
+*/
+void QCPAbstractLegendItem::setSelectedFont(const QFont &font)
+{
