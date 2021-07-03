@@ -18252,3 +18252,234 @@ void QCPLegend::setSelectedBorderPen(const QPen &pen)
   \see setSelectedParts, setSelectableParts, setSelectedFont
 */
 void QCPLegend::setSelectedIconBorderPen(const QPen &pen)
+{
+  mSelectedIconBorderPen = pen;
+}
+
+/*!
+  When the legend box is selected, this brush is used to draw the legend background instead of the normal brush
+  set via \ref setBrush.
+
+  \see setSelectedParts, setSelectableParts, setSelectedBorderPen
+*/
+void QCPLegend::setSelectedBrush(const QBrush &brush)
+{
+  mSelectedBrush = brush;
+}
+
+/*!
+  Sets the default font that is used by legend items when they are selected.
+  
+  This function will also set \a font on all already existing legend items.
+
+  \see setFont, QCPAbstractLegendItem::setSelectedFont
+*/
+void QCPLegend::setSelectedFont(const QFont &font)
+{
+  mSelectedFont = font;
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (item(i))
+      item(i)->setSelectedFont(font);
+  }
+}
+
+/*!
+  Sets the default text color that is used by legend items when they are selected.
+  
+  This function will also set \a color on all already existing legend items.
+
+  \see setTextColor, QCPAbstractLegendItem::setSelectedTextColor
+*/
+void QCPLegend::setSelectedTextColor(const QColor &color)
+{
+  mSelectedTextColor = color;
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (item(i))
+      item(i)->setSelectedTextColor(color);
+  }
+}
+
+/*!
+  Returns the item with index \a i.
+  
+  \see itemCount
+*/
+QCPAbstractLegendItem *QCPLegend::item(int index) const
+{
+  return qobject_cast<QCPAbstractLegendItem*>(elementAt(index));
+}
+
+/*!
+  Returns the QCPPlottableLegendItem which is associated with \a plottable (e.g. a \ref QCPGraph*).
+  If such an item isn't in the legend, returns 0.
+  
+  \see hasItemWithPlottable
+*/
+QCPPlottableLegendItem *QCPLegend::itemWithPlottable(const QCPAbstractPlottable *plottable) const
+{
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (QCPPlottableLegendItem *pli = qobject_cast<QCPPlottableLegendItem*>(item(i)))
+    {
+      if (pli->plottable() == plottable)
+        return pli;
+    }
+  }
+  return 0;
+}
+
+/*!
+  Returns the number of items currently in the legend.
+  \see item
+*/
+int QCPLegend::itemCount() const
+{
+  return elementCount();
+}
+
+/*!
+  Returns whether the legend contains \a itm.
+*/
+bool QCPLegend::hasItem(QCPAbstractLegendItem *item) const
+{
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (item == this->item(i))
+        return true;
+  }
+  return false;
+}
+
+/*!
+  Returns whether the legend contains a QCPPlottableLegendItem which is associated with \a plottable (e.g. a \ref QCPGraph*).
+  If such an item isn't in the legend, returns false.
+  
+  \see itemWithPlottable
+*/
+bool QCPLegend::hasItemWithPlottable(const QCPAbstractPlottable *plottable) const
+{
+  return itemWithPlottable(plottable);
+}
+
+/*!
+  Adds \a item to the legend, if it's not present already.
+  
+  Returns true on sucess, i.e. if the item wasn't in the list already and has been successfuly added.
+  
+  The legend takes ownership of the item.
+*/
+bool QCPLegend::addItem(QCPAbstractLegendItem *item)
+{
+  if (!hasItem(item))
+  {
+    return addElement(rowCount(), 0, item);
+  } else
+    return false;
+}
+
+/*!
+  Removes the item with index \a index from the legend.
+
+  Returns true, if successful.
+  
+  \see itemCount, clearItems
+*/
+bool QCPLegend::removeItem(int index)
+{
+  if (QCPAbstractLegendItem *ali = item(index))
+  {
+    bool success = remove(ali);
+    simplify();
+    return success;
+  } else
+    return false;
+}
+
+/*! \overload
+  
+  Removes \a item from the legend.
+
+  Returns true, if successful.
+  
+  \see clearItems
+*/
+bool QCPLegend::removeItem(QCPAbstractLegendItem *item)
+{
+  bool success = remove(item);
+  simplify();
+  return success;
+}
+
+/*!
+  Removes all items from the legend.
+*/
+void QCPLegend::clearItems()
+{
+  for (int i=itemCount()-1; i>=0; --i)
+    removeItem(i);
+}
+
+/*!
+  Returns the legend items that are currently selected. If no items are selected,
+  the list is empty.
+  
+  \see QCPAbstractLegendItem::setSelected, setSelectable
+*/
+QList<QCPAbstractLegendItem *> QCPLegend::selectedItems() const
+{
+  QList<QCPAbstractLegendItem*> result;
+  for (int i=0; i<itemCount(); ++i)
+  {
+    if (QCPAbstractLegendItem *ali = item(i))
+    {
+      if (ali->selected())
+        result.append(ali);
+    }
+  }
+  return result;
+}
+
+/*! \internal
+
+  A convenience function to easily set the QPainter::Antialiased hint on the provided \a painter
+  before drawing main legend elements.
+
+  This is the antialiasing state the painter passed to the \ref draw method is in by default.
+  
+  This function takes into account the local setting of the antialiasing flag as well as the
+  overrides set with \ref QCustomPlot::setAntialiasedElements and \ref
+  QCustomPlot::setNotAntialiasedElements.
+  
+  \see setAntialiased
+*/
+void QCPLegend::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiased, QCP::aeLegend);
+}
+
+/*! \internal
+  
+  Returns the pen used to paint the border of the legend, taking into account the selection state
+  of the legend box.
+*/
+QPen QCPLegend::getBorderPen() const
+{
+  return mSelectedParts.testFlag(spLegendBox) ? mSelectedBorderPen : mBorderPen;
+}
+
+/*! \internal
+  
+  Returns the brush used to paint the background of the legend, taking into account the selection
+  state of the legend box.
+*/
+QBrush QCPLegend::getBrush() const
+{
+  return mSelectedParts.testFlag(spLegendBox) ? mSelectedBrush : mBrush;
+}
+
+/*! \internal
+  
+  Draws the legend box with the provided \a painter. The individual legend items are layerables
+  themselves, thus are drawn independently.
