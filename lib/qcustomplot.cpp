@@ -18741,3 +18741,59 @@ QSize QCPPlotTitle::maximumSizeHint() const
 
 /* inherits documentation from base class */
 void QCPPlotTitle::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
+{
+  Q_UNUSED(event)
+  Q_UNUSED(details)
+  if (mSelectable)
+  {
+    bool selBefore = mSelected;
+    setSelected(additive ? !mSelected : true);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+void QCPPlotTitle::deselectEvent(bool *selectionStateChanged)
+{
+  if (mSelectable)
+  {
+    bool selBefore = mSelected;
+    setSelected(false);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelected != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+double QCPPlotTitle::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  Q_UNUSED(details)
+  if (onlySelectable && !mSelectable)
+    return -1;
+  
+  if (mTextBoundingRect.contains(pos.toPoint()))
+    return mParentPlot->selectionTolerance()*0.99;
+  else
+    return -1;
+}
+
+/*! \internal
+  
+  Returns the main font to be used. This is mSelectedFont if \ref setSelected is set to
+  <tt>true</tt>, else mFont is returned.
+*/
+QFont QCPPlotTitle::mainFont() const
+{
+  return mSelected ? mSelectedFont : mFont;
+}
+
+/*! \internal
+  
+  Returns the main color to be used. This is mSelectedTextColor if \ref setSelected is set to
+  <tt>true</tt>, else mTextColor is returned.
+*/
+QColor QCPPlotTitle::mainTextColor() const
+{
+  return mSelected ? mSelectedTextColor : mTextColor;
+}
