@@ -18483,3 +18483,261 @@ QBrush QCPLegend::getBrush() const
   
   Draws the legend box with the provided \a painter. The individual legend items are layerables
   themselves, thus are drawn independently.
+*/
+void QCPLegend::draw(QCPPainter *painter)
+{
+  // draw background rect:
+  painter->setBrush(getBrush());
+  painter->setPen(getBorderPen());
+  painter->drawRect(mOuterRect);
+}
+
+/* inherits documentation from base class */
+double QCPLegend::selectTest(const QPointF &pos, bool onlySelectable, QVariant *details) const
+{
+  if (!mParentPlot) return -1;
+  if (onlySelectable && !mSelectableParts.testFlag(spLegendBox))
+    return -1;
+  
+  if (mOuterRect.contains(pos.toPoint()))
+  {
+    if (details) details->setValue(spLegendBox);
+    return mParentPlot->selectionTolerance()*0.99;
+  }
+  return -1;
+}
+
+/* inherits documentation from base class */
+void QCPLegend::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
+{
+  Q_UNUSED(event)
+  mSelectedParts = selectedParts(); // in case item selection has changed
+  if (details.value<SelectablePart>() == spLegendBox && mSelectableParts.testFlag(spLegendBox))
+  {
+    SelectableParts selBefore = mSelectedParts;
+    setSelectedParts(additive ? mSelectedParts^spLegendBox : mSelectedParts|spLegendBox); // no need to unset spItems in !additive case, because they will be deselected by QCustomPlot (they're normal QCPLayerables with own deselectEvent)
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelectedParts != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+void QCPLegend::deselectEvent(bool *selectionStateChanged)
+{
+  mSelectedParts = selectedParts(); // in case item selection has changed
+  if (mSelectableParts.testFlag(spLegendBox))
+  {
+    SelectableParts selBefore = mSelectedParts;
+    setSelectedParts(selectedParts() & ~spLegendBox);
+    if (selectionStateChanged)
+      *selectionStateChanged = mSelectedParts != selBefore;
+  }
+}
+
+/* inherits documentation from base class */
+QCP::Interaction QCPLegend::selectionCategory() const
+{
+  return QCP::iSelectLegend;
+}
+
+/* inherits documentation from base class */
+QCP::Interaction QCPAbstractLegendItem::selectionCategory() const
+{
+  return QCP::iSelectLegend;
+}
+
+/* inherits documentation from base class */
+void QCPLegend::parentPlotInitialized(QCustomPlot *parentPlot)
+{
+  Q_UNUSED(parentPlot)
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// QCPPlotTitle
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class QCPPlotTitle
+  \brief A layout element displaying a plot title text
+  
+  The text may be specified with \ref setText, theformatting can be controlled with \ref setFont
+  and \ref setTextColor.
+  
+  A plot title can be added as follows:
+  \code
+  customPlot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
+  customPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(customPlot, "Your Plot Title"));
+  \endcode
+  
+  Since a plot title is a common requirement, QCustomPlot offers specialized selection signals for
+  easy interaction with QCPPlotTitle. If a layout element of type QCPPlotTitle is clicked, the
+  signal \ref QCustomPlot::titleClick is emitted. A double click emits the \ref
+  QCustomPlot::titleDoubleClick signal.
+*/
+
+/* start documentation of signals */
+
+/*! \fn void QCPPlotTitle::selectionChanged(bool selected)
+  
+  This signal is emitted when the selection state has changed to \a selected, either by user
+  interaction or by a direct call to \ref setSelected.
+  
+  \see setSelected, setSelectable
+*/
+
+/* end documentation of signals */
+
+/*!
+  Creates a new QCPPlotTitle instance and sets default values. The initial text is empty (\ref setText).
+  
+  To set the title text in the constructor, rather use \ref QCPPlotTitle(QCustomPlot *parentPlot, const QString &text).
+*/
+QCPPlotTitle::QCPPlotTitle(QCustomPlot *parentPlot) : 
+  QCPLayoutElement(parentPlot),
+  mFont(QFont("sans serif", 13*1.5, QFont::Bold)),
+  mTextColor(Qt::black),
+  mSelectedFont(QFont("sans serif", 13*1.6, QFont::Bold)),
+  mSelectedTextColor(Qt::blue),
+  mSelectable(false),
+  mSelected(false)
+{
+  if (parentPlot)
+  {
+    setLayer(parentPlot->currentLayer());
+    mFont = QFont(parentPlot->font().family(), parentPlot->font().pointSize()*1.5, QFont::Bold);
+    mSelectedFont = QFont(parentPlot->font().family(), parentPlot->font().pointSize()*1.6, QFont::Bold);
+  }
+  setMargins(QMargins(5, 5, 5, 0));
+}
+
+/*! \overload
+  
+  Creates a new QCPPlotTitle instance and sets default values. The initial text is set to \a text.
+*/
+QCPPlotTitle::QCPPlotTitle(QCustomPlot *parentPlot, const QString &text) :
+  QCPLayoutElement(parentPlot),
+  mText(text),
+  mFont(QFont(parentPlot->font().family(), parentPlot->font().pointSize()*1.5, QFont::Bold)),
+  mTextColor(Qt::black),
+  mSelectedFont(QFont(parentPlot->font().family(), parentPlot->font().pointSize()*1.6, QFont::Bold)),
+  mSelectedTextColor(Qt::blue),
+  mSelectable(false),
+  mSelected(false)
+{
+  setLayer("axes");
+  setMargins(QMargins(5, 5, 5, 0));
+}
+
+/*!
+  Sets the text that will be displayed to \a text. Multiple lines can be created by insertion of "\n".
+  
+  \see setFont, setTextColor
+*/
+void QCPPlotTitle::setText(const QString &text)
+{
+  mText = text;
+}
+
+/*!
+  Sets the \a font of the title text.
+  
+  \see setTextColor, setSelectedFont
+*/
+void QCPPlotTitle::setFont(const QFont &font)
+{
+  mFont = font;
+}
+
+/*!
+  Sets the \a color of the title text.
+  
+  \see setFont, setSelectedTextColor
+*/
+void QCPPlotTitle::setTextColor(const QColor &color)
+{
+  mTextColor = color;
+}
+
+/*!
+  Sets the \a font of the title text that will be used if the plot title is selected (\ref setSelected).
+  
+  \see setFont
+*/
+void QCPPlotTitle::setSelectedFont(const QFont &font)
+{
+  mSelectedFont = font;
+}
+
+/*!
+  Sets the \a color of the title text that will be used if the plot title is selected (\ref setSelected).
+  
+  \see setTextColor
+*/
+void QCPPlotTitle::setSelectedTextColor(const QColor &color)
+{
+  mSelectedTextColor = color;
+}
+
+/*!
+  Sets whether the user may select this plot title to \a selectable.
+
+  Note that even when \a selectable is set to <tt>false</tt>, the selection state may be changed
+  programmatically via \ref setSelected.
+*/
+void QCPPlotTitle::setSelectable(bool selectable)
+{
+  mSelectable = selectable;
+}
+
+/*!
+  Sets the selection state of this plot title to \a selected. If the selection has changed, \ref
+  selectionChanged is emitted.
+  
+  Note that this function can change the selection state independently of the current \ref
+  setSelectable state.
+*/
+void QCPPlotTitle::setSelected(bool selected)
+{
+  if (mSelected != selected)
+  {
+    mSelected = selected;
+    emit selectionChanged(mSelected);
+  }
+}
+
+/* inherits documentation from base class */
+void QCPPlotTitle::applyDefaultAntialiasingHint(QCPPainter *painter) const
+{
+  applyAntialiasingHint(painter, mAntialiased, QCP::aeNone);
+}
+
+/* inherits documentation from base class */
+void QCPPlotTitle::draw(QCPPainter *painter)
+{
+  painter->setFont(mainFont());
+  painter->setPen(QPen(mainTextColor()));
+  painter->drawText(mRect, Qt::AlignCenter, mText, &mTextBoundingRect);
+}
+
+/* inherits documentation from base class */
+QSize QCPPlotTitle::minimumSizeHint() const
+{
+  QFontMetrics metrics(mFont);
+  QSize result = metrics.boundingRect(0, 0, 0, 0, Qt::AlignCenter, mText).size();
+  result.rwidth() += mMargins.left() + mMargins.right();
+  result.rheight() += mMargins.top() + mMargins.bottom();
+  return result;
+}
+
+/* inherits documentation from base class */
+QSize QCPPlotTitle::maximumSizeHint() const
+{
+  QFontMetrics metrics(mFont);
+  QSize result = metrics.boundingRect(0, 0, 0, 0, Qt::AlignCenter, mText).size();
+  result.rheight() += mMargins.top() + mMargins.bottom();
+  result.setWidth(QWIDGETSIZE_MAX);
+  return result;
+}
+
+/* inherits documentation from base class */
+void QCPPlotTitle::selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged)
