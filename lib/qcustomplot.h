@@ -19,4 +19,9 @@
 ****************************************************************************
 **           Author: Emanuel Eichhammer                                   **
 **  Website/Contact: http://www.qcustomplot.com/                          **
-**             Date: 
+**             Date: 04.11.13                                             **
+**          Version: 1.1.0                                                **
+****************************************************************************/
+
+#ifndef QCUSTOMPLOT_H
+#define QCUSTOMPLOT_H
