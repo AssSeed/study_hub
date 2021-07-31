@@ -63,4 +63,16 @@ class QCPAxisRect;
 class QCPAbstractPlottable;
 class QCPGraph;
 class QCPAbstractItem;
-class QC
+class QCPItemPosition;
+class QCPLayer;
+class QCPPlotTitle;
+class QCPLegend;
+class QCPAbstractLegendItem;
+
+
+/*! \file */
+
+
+// decl definitions for shared library compilation/usage:
+#if defined(QCUSTOMPLOT_COMPILE_LIBRARY)
+#  define QCP_LIB_DECL Q_DECL_E
