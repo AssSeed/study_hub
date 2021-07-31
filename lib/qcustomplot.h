@@ -25,3 +25,16 @@
 
 #ifndef QCUSTOMPLOT_H
 #define QCUSTOMPLOT_H
+
+#include <QObject>
+#include <QPointer>
+#include <QWidget>
+#include <QPainter>
+#include <QPaintEvent>
+#include <QMouseEvent>
+#include <QPixmap>
+#include <QVector>
+#include <QString>
+#include <QDateTime>
+#include <QMultiMap>
+#
