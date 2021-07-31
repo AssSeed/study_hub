@@ -50,4 +50,17 @@
 #  include <QPrinter>
 #else
 #  include <QtNumeric>
-#
+#  include <QtPrintSupport>
+#endif
+
+class QCPPainter;
+class QCustomPlot;
+class QCPLayerable;
+class QCPLayoutElement;
+class QCPLayout;
+class QCPAxis;
+class QCPAxisRect;
+class QCPAbstractPlottable;
+class QCPGraph;
+class QCPAbstractItem;
+class QC
