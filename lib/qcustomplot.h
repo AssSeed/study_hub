@@ -93,4 +93,8 @@ namespace QCP
   \see QCPLayoutElement::setAutoMargins, QCPAxisRect::setAutoMargins
 */
 enum MarginSide { msLeft     = 0x01 ///< <tt>0x01</tt> left margin
-                  ,msRight   = 0x02 ///< <tt>0x02<
+                  ,msRight   = 0x02 ///< <tt>0x02</tt> right margin
+                  ,msTop     = 0x04 ///< <tt>0x04</tt> top margin
+                  ,msBottom  = 0x08 ///< <tt>0x08</tt> bottom margin
+                  ,msAll     = 0xFF ///< <tt>0xFF</tt> all margins
+                  ,msNone 
