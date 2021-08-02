@@ -75,4 +75,17 @@ class QCPAbstractLegendItem;
 
 // decl definitions for shared library compilation/usage:
 #if defined(QCUSTOMPLOT_COMPILE_LIBRARY)
-#  define QCP_LIB_DECL Q_DECL_E
+#  define QCP_LIB_DECL Q_DECL_EXPORT
+#elif defined(QCUSTOMPLOT_USE_LIBRARY)
+#  define QCP_LIB_DECL Q_DECL_IMPORT
+#else
+#  define QCP_LIB_DECL
+#endif
+
+/*!
+  The QCP Namespace contains general enums and QFlags used throughout the QCustomPlot library
+*/
+namespace QCP
+{
+/*!
+ 
