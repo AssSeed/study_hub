@@ -88,4 +88,9 @@ class QCPAbstractLegendItem;
 namespace QCP
 {
 /*!
- 
+  Defines the sides of a rectangular entity to which margins can be applied.
+  
+  \see QCPLayoutElement::setAutoMargins, QCPAxisRect::setAutoMargins
+*/
+enum MarginSide { msLeft     = 0x01 ///< <tt>0x01</tt> left margin
+                  ,msRight   = 0x02 ///< <tt>0x02<
