@@ -97,4 +97,10 @@ enum MarginSide { msLeft     = 0x01 ///< <tt>0x01</tt> left margin
                   ,msTop     = 0x04 ///< <tt>0x04</tt> top margin
                   ,msBottom  = 0x08 ///< <tt>0x08</tt> bottom margin
                   ,msAll     = 0xFF ///< <tt>0xFF</tt> all margins
-                  ,msNone 
+                  ,msNone    = 0x00 ///< <tt>0x00</tt> no margin
+                };
+Q_DECLARE_FLAGS(MarginSides, MarginSide)
+
+/*!
+  Defines what objects of a plot can be forcibly drawn antialiased/not antialiased. If an object is
+  neither forcibly drawn antialiased nor forcibly drawn not a
