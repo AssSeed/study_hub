@@ -103,4 +103,9 @@ Q_DECLARE_FLAGS(MarginSides, MarginSide)
 
 /*!
   Defines what objects of a plot can be forcibly drawn antialiased/not antialiased. If an object is
-  neither forcibly drawn antialiased nor forcibly drawn not a
+  neither forcibly drawn antialiased nor forcibly drawn not antialiased, it is up to the respective
+  element how it is drawn. Typically it provides a \a setAntialiased function for this.
+  
+  \c AntialiasedElements is a flag of or-combined elements of this enum type.
+  
+  \see QCustomPlot::setAnt
