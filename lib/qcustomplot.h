@@ -108,4 +108,7 @@ Q_DECLARE_FLAGS(MarginSides, MarginSide)
   
   \c AntialiasedElements is a flag of or-combined elements of this enum type.
   
-  \see QCustomPlot::setAnt
+  \see QCustomPlot::setAntialiasedElements, QCustomPlot::setNotAntialiasedElements
+*/
+enum AntialiasedElement { aeAxes           = 0x0001 ///< <tt>0x0001</tt> Axis base line and tick marks
+                          ,aeGrid          = 0x0002 ///< <tt>0x0002</tt> Grid l
