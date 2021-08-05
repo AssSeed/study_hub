@@ -111,4 +111,7 @@ Q_DECLARE_FLAGS(MarginSides, MarginSide)
   \see QCustomPlot::setAntialiasedElements, QCustomPlot::setNotAntialiasedElements
 */
 enum AntialiasedElement { aeAxes           = 0x0001 ///< <tt>0x0001</tt> Axis base line and tick marks
-                          ,aeGrid          = 0x0002 ///< <tt>0x0002</tt> Grid l
+                          ,aeGrid          = 0x0002 ///< <tt>0x0002</tt> Grid lines
+                          ,aeSubGrid       = 0x0004 ///< <tt>0x0004</tt> Sub grid lines
+                          ,aeLegend        = 0x0008 ///< <tt>0x0008</tt> Legend box
+                          ,aeLegendItems   = 0x0010 ///< <tt>0x0010</tt>
