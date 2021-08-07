@@ -118,4 +118,6 @@ enum AntialiasedElement { aeAxes           = 0x0001 ///< <tt>0x0001</tt> Axis ba
                           ,aePlottables    = 0x0020 ///< <tt>0x0020</tt> Main lines of plottables (excluding error bars, see element \ref aeErrorBars)
                           ,aeItems         = 0x0040 ///< <tt>0x0040</tt> Main lines of items
                           ,aeScatters      = 0x0080 ///< <tt>0x0080</tt> Scatter symbols of plottables (excluding scatter symbols of type ssPixmap)
-                          ,aeErrorBars     = 0x0100 ///< <tt>0x0100</tt> Error b
+                          ,aeErrorBars     = 0x0100 ///< <tt>0x0100</tt> Error bars
+                          ,aeFills         = 0x0200 ///< <tt>0x0200</tt> Borders of fills (e.g. under or between graphs)
+                          ,aeZeroLine      = 0x0400 ///< <tt>0x0400</tt> Zero-lines, see \ref QCPGrid:
