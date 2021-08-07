@@ -114,4 +114,6 @@ enum AntialiasedElement { aeAxes           = 0x0001 ///< <tt>0x0001</tt> Axis ba
                           ,aeGrid          = 0x0002 ///< <tt>0x0002</tt> Grid lines
                           ,aeSubGrid       = 0x0004 ///< <tt>0x0004</tt> Sub grid lines
                           ,aeLegend        = 0x0008 ///< <tt>0x0008</tt> Legend box
-                          ,aeLegendItems   = 0x0010 ///< <tt>0x0010</tt>
+                          ,aeLegendItems   = 0x0010 ///< <tt>0x0010</tt> Legend items
+                          ,aePlottables    = 0x0020 ///< <tt>0x0020</tt> Main lines of plottables (excluding error bars, see element \ref aeErrorBars)
+                          ,aeItems         = 0x0040 ///< <tt>0x0040</tt> Main lines of 
