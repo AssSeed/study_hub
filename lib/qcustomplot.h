@@ -124,4 +124,12 @@ enum AntialiasedElement { aeAxes           = 0x0001 ///< <tt>0x0001</tt> Axis ba
                           ,aeAll           = 0xFFFF ///< <tt>0xFFFF</tt> All elements
                           ,aeNone          = 0x0000 ///< <tt>0x0000</tt> No elements
                         };
-Q_DECLARE_FLAGS(Antialias
+Q_DECLARE_FLAGS(AntialiasedElements, AntialiasedElement)
+
+/*!
+  Defines plotting hints that control various aspects of the quality and speed of plotting.
+  
+  \see QCustomPlot::setPlottingHints
+*/
+enum PlottingHint { phNone            = 0x000 ///< <tt>0x000</tt> No hints are set
+       
