@@ -132,4 +132,5 @@ Q_DECLARE_FLAGS(AntialiasedElements, AntialiasedElement)
   \see QCustomPlot::setPlottingHints
 */
 enum PlottingHint { phNone            = 0x000 ///< <tt>0x000</tt> No hints are set
-       
+                    ,phFastPolylines  = 0x001 ///< <tt>0x001</tt> Graph/Curve lines are drawn with a faster method. This reduces the quality
+                                              ///<                especially of the line segment joins. (Only relevant for 
