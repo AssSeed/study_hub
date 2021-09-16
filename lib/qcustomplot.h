@@ -133,4 +133,6 @@ Q_DECLARE_FLAGS(AntialiasedElements, AntialiasedElement)
 */
 enum PlottingHint { phNone            = 0x000 ///< <tt>0x000</tt> No hints are set
                     ,phFastPolylines  = 0x001 ///< <tt>0x001</tt> Graph/Curve lines are drawn with a faster method. This reduces the quality
-                                              ///<                especially of the line segment joins. (Only relevant for 
+                                              ///<                especially of the line segment joins. (Only relevant for solid line pens.)
+                    ,phForceRepaint   = 0x002 ///< <tt>0x002</tt> causes an immediate repaint() instead of a soft update() when QCustomPlot::replot() is called. This is set by default
+                          
