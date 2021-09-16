@@ -136,4 +136,11 @@ enum PlottingHint { phNone            = 0x000 ///< <tt>0x000</tt> No hints are s
                                               ///<                especially of the line segment joins. (Only relevant for solid line pens.)
                     ,phForceRepaint   = 0x002 ///< <tt>0x002</tt> causes an immediate repaint() instead of a soft update() when QCustomPlot::replot() is called. This is set by default
                                               ///<                on Windows-Systems to prevent the plot from freezing on fast consecutive replots (e.g. user drags ranges with mouse).
-                    ,phCacheLabels    = 0x004 ///< <tt>0x004</tt> axis (tick) la
+                    ,phCacheLabels    = 0x004 ///< <tt>0x004</tt> axis (tick) labels will be cached as pixmaps, increasing replot performance.
+                  };
+Q_DECLARE_FLAGS(PlottingHints, PlottingHint)
+
+/*!
+  Defines the mouse interactions possible with QCustomPlot.
+  
+  \c Interactions is a flag of or-combined elemen
