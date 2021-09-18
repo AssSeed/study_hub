@@ -143,4 +143,9 @@ Q_DECLARE_FLAGS(PlottingHints, PlottingHint)
 /*!
   Defines the mouse interactions possible with QCustomPlot.
   
-  \c Interactions is a flag of or-combined elemen
+  \c Interactions is a flag of or-combined elements of this enum type.
+  
+  \see QCustomPlot::setInteractions
+*/
+enum Interaction { iRangeDrag         = 0x001 ///< <tt>0x001</tt> Axis ranges are draggable (see \ref QCPAxisRect::setRangeDrag, \ref QCPAxisRect::setRangeDragAxes)
+         
