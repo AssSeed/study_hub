@@ -160,4 +160,8 @@ Q_DECLARE_FLAGS(Interactions, Interaction)
 
 /*! \internal
   
-  Returns whether the specified \a
+  Returns whether the specified \a value is considered an invalid data value for plottables (i.e.
+  is \e nan or \e +/-inf). This function is used to check data validity upon replots, when the
+  compiler flag \c QCUSTOMPLOT_CHECK_DATA is set.
+*/
+inline bool isInval
