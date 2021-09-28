@@ -179,3 +179,14 @@ inline bool isInvalidData(double value1, double value2)
   return isInvalidData(value1) || isInvalidData(value2);
 }
 
+/*! \internal
+  
+  Sets the specified \a side of \a margins to \a value
+  
+  \see getMarginValue
+*/
+inline void setMarginValue(QMargins &margins, QCP::MarginSide side, int value)
+{
+  switch (side)
+  {
+    case QCP::msLeft: margins.setLeft(value);
