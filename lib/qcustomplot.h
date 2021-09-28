@@ -164,4 +164,18 @@ Q_DECLARE_FLAGS(Interactions, Interaction)
   is \e nan or \e +/-inf). This function is used to check data validity upon replots, when the
   compiler flag \c QCUSTOMPLOT_CHECK_DATA is set.
 */
-inline bool isInval
+inline bool isInvalidData(double value)
+{
+  return qIsNaN(value) || qIsInf(value);
+}
+
+/*! \internal
+  \overload
+  
+  Checks two arguments instead of one.
+*/
+inline bool isInvalidData(double value1, double value2)
+{
+  return isInvalidData(value1) || isInvalidData(value2);
+}
+
