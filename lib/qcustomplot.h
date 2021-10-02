@@ -189,4 +189,8 @@ inline void setMarginValue(QMargins &margins, QCP::MarginSide side, int value)
 {
   switch (side)
   {
-    case QCP::msLeft: margins.setLeft(value);
+    case QCP::msLeft: margins.setLeft(value); break;
+    case QCP::msRight: margins.setRight(value); break;
+    case QCP::msTop: margins.setTop(value); break;
+    case QCP::msBottom: margins.setBottom(value); break;
+    case QCP::msAll: margins = QMargins(value, value, value, v
