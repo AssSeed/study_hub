@@ -193,4 +193,16 @@ inline void setMarginValue(QMargins &margins, QCP::MarginSide side, int value)
     case QCP::msRight: margins.setRight(value); break;
     case QCP::msTop: margins.setTop(value); break;
     case QCP::msBottom: margins.setBottom(value); break;
-    case QCP::msAll: margins = QMargins(value, value, value, v
+    case QCP::msAll: margins = QMargins(value, value, value, value); break;
+    default: break;
+  }
+}
+
+/*! \internal
+  
+  Returns the value of the specified \a side of \a margins. If \a side is \ref QCP::msNone or
+  \ref QCP::msAll, returns 0.
+  
+  \see setMarginValue
+*/
+inline int getMarginValue(const QMargins
