@@ -205,4 +205,11 @@ inline void setMarginValue(QMargins &margins, QCP::MarginSide side, int value)
   
   \see setMarginValue
 */
-inline int getMarginValue(const QMargins
+inline int getMarginValue(const QMargins &margins, QCP::MarginSide side)
+{
+  switch (side)
+  {
+    case QCP::msLeft: return margins.left();
+    case QCP::msRight: return margins.right();
+    case QCP::msTop: return margins.top();
+    case QCP::msBot
