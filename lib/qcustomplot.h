@@ -212,4 +212,15 @@ inline int getMarginValue(const QMargins &margins, QCP::MarginSide side)
     case QCP::msLeft: return margins.left();
     case QCP::msRight: return margins.right();
     case QCP::msTop: return margins.top();
-    case QCP::msBot
+    case QCP::msBottom: return margins.bottom();
+    default: break;
+  }
+  return 0;
+}
+
+} // end of namespace QCP
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::AntialiasedElements)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::PlottingHints)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::MarginSides)
+Q_DECLARE_O
