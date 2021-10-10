@@ -233,4 +233,9 @@ public:
   /*!
     Defines the shape used for scatter points.
 
-    On plottables/items that draw scatters, the sizes of these visualizations (with exception
+    On plottables/items that draw scatters, the sizes of these visualizations (with exception of
+    \ref ssDot and \ref ssPixmap) can be controlled with the \ref setSize function. Scatters are
+    drawn with the pen and brush specified with \ref setPen and \ref setBrush.
+  */
+  Q_ENUMS(ScatterShape)
+  enum ScatterShape { ssNone       ///< no scatt
