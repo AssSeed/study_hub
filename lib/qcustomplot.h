@@ -238,4 +238,6 @@ public:
     drawn with the pen and brush specified with \ref setPen and \ref setBrush.
   */
   Q_ENUMS(ScatterShape)
-  enum ScatterShape { ssNone       ///< no scatt
+  enum ScatterShape { ssNone       ///< no scatter symbols are drawn (e.g. in QCPGraph, data only represented with lines)
+                      ,ssDot       ///< \enumimage{ssDot.png} a single pixel (use \ref ssDisc or \ref ssCircle if you want a round shape with a certain radius)
+                      ,
