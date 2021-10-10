@@ -223,4 +223,14 @@ inline int getMarginValue(const QMargins &margins, QCP::MarginSide side)
 Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::AntialiasedElements)
 Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::PlottingHints)
 Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::MarginSides)
-Q_DECLARE_O
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCP::Interactions)
+
+
+class QCP_LIB_DECL QCPScatterStyle
+{
+  Q_GADGET
+public:
+  /*!
+    Defines the shape used for scatter points.
+
+    On plottables/items that draw scatters, the sizes of these visualizations (with exception
