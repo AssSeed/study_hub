@@ -243,4 +243,7 @@ public:
                       ,ssCross     ///< \enumimage{ssCross.png} a cross
                       ,ssPlus      ///< \enumimage{ssPlus.png} a plus
                       ,ssCircle    ///< \enumimage{ssCircle.png} a circle
-                      ,ssDisc      ///< \enumimage{ssD
+                      ,ssDisc      ///< \enumimage{ssDisc.png} a circle which is filled with the pen's color (not the brush as with ssCircle)
+                      ,ssSquare    ///< \enumimage{ssSquare.png} a square
+                      ,ssDiamond   ///< \enumimage{ssDiamond.png} a diamond
+            
