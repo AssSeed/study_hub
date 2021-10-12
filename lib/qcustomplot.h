@@ -240,4 +240,7 @@ public:
   Q_ENUMS(ScatterShape)
   enum ScatterShape { ssNone       ///< no scatter symbols are drawn (e.g. in QCPGraph, data only represented with lines)
                       ,ssDot       ///< \enumimage{ssDot.png} a single pixel (use \ref ssDisc or \ref ssCircle if you want a round shape with a certain radius)
-                      ,
+                      ,ssCross     ///< \enumimage{ssCross.png} a cross
+                      ,ssPlus      ///< \enumimage{ssPlus.png} a plus
+                      ,ssCircle    ///< \enumimage{ssCircle.png} a circle
+                      ,ssDisc      ///< \enumimage{ssD
