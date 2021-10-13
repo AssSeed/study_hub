@@ -246,4 +246,6 @@ public:
                       ,ssDisc      ///< \enumimage{ssDisc.png} a circle which is filled with the pen's color (not the brush as with ssCircle)
                       ,ssSquare    ///< \enumimage{ssSquare.png} a square
                       ,ssDiamond   ///< \enumimage{ssDiamond.png} a diamond
+                      ,ssStar      ///< \enumimage{ssStar.png} a star with eight arms, i.e. a combination of cross and plus
+                      ,ssTriangle  ///< \enumimage{ssTriangle.png} an equilateral triangle, standing on baseline
             
