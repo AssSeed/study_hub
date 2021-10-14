@@ -248,4 +248,6 @@ public:
                       ,ssDiamond   ///< \enumimage{ssDiamond.png} a diamond
                       ,ssStar      ///< \enumimage{ssStar.png} a star with eight arms, i.e. a combination of cross and plus
                       ,ssTriangle  ///< \enumimage{ssTriangle.png} an equilateral triangle, standing on baseline
-            
+                      ,ssTriangleInverted ///< \enumimage{ssTriangleInverted.png} an equilateral triangle, standing on corner
+                      ,ssCrossSquare      ///< \enumimage{ssCrossSquare.png} a square with a cross inside
+                      ,ssPlusSquare 
