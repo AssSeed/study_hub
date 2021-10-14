@@ -250,4 +250,6 @@ public:
                       ,ssTriangle  ///< \enumimage{ssTriangle.png} an equilateral triangle, standing on baseline
                       ,ssTriangleInverted ///< \enumimage{ssTriangleInverted.png} an equilateral triangle, standing on corner
                       ,ssCrossSquare      ///< \enumimage{ssCrossSquare.png} a square with a cross inside
-                      ,ssPlusSquare 
+                      ,ssPlusSquare       ///< \enumimage{ssPlusSquare.png} a square with a plus inside
+                      ,ssCrossCircle      ///< \enumimage{ssCrossCircle.png} a circle with a cross inside
+                      ,ssPlusCircle       ///< \en
