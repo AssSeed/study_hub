@@ -252,4 +252,6 @@ public:
                       ,ssCrossSquare      ///< \enumimage{ssCrossSquare.png} a square with a cross inside
                       ,ssPlusSquare       ///< \enumimage{ssPlusSquare.png} a square with a plus inside
                       ,ssCrossCircle      ///< \enumimage{ssCrossCircle.png} a circle with a cross inside
-                      ,ssPlusCircle       ///< \en
+                      ,ssPlusCircle       ///< \enumimage{ssPlusCircle.png} a circle with a plus inside
+                      ,ssPeace     ///< \enumimage{ssPeace.png} a circle, with one vertical and two downward diagonal lines
+                      ,ssPixmap    ///< a custom pixmap specified by \ref setPixmap, cent
