@@ -262,4 +262,10 @@ public:
   QCPScatterStyle(ScatterShape shape, double size=6);
   QCPScatterStyle(ScatterShape shape, const QColor &color, double size);
   QCPScatterStyle(ScatterShape shape, const QColor &color, const QColor &fill, double size);
-  QCPScatterStyle(ScatterShape shape, const QPe
+  QCPScatterStyle(ScatterShape shape, const QPen &pen, const QBrush &brush, double size);
+  QCPScatterStyle(const QPixmap &pixmap);
+  QCPScatterStyle(const QPainterPath &customPath, const QPen &pen, const QBrush &brush=Qt::NoBrush, double size=6);
+  
+  // getters:
+  double size() const { return mSize; }
+ 
