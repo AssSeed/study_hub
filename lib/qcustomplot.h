@@ -259,4 +259,7 @@ public:
                     };
 
   QCPScatterStyle();
-  QCPScatterStyle(ScatterShape shape, double si
+  QCPScatterStyle(ScatterShape shape, double size=6);
+  QCPScatterStyle(ScatterShape shape, const QColor &color, double size);
+  QCPScatterStyle(ScatterShape shape, const QColor &color, const QColor &fill, double size);
+  QCPScatterStyle(ScatterShape shape, const QPe
