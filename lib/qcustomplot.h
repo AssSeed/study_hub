@@ -268,4 +268,8 @@ public:
   
   // getters:
   double size() const { return mSize; }
- 
+  ScatterShape shape() const { return mShape; }
+  QPen pen() const { return mPen; }
+  QBrush brush() const { return mBrush; }
+  QPixmap pixmap() const { return mPixmap; }
+  QPainterPath customPath() const { return mCustomPath; }
