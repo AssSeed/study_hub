@@ -273,3 +273,11 @@ public:
   QBrush brush() const { return mBrush; }
   QPixmap pixmap() const { return mPixmap; }
   QPainterPath customPath() const { return mCustomPath; }
+
+  // setters:
+  void setSize(double size);
+  void setShape(ScatterShape shape);
+  void setPen(const QPen &pen);
+  void setBrush(const QBrush &brush);
+  void setPixmap(const QPixmap &pixmap);
+  void setCustomPath(const QPainterPath &customPath)
