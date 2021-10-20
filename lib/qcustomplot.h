@@ -287,3 +287,15 @@ public:
   bool isPenDefined() const { return mPenDefined; }
   void applyTo(QCPPainter *painter, const QPen &defaultPen) const;
   void drawShape(QCPPainter *painter, QPointF pos) const;
+  void drawShape(QCPPainter *painter, double x, double y) const;
+
+protected:
+  // property members:
+  double mSize;
+  ScatterShape mShape;
+  QPen mPen;
+  QBrush mBrush;
+  QPixmap mPixmap;
+  QPainterPath mCustomPath;
+  
+  // non-property me
