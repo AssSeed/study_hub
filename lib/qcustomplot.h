@@ -298,4 +298,15 @@ protected:
   QPixmap mPixmap;
   QPainterPath mCustomPath;
   
-  // non-property me
+  // non-property members:
+  bool mPenDefined;
+};
+Q_DECLARE_TYPEINFO(QCPScatterStyle, Q_MOVABLE_TYPE);
+
+
+class QCP_LIB_DECL QCPPainter : public QPainter
+{
+  Q_GADGET
+public:
+  /*!
+    Defines special modes the painter can operate in. They disable or enable certain 
