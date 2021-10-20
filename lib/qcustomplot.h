@@ -280,4 +280,10 @@ public:
   void setPen(const QPen &pen);
   void setBrush(const QBrush &brush);
   void setPixmap(const QPixmap &pixmap);
-  void setCustomPath(const QPainterPath &customPath)
+  void setCustomPath(const QPainterPath &customPath);
+
+  // non-property methods:
+  bool isNone() const { return mShape == ssNone; }
+  bool isPenDefined() const { return mPenDefined; }
+  void applyTo(QCPPainter *painter, const QPen &defaultPen) const;
+  void drawShape(QCPPainter *painter, QPointF pos) const;
