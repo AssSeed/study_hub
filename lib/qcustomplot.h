@@ -325,4 +325,10 @@ public:
   ~QCPPainter();
   
   // getters:
-  bool 
+  bool antialiasing() const { return testRenderHint(QPainter::Antialiasing); }
+  PainterModes modes() const { return mModes; }
+
+  // setters:
+  void setAntialiasing(bool enabled);
+  void setMode(PainterMode mode, bool enabled=true);
+  void setModes(Pain
