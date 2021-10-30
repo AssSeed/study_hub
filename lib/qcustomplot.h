@@ -331,4 +331,10 @@ public:
   // setters:
   void setAntialiasing(bool enabled);
   void setMode(PainterMode mode, bool enabled=true);
-  void setModes(Pain
+  void setModes(PainterModes modes);
+
+  // methods hiding non-virtual base class functions (QPainter bug workarounds):
+  bool begin(QPaintDevice *device);
+  void setPen(const QPen &pen);
+  void setPen(const QColor &color);
+  void setPen(Qt::PenStyle penS
