@@ -346,4 +346,18 @@ public:
   // non-virtual methods:
   void makeNonCosmetic();
   
-protec
+protected:
+  // property members:
+  PainterModes mModes;
+  bool mIsAntialiasing;
+  
+  // non-property members:
+  QStack<bool> mAntialiasingStack;
+};
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCPPainter::PainterModes)
+
+
+class QCP_LIB_DECL QCPLayer : public QObject
+{
+  Q_OBJECT
+ 
