@@ -337,4 +337,13 @@ public:
   bool begin(QPaintDevice *device);
   void setPen(const QPen &pen);
   void setPen(const QColor &color);
-  void setPen(Qt::PenStyle penS
+  void setPen(Qt::PenStyle penStyle);
+  void drawLine(const QLineF &line);
+  void drawLine(const QPointF &p1, const QPointF &p2) {drawLine(QLineF(p1, p2));}
+  void save();
+  void restore();
+  
+  // non-virtual methods:
+  void makeNonCosmetic();
+  
+protec
