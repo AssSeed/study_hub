@@ -360,4 +360,11 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(QCPPainter::PainterModes)
 class QCP_LIB_DECL QCPLayer : public QObject
 {
   Q_OBJECT
- 
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QCustomPlot* parentPlot READ parentPlot)
+  Q_PROPERTY(QString name READ name)
+  Q_PROPERTY(int index READ index)
+  Q_PROPERTY(QList<QCPLayerable*> children READ children)
+  /// \endcond
+public:
+  
