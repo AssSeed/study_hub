@@ -374,4 +374,15 @@ public:
   QCustomPlot *parentPlot() const { return mParentPlot; }
   QString name() const { return mName; }
   int index() const { return mIndex; }
-  QList<QCPLayerable*> children() con
+  QList<QCPLayerable*> children() const { return mChildren; }
+  
+protected:
+  // property members:
+  QCustomPlot *mParentPlot;
+  QString mName;
+  int mIndex;
+  QList<QCPLayerable*> mChildren;
+  
+  // non-virtual methods:
+  void addChild(QCPLayerable *layerable, bool prepend);
+  void 
