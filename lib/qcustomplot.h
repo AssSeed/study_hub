@@ -367,4 +367,11 @@ class QCP_LIB_DECL QCPLayer : public QObject
   Q_PROPERTY(QList<QCPLayerable*> children READ children)
   /// \endcond
 public:
+  QCPLayer(QCustomPlot* parentPlot, const QString &layerName);
+  ~QCPLayer();
   
+  // getters:
+  QCustomPlot *parentPlot() const { return mParentPlot; }
+  QString name() const { return mName; }
+  int index() const { return mIndex; }
+  QList<QCPLayerable*> children() con
