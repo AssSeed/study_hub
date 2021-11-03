@@ -385,4 +385,17 @@ protected:
   
   // non-virtual methods:
   void addChild(QCPLayerable *layerable, bool prepend);
-  void 
+  void removeChild(QCPLayerable *layerable);
+  
+private:
+  Q_DISABLE_COPY(QCPLayer)
+  
+  friend class QCustomPlot;
+  friend class QCPLayerable;
+};
+
+class QCP_LIB_DECL QCPLayerable : public QObject
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(bo
