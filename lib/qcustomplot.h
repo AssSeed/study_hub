@@ -398,4 +398,8 @@ class QCP_LIB_DECL QCPLayerable : public QObject
 {
   Q_OBJECT
   /// \cond INCLUDE_QPROPERTIES
-  Q_PROPERTY(bo
+  Q_PROPERTY(bool visible READ visible WRITE setVisible)
+  Q_PROPERTY(QCustomPlot* parentPlot READ parentPlot)
+  Q_PROPERTY(QCPLayerable* parentLayerable READ parentLayerable)
+  Q_PROPERTY(QCPLayer* layer READ layer WRITE setLayer)
+  Q_PROPERTY(bool antial
