@@ -402,4 +402,11 @@ class QCP_LIB_DECL QCPLayerable : public QObject
   Q_PROPERTY(QCustomPlot* parentPlot READ parentPlot)
   Q_PROPERTY(QCPLayerable* parentLayerable READ parentLayerable)
   Q_PROPERTY(QCPLayer* layer READ layer WRITE setLayer)
-  Q_PROPERTY(bool antial
+  Q_PROPERTY(bool antialiased READ antialiased WRITE setAntialiased)
+  /// \endcond
+public:
+  QCPLayerable(QCustomPlot *plot, QString targetLayer="", QCPLayerable *parentLayerable=0);
+  ~QCPLayerable();
+  
+  // getters:
+  bool visible() const { return mVisible; }
