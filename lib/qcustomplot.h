@@ -413,4 +413,13 @@ public:
   QCustomPlot *parentPlot() const { return mParentPlot; }
   QCPLayerable *parentLayerable() const { return mParentLayerable.data(); }
   QCPLayer *layer() const { return mLayer; }
-  bool antialiased() const { return m
+  bool antialiased() const { return mAntialiased; }
+  
+  // setters:
+  void setVisible(bool on);
+  bool setLayer(QCPLayer *layer);
+  bool setLayer(const QString &layerName);
+  void setAntialiased(bool enabled);
+  
+  // introduced virtual methods:
+  virtual double selectTest(con
