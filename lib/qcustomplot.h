@@ -410,3 +410,7 @@ public:
   
   // getters:
   bool visible() const { return mVisible; }
+  QCustomPlot *parentPlot() const { return mParentPlot; }
+  QCPLayerable *parentLayerable() const { return mParentLayerable.data(); }
+  QCPLayer *layer() const { return mLayer; }
+  bool antialiased() const { return m
