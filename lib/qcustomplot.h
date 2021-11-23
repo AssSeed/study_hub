@@ -422,4 +422,15 @@ public:
   void setAntialiased(bool enabled);
   
   // introduced virtual methods:
-  virtual double selectTest(con
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  // non-property methods:
+  bool realVisibility() const;
+  
+protected:
+  // property members:
+  bool mVisible;
+  QCustomPlot *mParentPlot;
+  QPointer<QCPLayerable> mParentLayerable;
+  QCPLayer *mLayer;
+  bool mAntiali
