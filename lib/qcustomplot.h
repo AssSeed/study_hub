@@ -439,4 +439,8 @@ protected:
   virtual void parentPlotInitialized(QCustomPlot *parentPlot);
   virtual QCP::Interaction selectionCategory() const;
   virtual QRect clipRect() const;
-  virtual void applyDefaultAntialiasingHint(QCPPainter *painte
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const = 0;
+  virtual void draw(QCPPainter *painter) = 0;
+  // events:
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *select
