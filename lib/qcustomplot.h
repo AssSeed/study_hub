@@ -433,4 +433,10 @@ protected:
   QCustomPlot *mParentPlot;
   QPointer<QCPLayerable> mParentLayerable;
   QCPLayer *mLayer;
-  bool mAntiali
+  bool mAntialiased;
+  
+  // introduced virtual methods:
+  virtual void parentPlotInitialized(QCustomPlot *parentPlot);
+  virtual QCP::Interaction selectionCategory() const;
+  virtual QRect clipRect() const;
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painte
