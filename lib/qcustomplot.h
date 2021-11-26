@@ -449,4 +449,19 @@ protected:
   void initializeParentPlot(QCustomPlot *parentPlot);
   void setParentLayerable(QCPLayerable* parentLayerable);
   bool moveToLayer(QCPLayer *layer, bool prepend);
-  void applyAntialiasingHint(QCPPainter 
+  void applyAntialiasingHint(QCPPainter *painter, bool localAntialiased, QCP::AntialiasedElement overrideElement) const;
+  
+private:
+  Q_DISABLE_COPY(QCPLayerable)
+  
+  friend class QCustomPlot;
+  friend class QCPAxisRect;
+};
+
+
+class QCP_LIB_DECL QCPRange
+{
+public:
+  double lower, upper;
+  
+  QC
