@@ -492,4 +492,12 @@ public:
   ~QCPMarginGroup();
   
   // non-virtual methods:
-  QList<QCPLay
+  QList<QCPLayoutElement*> elements(QCP::MarginSide side) const { return mChildren.value(side); }
+  bool isEmpty() const;
+  void clear();
+  
+protected:
+  // non-property members:
+  QCustomPlot *mParentPlot;
+  QHash<QCP::MarginSide, QList<QCPLayoutElement*> > mChildren;
+  
