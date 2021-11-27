@@ -479,4 +479,17 @@ public:
   static bool validRange(double lower, double upper);
   static bool validRange(const QCPRange &range);
   static const double minRange; //1e-280;
-  stati
+  static const double maxRange; //1e280;
+};
+Q_DECLARE_TYPEINFO(QCPRange, Q_MOVABLE_TYPE);
+
+
+class QCP_LIB_DECL QCPMarginGroup : public QObject
+{
+  Q_OBJECT
+public:
+  QCPMarginGroup(QCustomPlot *parentPlot);
+  ~QCPMarginGroup();
+  
+  // non-virtual methods:
+  QList<QCPLay
