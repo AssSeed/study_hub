@@ -472,4 +472,11 @@ public:
   void normalize();
   void expand(const QCPRange &otherRange);
   QCPRange expanded(const QCPRange &otherRange) const;
-  QCPRange sanitizedForLogScale(
+  QCPRange sanitizedForLogScale() const;
+  QCPRange sanitizedForLinScale() const;
+  bool contains(double value) const;
+  
+  static bool validRange(double lower, double upper);
+  static bool validRange(const QCPRange &range);
+  static const double minRange; //1e-280;
+  stati
