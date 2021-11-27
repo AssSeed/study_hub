@@ -464,4 +464,12 @@ class QCP_LIB_DECL QCPRange
 public:
   double lower, upper;
   
-  QC
+  QCPRange();
+  QCPRange(double lower, double upper);
+  
+  double size() const;
+  double center() const;
+  void normalize();
+  void expand(const QCPRange &otherRange);
+  QCPRange expanded(const QCPRange &otherRange) const;
+  QCPRange sanitizedForLogScale(
