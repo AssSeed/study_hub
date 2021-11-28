@@ -518,4 +518,8 @@ class QCP_LIB_DECL QCPLayoutElement : public QCPLayerable
   Q_OBJECT
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(QCPLayout* layout READ layout)
-  Q_PROPE
+  Q_PROPERTY(QRect rect READ rect)
+  Q_PROPERTY(QRect outerRect READ outerRect WRITE setOuterRect)
+  Q_PROPERTY(QMargins margins READ margins WRITE setMargins)
+  Q_PROPERTY(QMargins minimumMargins READ minimumMargins WRITE setMinimumMargins)
+  Q_PRO
