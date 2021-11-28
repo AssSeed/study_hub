@@ -501,3 +501,10 @@ protected:
   QCustomPlot *mParentPlot;
   QHash<QCP::MarginSide, QList<QCPLayoutElement*> > mChildren;
   
+  // non-virtual methods:
+  int commonMargin(QCP::MarginSide side) const;
+  void addChild(QCP::MarginSide side, QCPLayoutElement *element);
+  void removeChild(QCP::MarginSide side, QCPLayoutElement *element);
+  
+private:
+  Q_DISABLE_COPY(QCPMarginG
