@@ -507,4 +507,15 @@ protected:
   void removeChild(QCP::MarginSide side, QCPLayoutElement *element);
   
 private:
-  Q_DISABLE_COPY(QCPMarginG
+  Q_DISABLE_COPY(QCPMarginGroup)
+  
+  friend class QCPLayoutElement;
+};
+
+
+class QCP_LIB_DECL QCPLayoutElement : public QCPLayerable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QCPLayout* layout READ layout)
+  Q_PROPE
