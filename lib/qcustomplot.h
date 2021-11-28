@@ -522,4 +522,12 @@ class QCP_LIB_DECL QCPLayoutElement : public QCPLayerable
   Q_PROPERTY(QRect outerRect READ outerRect WRITE setOuterRect)
   Q_PROPERTY(QMargins margins READ margins WRITE setMargins)
   Q_PROPERTY(QMargins minimumMargins READ minimumMargins WRITE setMinimumMargins)
-  Q_PRO
+  Q_PROPERTY(QSize minimumSize READ minimumSize WRITE setMinimumSize)
+  Q_PROPERTY(QSize maximumSize READ maximumSize WRITE setMaximumSize)
+  /// \endcond
+public:
+  explicit QCPLayoutElement(QCustomPlot *parentPlot=0);
+  virtual ~QCPLayoutElement();
+  
+  // getters:
+  QCP
