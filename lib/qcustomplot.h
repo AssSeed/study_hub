@@ -530,4 +530,8 @@ public:
   virtual ~QCPLayoutElement();
   
   // getters:
-  QCP
+  QCPLayout *layout() const { return mParentLayout; }
+  QRect rect() const { return mRect; }
+  QRect outerRect() const { return mOuterRect; }
+  QMargins margins() const { return mMargins; }
+  QMargins minimumMargins() const { return mMinimumMa
