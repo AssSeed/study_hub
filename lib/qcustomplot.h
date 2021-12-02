@@ -534,4 +534,8 @@ public:
   QRect rect() const { return mRect; }
   QRect outerRect() const { return mOuterRect; }
   QMargins margins() const { return mMargins; }
-  QMargins minimumMargins() const { return mMinimumMa
+  QMargins minimumMargins() const { return mMinimumMargins; }
+  QCP::MarginSides autoMargins() const { return mAutoMargins; }
+  QSize minimumSize() const { return mMinimumSize; }
+  QSize maximumSize() const { return mMaximumSize; }
+  QCPMarginGroup *marginGroup(QCP::MarginSide side) const 
