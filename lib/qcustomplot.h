@@ -549,4 +549,11 @@ public:
   void setMinimumSize(const QSize &size);
   void setMinimumSize(int width, int height);
   void setMaximumSize(const QSize &size);
-  void setMaximumSize(int wid
+  void setMaximumSize(int width, int height);
+  void setMarginGroup(QCP::MarginSides sides, QCPMarginGroup *group);
+  
+  // introduced virtual methods:
+  virtual void update();
+  virtual QSize minimumSizeHint() const;
+  virtual QSize maximumSizeHint() const;
+  
