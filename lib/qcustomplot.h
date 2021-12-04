@@ -563,4 +563,12 @@ public:
   
 protected:
   // property members:
-  QCPLayout *mParen
+  QCPLayout *mParentLayout;
+  QSize mMinimumSize, mMaximumSize;
+  QRect mRect, mOuterRect;
+  QMargins mMargins, mMinimumMargins;
+  QCP::MarginSides mAutoMargins;
+  QHash<QCP::MarginSide, QCPMarginGroup*> mMarginGroups;
+  
+  // introduced virtual methods:
+  virtual int c
