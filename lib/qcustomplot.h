@@ -556,4 +556,11 @@ public:
   virtual void update();
   virtual QSize minimumSizeHint() const;
   virtual QSize maximumSizeHint() const;
+  virtual QList<QCPLayoutElement*> elements(bool recursive) const;
   
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+protected:
+  // property members:
+  QCPLayout *mParen
