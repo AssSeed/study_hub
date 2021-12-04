@@ -544,4 +544,9 @@ public:
   // setters:
   void setOuterRect(const QRect &rect);
   void setMargins(const QMargins &margins);
-  void
+  void setMinimumMargins(const QMargins &margins);
+  void setAutoMargins(QCP::MarginSides sides);
+  void setMinimumSize(const QSize &size);
+  void setMinimumSize(int width, int height);
+  void setMaximumSize(const QSize &size);
+  void setMaximumSize(int wid
