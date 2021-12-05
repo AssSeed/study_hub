@@ -571,4 +571,8 @@ protected:
   QHash<QCP::MarginSide, QCPMarginGroup*> mMarginGroups;
   
   // introduced virtual methods:
-  virtual int c
+  virtual int calculateAutoMargin(QCP::MarginSide side);
+  // events:
+  virtual void mousePressEvent(QMouseEvent *event) {Q_UNUSED(event)}
+  virtual void mouseMoveEvent(QMouseEvent *event) {Q_UNUSED(event)}
+  virtual void mouseRelease
