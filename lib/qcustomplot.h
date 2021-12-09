@@ -580,4 +580,9 @@ protected:
   virtual void wheelEvent(QWheelEvent *event) {Q_UNUSED(event)}
   
   // reimplemented virtual methods:
-  virtual void
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const { Q_UNUSED(painter) }
+  virtual void draw(QCPPainter *painter) { Q_UNUSED(painter) }
+  virtual void parentPlotInitialized(QCustomPlot *parentPlot);
+
+private:
+  Q_DISABLE_COPY(QCPLayoutElement
