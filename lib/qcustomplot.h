@@ -575,4 +575,9 @@ protected:
   // events:
   virtual void mousePressEvent(QMouseEvent *event) {Q_UNUSED(event)}
   virtual void mouseMoveEvent(QMouseEvent *event) {Q_UNUSED(event)}
-  virtual void mouseRelease
+  virtual void mouseReleaseEvent(QMouseEvent *event) {Q_UNUSED(event)}
+  virtual void mouseDoubleClickEvent(QMouseEvent *event) {Q_UNUSED(event)}
+  virtual void wheelEvent(QWheelEvent *event) {Q_UNUSED(event)}
+  
+  // reimplemented virtual methods:
+  virtual void
