@@ -585,4 +585,18 @@ protected:
   virtual void parentPlotInitialized(QCustomPlot *parentPlot);
 
 private:
-  Q_DISABLE_COPY(QCPLayoutElement
+  Q_DISABLE_COPY(QCPLayoutElement)
+  
+  friend class QCustomPlot;
+  friend class QCPLayout;
+  friend class QCPMarginGroup;
+};
+
+
+class QCP_LIB_DECL QCPLayout : public QCPLayoutElement
+{
+  Q_OBJECT
+public:
+  explicit QCPLayout();
+  
+  // reimplemented virtual met
