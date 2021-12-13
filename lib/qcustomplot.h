@@ -599,4 +599,11 @@ class QCP_LIB_DECL QCPLayout : public QCPLayoutElement
 public:
   explicit QCPLayout();
   
-  // reimplemented virtual met
+  // reimplemented virtual methods:
+  virtual void update();
+  virtual QList<QCPLayoutElement*> elements(bool recursive) const;
+  
+  // introduced virtual methods:
+  virtual int elementCount() const = 0;
+  virtual QCPLayoutElement* elementAt(int index) const = 0;
+  virtual QCPLayo
