@@ -606,4 +606,11 @@ public:
   // introduced virtual methods:
   virtual int elementCount() const = 0;
   virtual QCPLayoutElement* elementAt(int index) const = 0;
-  virtual QCPLayo
+  virtual QCPLayoutElement* takeAt(int index) = 0;
+  virtual bool take(QCPLayoutElement* element) = 0;
+  virtual void simplify();
+  
+  // non-virtual methods:
+  bool removeAt(int index);
+  bool remove(QCPLayoutElement* element);
+  void cle
