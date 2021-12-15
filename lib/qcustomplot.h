@@ -632,3 +632,9 @@ private:
 
 
 class QCP_LIB_DECL QCPLayoutGrid : public QCPLayout
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(int rowCount READ rowCount)
+  Q_PROPERTY(int columnCount READ columnCount)
+  Q_PROPERTY(QList<double> columnStretchFactors READ columnStretchFactors WRITE setColumnStretchFacto
