@@ -637,4 +637,7 @@ class QCP_LIB_DECL QCPLayoutGrid : public QCPLayout
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(int rowCount READ rowCount)
   Q_PROPERTY(int columnCount READ columnCount)
-  Q_PROPERTY(QList<double> columnStretchFactors READ columnStretchFactors WRITE setColumnStretchFacto
+  Q_PROPERTY(QList<double> columnStretchFactors READ columnStretchFactors WRITE setColumnStretchFactors)
+  Q_PROPERTY(QList<double> rowStretchFactors READ rowStretchFactors WRITE setRowStretchFactors)
+  Q_PROPERTY(int columnSpacing READ columnSpacing WRITE setColumnSpacing)
+  Q_PROPERTY(int rowSpacing READ rowSpacing WRITE setRowSpaci
