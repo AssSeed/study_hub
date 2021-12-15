@@ -613,4 +613,14 @@ public:
   // non-virtual methods:
   bool removeAt(int index);
   bool remove(QCPLayoutElement* element);
-  void cle
+  void clear();
+  
+protected:
+  // introduced virtual methods:
+  virtual void updateLayout();
+  
+  // non-virtual methods:
+  void sizeConstraintsChanged() const;
+  void adoptElement(QCPLayoutElement *el);
+  void releaseElement(QCPLayoutElement *el);
+  QVector<i
