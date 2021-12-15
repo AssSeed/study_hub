@@ -623,4 +623,12 @@ protected:
   void sizeConstraintsChanged() const;
   void adoptElement(QCPLayoutElement *el);
   void releaseElement(QCPLayoutElement *el);
-  QVector<i
+  QVector<int> getSectionSizes(QVector<int> maxSizes, QVector<int> minSizes, QVector<double> stretchFactors, int totalSize) const;
+  
+private:
+  Q_DISABLE_COPY(QCPLayout)
+  friend class QCPLayoutElement;
+};
+
+
+class QCP_LIB_DECL QCPLayoutGrid : public QCPLayout
