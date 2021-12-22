@@ -660,4 +660,11 @@ public:
   void setRowStretchFactor(int row, double factor);
   void setRowStretchFactors(const QList<double> &factors);
   void setColumnSpacing(int pixels);
-  void setRowSpa
+  void setRowSpacing(int pixels);
+  
+  // reimplemented virtual methods:
+  virtual void updateLayout();
+  virtual int elementCount() const;
+  virtual QCPLayoutElement* elementAt(int index) const;
+  virtual QCPLayoutElement* takeAt(int index);
+  virtual bool take(QCPLayoutElement* el
