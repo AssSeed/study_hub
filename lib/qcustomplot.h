@@ -655,4 +655,9 @@ public:
   int rowSpacing() const { return mRowSpacing; }
   
   // setters:
-  void setColumnStretchFactor(int column, double fa
+  void setColumnStretchFactor(int column, double factor);
+  void setColumnStretchFactors(const QList<double> &factors);
+  void setRowStretchFactor(int row, double factor);
+  void setRowStretchFactors(const QList<double> &factors);
+  void setColumnSpacing(int pixels);
+  void setRowSpa
