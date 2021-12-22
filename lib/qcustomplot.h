@@ -640,4 +640,14 @@ class QCP_LIB_DECL QCPLayoutGrid : public QCPLayout
   Q_PROPERTY(QList<double> columnStretchFactors READ columnStretchFactors WRITE setColumnStretchFactors)
   Q_PROPERTY(QList<double> rowStretchFactors READ rowStretchFactors WRITE setRowStretchFactors)
   Q_PROPERTY(int columnSpacing READ columnSpacing WRITE setColumnSpacing)
-  Q_PROPERTY(int rowSpacing READ rowSpacing WRITE setRowSpaci
+  Q_PROPERTY(int rowSpacing READ rowSpacing WRITE setRowSpacing)
+  /// \endcond
+public:
+  explicit QCPLayoutGrid();
+  virtual ~QCPLayoutGrid();
+  
+  // getters:
+  int rowCount() const;
+  int columnCount() const;
+  QList<double> columnStretchFactors() const { return mColumnStretchFactors; }
+  QList<
