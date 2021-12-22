@@ -650,4 +650,9 @@ public:
   int rowCount() const;
   int columnCount() const;
   QList<double> columnStretchFactors() const { return mColumnStretchFactors; }
-  QList<
+  QList<double> rowStretchFactors() const { return mRowStretchFactors; }
+  int columnSpacing() const { return mColumnSpacing; }
+  int rowSpacing() const { return mRowSpacing; }
+  
+  // setters:
+  void setColumnStretchFactor(int column, double fa
