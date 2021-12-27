@@ -667,4 +667,11 @@ public:
   virtual int elementCount() const;
   virtual QCPLayoutElement* elementAt(int index) const;
   virtual QCPLayoutElement* takeAt(int index);
-  virtual bool take(QCPLayoutElement* el
+  virtual bool take(QCPLayoutElement* element);
+  virtual QList<QCPLayoutElement*> elements(bool recursive) const;
+  virtual void simplify();
+  virtual QSize minimumSizeHint() const;
+  virtual QSize maximumSizeHint() const;
+  
+  // non-virtual methods:
+  QCPLayoutElement *element(int
