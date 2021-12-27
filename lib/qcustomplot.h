@@ -674,4 +674,9 @@ public:
   virtual QSize maximumSizeHint() const;
   
   // non-virtual methods:
-  QCPLayoutElement *element(int
+  QCPLayoutElement *element(int row, int column) const;
+  bool addElement(int row, int column, QCPLayoutElement *element);
+  bool hasElement(int row, int column);
+  void expandTo(int newRowCount, int newColumnCount);
+  void insertRow(int newIndex);
+  void insertColumn(int newIndex);
