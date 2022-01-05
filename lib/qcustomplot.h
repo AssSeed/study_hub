@@ -680,3 +680,13 @@ public:
   void expandTo(int newRowCount, int newColumnCount);
   void insertRow(int newIndex);
   void insertColumn(int newIndex);
+  
+protected:
+  // property members:
+  QList<QList<QCPLayoutElement*> > mElements;
+  QList<double> mColumnStretchFactors;
+  QList<double> mRowStretchFactors;
+  int mColumnSpacing, mRowSpacing;
+  
+  // non-virtual methods:
+  void getMinimumRowColSizes(QVecto
