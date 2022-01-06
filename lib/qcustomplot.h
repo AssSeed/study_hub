@@ -689,4 +689,14 @@ protected:
   int mColumnSpacing, mRowSpacing;
   
   // non-virtual methods:
-  void getMinimumRowColSizes(QVecto
+  void getMinimumRowColSizes(QVector<int> *minColWidths, QVector<int> *minRowHeights) const;
+  void getMaximumRowColSizes(QVector<int> *maxColWidths, QVector<int> *maxRowHeights) const;
+  
+private:
+  Q_DISABLE_COPY(QCPLayoutGrid)
+};
+
+
+class QCP_LIB_DECL QCPLayoutInset : public QCPLayout
+{
+  Q_
