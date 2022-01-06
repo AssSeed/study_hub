@@ -699,4 +699,9 @@ private:
 
 class QCP_LIB_DECL QCPLayoutInset : public QCPLayout
 {
-  Q_
+  Q_OBJECT
+public:
+  /*!
+    Defines how the placement and sizing is handled for a certain element in a QCPLayoutInset.
+  */
+  enum InsetPlacement {ipFree            ///< The element may be positioned/sized arbitrarily, see \ref setInse
