@@ -712,4 +712,10 @@ public:
   virtual ~QCPLayoutInset();
   
   // getters:
-  InsetPlacement i
+  InsetPlacement insetPlacement(int index) const;
+  Qt::Alignment insetAlignment(int index) const;
+  QRectF insetRect(int index) const;
+  
+  // setters:
+  void setInsetPlacement(int index, InsetPlacement placement);
+  void setInsetAlignment(int index, Qt::Alignment alignmen
