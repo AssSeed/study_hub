@@ -718,4 +718,11 @@ public:
   
   // setters:
   void setInsetPlacement(int index, InsetPlacement placement);
-  void setInsetAlignment(int index, Qt::Alignment alignmen
+  void setInsetAlignment(int index, Qt::Alignment alignment);
+  void setInsetRect(int index, const QRectF &rect);
+  
+  // reimplemented virtual methods:
+  virtual void updateLayout();
+  virtual int elementCount() const;
+  virtual QCPLayoutElement* elementAt(int index) const;
+  virtual QCPL
