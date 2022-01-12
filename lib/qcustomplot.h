@@ -725,4 +725,10 @@ public:
   virtual void updateLayout();
   virtual int elementCount() const;
   virtual QCPLayoutElement* elementAt(int index) const;
-  virtual QCPL
+  virtual QCPLayoutElement* takeAt(int index);
+  virtual bool take(QCPLayoutElement* element);
+  virtual void simplify() {}
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  // non-virtual methods:
+  void addElement(QCPLayoutE
