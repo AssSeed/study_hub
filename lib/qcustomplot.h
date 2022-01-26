@@ -731,4 +731,11 @@ public:
   virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
   
   // non-virtual methods:
-  void addElement(QCPLayoutE
+  void addElement(QCPLayoutElement *element, Qt::Alignment alignment);
+  void addElement(QCPLayoutElement *element, const QRectF &rect);
+  
+protected:
+  // property members:
+  QList<QCPLayoutElement*> mElements;
+  QList<InsetPlacement> mInsetPlacement;
+  QList<Qt::Alignment> 
