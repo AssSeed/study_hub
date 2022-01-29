@@ -738,4 +738,17 @@ protected:
   // property members:
   QList<QCPLayoutElement*> mElements;
   QList<InsetPlacement> mInsetPlacement;
-  QList<Qt::Alignment> 
+  QList<Qt::Alignment> mInsetAlignment;
+  QList<QRectF> mInsetRect;
+  
+private:
+  Q_DISABLE_COPY(QCPLayoutInset)
+};
+
+
+class QCP_LIB_DECL QCPLineEnding
+{
+  Q_GADGET
+public:
+  /*!
+    Defines the type of ending decoration for line-like items, e.g. an arro
