@@ -751,4 +751,9 @@ class QCP_LIB_DECL QCPLineEnding
   Q_GADGET
 public:
   /*!
-    Defines the type of ending decoration for line-like items, e.g. an arro
+    Defines the type of ending decoration for line-like items, e.g. an arrow.
+    
+    \image html QCPLineEnding.png
+    
+    The width and length of these decorations can be controlled with the functions \ref setWidth
+    and \ref setLength. Some decorations like \ref esDisc, \ref esSquare, \ref esDiamond and \ref
