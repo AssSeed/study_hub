@@ -756,4 +756,10 @@ public:
     \image html QCPLineEnding.png
     
     The width and length of these decorations can be controlled with the functions \ref setWidth
-    and \ref setLength. Some decorations like \ref esDisc, \ref esSquare, \ref esDiamond and \ref
+    and \ref setLength. Some decorations like \ref esDisc, \ref esSquare, \ref esDiamond and \ref esBar only
+    support a width, the length property is ignored.
+    
+    \see QCPItemLine::setHead, QCPItemLine::setTail, QCPItemCurve::setHead, QCPItemCurve::setTail
+  */
+  Q_ENUMS(EndingStyle)
+  enum EndingStyle { esNone          ///< No en
