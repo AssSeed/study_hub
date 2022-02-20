@@ -765,4 +765,8 @@ public:
   enum EndingStyle { esNone          ///< No ending decoration
                      ,esFlatArrow    ///< A filled arrow head with a straight/flat back (a triangle)
                      ,esSpikeArrow   ///< A filled arrow head with an indented back
-                     ,esLineArrow    ///< A non-filled arro
+                     ,esLineArrow    ///< A non-filled arrow head with open back
+                     ,esDisc         ///< A filled circle
+                     ,esSquare       ///< A filled square
+                     ,esDiamond      ///< A filled diamond (45° rotated square)
+                     ,esBar         
