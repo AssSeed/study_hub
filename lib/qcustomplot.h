@@ -762,4 +762,7 @@ public:
     \see QCPItemLine::setHead, QCPItemLine::setTail, QCPItemCurve::setHead, QCPItemCurve::setTail
   */
   Q_ENUMS(EndingStyle)
-  enum EndingStyle { esNone          ///< No en
+  enum EndingStyle { esNone          ///< No ending decoration
+                     ,esFlatArrow    ///< A filled arrow head with a straight/flat back (a triangle)
+                     ,esSpikeArrow   ///< A filled arrow head with an indented back
+                     ,esLineArrow    ///< A non-filled arro
