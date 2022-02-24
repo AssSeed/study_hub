@@ -769,4 +769,6 @@ public:
                      ,esDisc         ///< A filled circle
                      ,esSquare       ///< A filled square
                      ,esDiamond      ///< A filled diamond (45° rotated square)
-                     ,esBar         
+                     ,esBar          ///< A bar perpendicular to the line
+                     ,esHalfBar      ///< A bar perpendicular to the line sticking out to one side
+                     ,esSkewedBar    ///< A bar that is skewed (skew controllable via \ref setLen
