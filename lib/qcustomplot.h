@@ -771,4 +771,13 @@ public:
                      ,esDiamond      ///< A filled diamond (45° rotated square)
                      ,esBar          ///< A bar perpendicular to the line
                      ,esHalfBar      ///< A bar perpendicular to the line sticking out to one side
-                     ,esSkewedBar    ///< A bar that is skewed (skew controllable via \ref setLen
+                     ,esSkewedBar    ///< A bar that is skewed (skew controllable via \ref setLength)
+                   };
+  
+  QCPLineEnding();
+  QCPLineEnding(EndingStyle style, double width=8, double length=10, bool inverted=false);
+  
+  // getters:
+  EndingStyle style() const { return mStyle; }
+  double width() const { return mWidth; }
+  double length() const { return m
