@@ -780,4 +780,14 @@ public:
   // getters:
   EndingStyle style() const { return mStyle; }
   double width() const { return mWidth; }
-  double length() const { return m
+  double length() const { return mLength; }
+  bool inverted() const { return mInverted; }
+  
+  // setters:
+  void setStyle(EndingStyle style);
+  void setWidth(double width);
+  void setLength(double length);
+  void setInverted(bool inverted);
+  
+  // non-property methods:
+  
