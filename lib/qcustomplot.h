@@ -796,4 +796,15 @@ public:
   void draw(QCPPainter *painter, const QVector2D &pos, double angle) const;
   
 protected:
-  /
+  // property members:
+  EndingStyle mStyle;
+  double mWidth, mLength;
+  bool mInverted;
+};
+Q_DECLARE_TYPEINFO(QCPLineEnding, Q_MOVABLE_TYPE);
+
+
+class QCP_LIB_DECL QCPGrid :public QCPLayerable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPE
