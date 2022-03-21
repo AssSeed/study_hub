@@ -810,4 +810,10 @@ class QCP_LIB_DECL QCPGrid :public QCPLayerable
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(bool subGridVisible READ subGridVisible WRITE setSubGridVisible)
   Q_PROPERTY(bool antialiasedSubGrid READ antialiasedSubGrid WRITE setAntialiasedSubGrid)
-  Q_PROPERTY(bool antialiasedZeroLine READ antialiasedZeroLine W
+  Q_PROPERTY(bool antialiasedZeroLine READ antialiasedZeroLine WRITE setAntialiasedZeroLine)
+  Q_PROPERTY(QPen pen READ pen WRITE setPen)
+  Q_PROPERTY(QPen subGridPen READ subGridPen WRITE setSubGridPen)
+  Q_PROPERTY(QPen zeroLinePen READ zeroLinePen WRITE setZeroLinePen)
+  /// \endcond
+public:
+  QCPGrid(QCPAxis *parentAxi
