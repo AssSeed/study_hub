@@ -816,4 +816,11 @@ class QCP_LIB_DECL QCPGrid :public QCPLayerable
   Q_PROPERTY(QPen zeroLinePen READ zeroLinePen WRITE setZeroLinePen)
   /// \endcond
 public:
-  QCPGrid(QCPAxis *parentAxi
+  QCPGrid(QCPAxis *parentAxis);
+  
+  // getters:
+  bool subGridVisible() const { return mSubGridVisible; }
+  bool antialiasedSubGrid() const { return mAntialiasedSubGrid; }
+  bool antialiasedZeroLine() const { return mAntialiasedZeroLine; }
+  QPen pen() const { return mPen; }
+  Q
