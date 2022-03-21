@@ -807,4 +807,7 @@ Q_DECLARE_TYPEINFO(QCPLineEnding, Q_MOVABLE_TYPE);
 class QCP_LIB_DECL QCPGrid :public QCPLayerable
 {
   Q_OBJECT
-  /// \cond INCLUDE_QPROPE
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(bool subGridVisible READ subGridVisible WRITE setSubGridVisible)
+  Q_PROPERTY(bool antialiasedSubGrid READ antialiasedSubGrid WRITE setAntialiasedSubGrid)
+  Q_PROPERTY(bool antialiasedZeroLine READ antialiasedZeroLine W
