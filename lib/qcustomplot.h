@@ -823,4 +823,10 @@ public:
   bool antialiasedSubGrid() const { return mAntialiasedSubGrid; }
   bool antialiasedZeroLine() const { return mAntialiasedZeroLine; }
   QPen pen() const { return mPen; }
-  Q
+  QPen subGridPen() const { return mSubGridPen; }
+  QPen zeroLinePen() const { return mZeroLinePen; }
+  
+  // setters:
+  void setSubGridVisible(bool visible);
+  void setAntialiasedSubGrid(bool enabled);
+  void set
