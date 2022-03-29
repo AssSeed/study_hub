@@ -829,4 +829,12 @@ public:
   // setters:
   void setSubGridVisible(bool visible);
   void setAntialiasedSubGrid(bool enabled);
-  void set
+  void setAntialiasedZeroLine(bool enabled);
+  void setPen(const QPen &pen);
+  void setSubGridPen(const QPen &pen);
+  void setZeroLinePen(const QPen &pen);
+  
+protected:
+  // property members:
+  bool mSubGridVisible;
+  bool mAntialiasedSubGrid, mA
