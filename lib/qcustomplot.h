@@ -837,4 +837,11 @@ public:
 protected:
   // property members:
   bool mSubGridVisible;
-  bool mAntialiasedSubGrid, mA
+  bool mAntialiasedSubGrid, mAntialiasedZeroLine;
+  QPen mPen, mSubGridPen, mZeroLinePen;
+  // non-property members:
+  QCPAxis *mParentAxis;
+  
+  // reimplemented virtual methods:
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
+  virtual void draw(
