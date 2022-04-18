@@ -844,4 +844,17 @@ protected:
   
   // reimplemented virtual methods:
   virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
-  virtual void draw(
+  virtual void draw(QCPPainter *painter);
+  
+  // non-virtual methods:
+  void drawGridLines(QCPPainter *painter) const;
+  void drawSubGridLines(QCPPainter *painter) const;
+  
+  friend class QCPAxis;
+};
+
+
+class QCP_LIB_DECL QCPAxis : public QCPLayerable
+{
+  Q_OBJECT
+  /// \
