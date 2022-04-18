@@ -857,4 +857,8 @@ protected:
 class QCP_LIB_DECL QCPAxis : public QCPLayerable
 {
   Q_OBJECT
-  /// \
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(AxisType axisType READ axisType)
+  Q_PROPERTY(QCPAxisRect* axisRect READ axisRect)
+  Q_PROPERTY(ScaleType scaleType READ scaleType WRITE setScaleType)
+  Q_PROPERTY(double scaleLogBase READ scaleLogBase WRITE setScaleLogBa
