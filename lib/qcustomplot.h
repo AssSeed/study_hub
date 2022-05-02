@@ -861,4 +861,8 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(AxisType axisType READ axisType)
   Q_PROPERTY(QCPAxisRect* axisRect READ axisRect)
   Q_PROPERTY(ScaleType scaleType READ scaleType WRITE setScaleType)
-  Q_PROPERTY(double scaleLogBase READ scaleLogBase WRITE setScaleLogBa
+  Q_PROPERTY(double scaleLogBase READ scaleLogBase WRITE setScaleLogBase)
+  Q_PROPERTY(QCPRange range READ range WRITE setRange)
+  Q_PROPERTY(bool rangeReversed READ rangeReversed WRITE setRangeReversed)
+  Q_PROPERTY(bool autoTicks READ autoTicks WRITE setAutoTicks)
+  Q_PROPERTY(int autoTickCount READ
