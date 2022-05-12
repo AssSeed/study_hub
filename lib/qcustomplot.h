@@ -865,4 +865,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(QCPRange range READ range WRITE setRange)
   Q_PROPERTY(bool rangeReversed READ rangeReversed WRITE setRangeReversed)
   Q_PROPERTY(bool autoTicks READ autoTicks WRITE setAutoTicks)
-  Q_PROPERTY(int autoTickCount READ
+  Q_PROPERTY(int autoTickCount READ autoTickCount WRITE setAutoTickCount)
+  Q_PROPERTY(bool autoTickLabels READ autoTickLabels WRITE setAutoTickLabels)
+  Q_PROPERTY(bool autoTickStep READ autoTickStep WRITE setAutoTickStep)
+  Q_PROPERTY(bool autoSubTicks READ autoSubTicks WRITE setAutoSubTic
