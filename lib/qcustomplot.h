@@ -875,4 +875,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(LabelType tickLabelType READ tickLabelType WRITE setTickLabelType)
   Q_PROPERTY(QFont tickLabelFont READ tickLabelFont WRITE setTickLabelFont)
   Q_PROPERTY(QColor tickLabelColor READ tickLabelColor WRITE setTickLabelColor)
-  Q_PROPERT
+  Q_PROPERTY(double tickLabelRotation READ tickLabelRotation WRITE setTickLabelRotation)
+  Q_PROPERTY(QString dateTimeFormat READ dateTimeFormat WRITE setDateTimeFormat)
+  Q_PROPERTY(QString numberFormat READ numberFormat WRITE setNumberFormat)
+  Q_PROPERTY(int nu
