@@ -868,4 +868,8 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(int autoTickCount READ autoTickCount WRITE setAutoTickCount)
   Q_PROPERTY(bool autoTickLabels READ autoTickLabels WRITE setAutoTickLabels)
   Q_PROPERTY(bool autoTickStep READ autoTickStep WRITE setAutoTickStep)
-  Q_PROPERTY(bool autoSubTicks READ autoSubTicks WRITE setAutoSubTic
+  Q_PROPERTY(bool autoSubTicks READ autoSubTicks WRITE setAutoSubTicks)
+  Q_PROPERTY(bool ticks READ ticks WRITE setTicks)
+  Q_PROPERTY(bool tickLabels READ tickLabels WRITE setTickLabels)
+  Q_PROPERTY(int tickLabelPadding READ tickLabelPadding WRITE setTickLabelPadding)
+  Q_PROPERTY(LabelType 
