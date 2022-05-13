@@ -872,4 +872,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(bool ticks READ ticks WRITE setTicks)
   Q_PROPERTY(bool tickLabels READ tickLabels WRITE setTickLabels)
   Q_PROPERTY(int tickLabelPadding READ tickLabelPadding WRITE setTickLabelPadding)
-  Q_PROPERTY(LabelType 
+  Q_PROPERTY(LabelType tickLabelType READ tickLabelType WRITE setTickLabelType)
+  Q_PROPERTY(QFont tickLabelFont READ tickLabelFont WRITE setTickLabelFont)
+  Q_PROPERTY(QColor tickLabelColor READ tickLabelColor WRITE setTickLabelColor)
+  Q_PROPERT
