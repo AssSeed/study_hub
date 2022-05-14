@@ -878,4 +878,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(double tickLabelRotation READ tickLabelRotation WRITE setTickLabelRotation)
   Q_PROPERTY(QString dateTimeFormat READ dateTimeFormat WRITE setDateTimeFormat)
   Q_PROPERTY(QString numberFormat READ numberFormat WRITE setNumberFormat)
-  Q_PROPERTY(int nu
+  Q_PROPERTY(int numberPrecision READ numberPrecision WRITE setNumberPrecision)
+  Q_PROPERTY(double tickStep READ tickStep WRITE setTickStep)
+  Q_PROPERTY(QVector<double> tickVector READ tickVector WRITE setTickVector)
+  Q_PROPERTY(QVector<QStr
