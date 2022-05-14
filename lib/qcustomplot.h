@@ -881,4 +881,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(int numberPrecision READ numberPrecision WRITE setNumberPrecision)
   Q_PROPERTY(double tickStep READ tickStep WRITE setTickStep)
   Q_PROPERTY(QVector<double> tickVector READ tickVector WRITE setTickVector)
-  Q_PROPERTY(QVector<QStr
+  Q_PROPERTY(QVector<QString> tickVectorLabels READ tickVectorLabels WRITE setTickVectorLabels)
+  Q_PROPERTY(int tickLengthIn READ tickLengthIn WRITE setTickLengthIn)
+  Q_PROPERTY(int tickLengthOut READ tickLengthOut WRITE setTickLengthOut)
+  
