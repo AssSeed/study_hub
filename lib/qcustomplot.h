@@ -884,4 +884,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(QVector<QString> tickVectorLabels READ tickVectorLabels WRITE setTickVectorLabels)
   Q_PROPERTY(int tickLengthIn READ tickLengthIn WRITE setTickLengthIn)
   Q_PROPERTY(int tickLengthOut READ tickLengthOut WRITE setTickLengthOut)
-  
+  Q_PROPERTY(int subTickCount READ subTickCount WRITE setSubTickCount)
+  Q_PROPERTY(int subTickLengthIn READ subTickLengthIn WRITE setSubTickLengthIn)
+  Q_PROPERTY(int subTickLengthOut READ subTickLengthOut WRITE setSubTickLengthOut)
+  Q_PROPERTY(QPen bas
