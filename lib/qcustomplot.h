@@ -887,4 +887,11 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(int subTickCount READ subTickCount WRITE setSubTickCount)
   Q_PROPERTY(int subTickLengthIn READ subTickLengthIn WRITE setSubTickLengthIn)
   Q_PROPERTY(int subTickLengthOut READ subTickLengthOut WRITE setSubTickLengthOut)
-  Q_PROPERTY(QPen bas
+  Q_PROPERTY(QPen basePen READ basePen WRITE setBasePen)
+  Q_PROPERTY(QPen tickPen READ tickPen WRITE setTickPen)
+  Q_PROPERTY(QPen subTickPen READ subTickPen WRITE setSubTickPen)
+  Q_PROPERTY(QFont labelFont READ labelFont WRITE setLabelFont)
+  Q_PROPERTY(QColor labelColor READ labelColor WRITE setLabelColor)
+  Q_PROPERTY(QString label READ label WRITE setLabel)
+  Q_PROPERTY(int labelPadding READ labelPadding WRITE setLabelPadding)
+  Q_PROPERTY(int padding READ padding WRITE setPadding
