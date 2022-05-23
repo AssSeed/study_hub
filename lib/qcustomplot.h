@@ -898,4 +898,6 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(int offset READ offset WRITE setOffset)
   Q_PROPERTY(SelectableParts selectedParts READ selectedParts WRITE setSelectedParts)
   Q_PROPERTY(SelectableParts selectableParts READ selectableParts WRITE setSelectableParts)
-  Q_PROPERTY(
+  Q_PROPERTY(QFont selectedTickLabelFont READ selectedTickLabelFont WRITE setSelectedTickLabelFont)
+  Q_PROPERTY(QFont selectedLabelFont READ selectedLabelFont WRITE setSelectedLabelFont)
+  Q_PROPERTY(QColor selectedTickLabelColor READ selectedTick
