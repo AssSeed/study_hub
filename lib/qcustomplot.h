@@ -906,4 +906,10 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
   Q_PROPERTY(QPen selectedTickPen READ selectedTickPen WRITE setSelectedTickPen)
   Q_PROPERTY(QPen selectedSubTickPen READ selectedSubTickPen WRITE setSelectedSubTickPen)
   Q_PROPERTY(QCPLineEnding lowerEnding READ lowerEnding WRITE setLowerEnding)
-  Q_PRO
+  Q_PROPERTY(QCPLineEnding upperEnding READ upperEnding WRITE setUpperEnding)
+  Q_PROPERTY(QCPGrid* grid READ grid)
+  /// \endcond
+public:
+  /*!
+    Defines at which side of the axis rect the axis will appear. This also affects how the tick
+    marks are drawn, on which side
