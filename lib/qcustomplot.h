@@ -912,4 +912,7 @@ class QCP_LIB_DECL QCPAxis : public QCPLayerable
 public:
   /*!
     Defines at which side of the axis rect the axis will appear. This also affects how the tick
-    marks are drawn, on which side
+    marks are drawn, on which side the labels are placed etc.
+  */
+  enum AxisType { atLeft    = 0x01  ///< <tt>0x01</tt> Axis is vertical and on the left side of the axis rect
+                  ,atRight  = 0x02  ///< <tt>0x02</tt> Axis is vertical and on the right side of the axis rec
