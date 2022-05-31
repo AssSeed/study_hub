@@ -919,4 +919,11 @@ public:
                   ,atTop    = 0x04  ///< <tt>0x04</tt> Axis is horizontal and on the top side of the axis rect
                   ,atBottom = 0x08  ///< <tt>0x08</tt> Axis is horizontal and on the bottom side of the axis rect
                 };
-  Q_FLAGS(Ax
+  Q_FLAGS(AxisType AxisTypes)
+  Q_DECLARE_FLAGS(AxisTypes, AxisType)
+  /*!
+    When automatic tick label generation is enabled (\ref setAutoTickLabels), defines how the
+    coordinate of the tick is interpreted, i.e. translated into a string.
+    
+    \see setTickLabelType
+ 
