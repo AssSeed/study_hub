@@ -926,4 +926,6 @@ public:
     coordinate of the tick is interpreted, i.e. translated into a string.
     
     \see setTickLabelType
- 
+  */
+  enum LabelType { ltNumber    ///< Tick coordinate is regarded as normal number and will be displayed as such. (see \ref setNumberFormat)
+                   ,ltDateTime ///< Tick coordinate is regarded as a date/time (seconds since 1970-01-01T00:
