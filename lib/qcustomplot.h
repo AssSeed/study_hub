@@ -928,4 +928,11 @@ public:
     \see setTickLabelType
   */
   enum LabelType { ltNumber    ///< Tick coordinate is regarded as normal number and will be displayed as such. (see \ref setNumberFormat)
-                   ,ltDateTime ///< Tick coordinate is regarded as a date/time (seconds since 1970-01-01T00:
+                   ,ltDateTime ///< Tick coordinate is regarded as a date/time (seconds since 1970-01-01T00:00:00 UTC) and will be displayed and formatted as such. (for details, see \ref setDateTimeFormat)
+                 };
+  Q_ENUMS(LabelType)
+  /*!
+    Defines the scale of an axis.
+    \see setScaleType
+  */
+  enum ScaleType { stLinear       ///< Linear sc
