@@ -935,4 +935,9 @@ public:
     Defines the scale of an axis.
     \see setScaleType
   */
-  enum ScaleType { stLinear       ///< Linear sc
+  enum ScaleType { stLinear       ///< Linear scaling
+                   ,stLogarithmic ///< Logarithmic scaling with correspondingly transformed plots and (major) tick marks at every base power (see \ref setScaleLogBase).
+                 };
+  Q_ENUMS(ScaleType)
+  /*!
+    Defines the selectable parts of an axi
