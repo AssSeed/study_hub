@@ -945,4 +945,8 @@ public:
   */
   enum SelectablePart { spNone        = 0      ///< None of the selectable parts
                         ,spAxis       = 0x001  ///< The axis backbone and tick marks
-                        ,spTickLabels = 
+                        ,spTickLabels = 0x002  ///< Tick labels (numbers) of this axis (as a whole, not individually)
+                        ,spAxisLabel  = 0x004  ///< The axis label
+                      };
+  Q_FLAGS(SelectablePart SelectableParts)
+  Q_DECLARE_FLAGS(SelectableParts, S
