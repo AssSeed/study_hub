@@ -949,4 +949,12 @@ public:
                         ,spAxisLabel  = 0x004  ///< The axis label
                       };
   Q_FLAGS(SelectablePart SelectableParts)
-  Q_DECLARE_FLAGS(SelectableParts, S
+  Q_DECLARE_FLAGS(SelectableParts, SelectablePart)
+  
+  explicit QCPAxis(QCPAxisRect *parent, AxisType type);
+      
+  // getters:
+  AxisType axisType() const { return mAxisType; }
+  QCPAxisRect *axisRect() const { return mAxisRect; }
+  ScaleType scaleType() const { return mScaleType; }
+  
