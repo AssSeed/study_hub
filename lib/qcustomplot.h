@@ -957,4 +957,8 @@ public:
   AxisType axisType() const { return mAxisType; }
   QCPAxisRect *axisRect() const { return mAxisRect; }
   ScaleType scaleType() const { return mScaleType; }
-  
+  double scaleLogBase() const { return mScaleLogBase; }
+  const QCPRange range() const { return mRange; }
+  bool rangeReversed() const { return mRangeReversed; }
+  bool autoTicks() const { return mAutoTicks; }
+  int autoTickCount() const { return mAutoTick
