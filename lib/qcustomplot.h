@@ -975,4 +975,8 @@ public:
   QString dateTimeFormat() const { return mDateTimeFormat; }
   Qt::TimeSpec dateTimeSpec() const { return mDateTimeSpec; }
   QString numberFormat() const;
-  int numberPrecision() const { re
+  int numberPrecision() const { return mNumberPrecision; }
+  double tickStep() const { return mTickStep; }
+  QVector<double> tickVector() const { return mTickVector; }
+  QVector<QString> tickVectorLabels() const { return mTickVectorLabels; }
+  int tickLengthIn() const { return mTic
