@@ -961,4 +961,9 @@ public:
   const QCPRange range() const { return mRange; }
   bool rangeReversed() const { return mRangeReversed; }
   bool autoTicks() const { return mAutoTicks; }
-  int autoTickCount() const { return mAutoTick
+  int autoTickCount() const { return mAutoTickCount; }
+  bool autoTickLabels() const { return mAutoTickLabels; }
+  bool autoTickStep() const { return mAutoTickStep; }
+  bool autoSubTicks() const { return mAutoSubTicks; }
+  bool ticks() const { return mTicks; }
+  bool tickLabels() const { return mTickL
