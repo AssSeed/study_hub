@@ -966,4 +966,9 @@ public:
   bool autoTickStep() const { return mAutoTickStep; }
   bool autoSubTicks() const { return mAutoSubTicks; }
   bool ticks() const { return mTicks; }
-  bool tickLabels() const { return mTickL
+  bool tickLabels() const { return mTickLabels; }
+  int tickLabelPadding() const { return mTickLabelPadding; }
+  LabelType tickLabelType() const { return mTickLabelType; }
+  QFont tickLabelFont() const { return mTickLabelFont; }
+  QColor tickLabelColor() const { return mTickLabelColor; }
+  double tickLabelRot
