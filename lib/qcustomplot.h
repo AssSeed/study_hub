@@ -971,4 +971,8 @@ public:
   LabelType tickLabelType() const { return mTickLabelType; }
   QFont tickLabelFont() const { return mTickLabelFont; }
   QColor tickLabelColor() const { return mTickLabelColor; }
-  double tickLabelRot
+  double tickLabelRotation() const { return mTickLabelRotation; }
+  QString dateTimeFormat() const { return mDateTimeFormat; }
+  Qt::TimeSpec dateTimeSpec() const { return mDateTimeSpec; }
+  QString numberFormat() const;
+  int numberPrecision() const { re
