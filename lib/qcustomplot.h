@@ -979,4 +979,9 @@ public:
   double tickStep() const { return mTickStep; }
   QVector<double> tickVector() const { return mTickVector; }
   QVector<QString> tickVectorLabels() const { return mTickVectorLabels; }
-  int tickLengthIn() const { return mTic
+  int tickLengthIn() const { return mTickLengthIn; }
+  int tickLengthOut() const { return mTickLengthOut; }
+  int subTickCount() const { return mSubTickCount; }
+  int subTickLengthIn() const { return mSubTickLengthIn; }
+  int subTickLengthOut() const { return mSubTickLengthOut; }
+ 
