@@ -984,4 +984,9 @@ public:
   int subTickCount() const { return mSubTickCount; }
   int subTickLengthIn() const { return mSubTickLengthIn; }
   int subTickLengthOut() const { return mSubTickLengthOut; }
- 
+  QPen basePen() const { return mBasePen; }
+  QPen tickPen() const { return mTickPen; }
+  QPen subTickPen() const { return mSubTickPen; }
+  QFont labelFont() const { return mLabelFont; }
+  QColor labelColor() const { return mLabelColor; }
+  QString label() const
