@@ -989,4 +989,9 @@ public:
   QPen subTickPen() const { return mSubTickPen; }
   QFont labelFont() const { return mLabelFont; }
   QColor labelColor() const { return mLabelColor; }
-  QString label() const
+  QString label() const { return mLabel; }
+  int labelPadding() const { return mLabelPadding; }
+  int padding() const { return mPadding; }
+  int offset() const { return mOffset; }
+  SelectableParts selectedParts() const { return mSelectedParts; }
+  S
