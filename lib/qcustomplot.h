@@ -994,4 +994,7 @@ public:
   int padding() const { return mPadding; }
   int offset() const { return mOffset; }
   SelectableParts selectedParts() const { return mSelectedParts; }
-  S
+  SelectableParts selectableParts() const { return mSelectableParts; }
+  QFont selectedTickLabelFont() const { return mSelectedTickLabelFont; }
+  QFont selectedLabelFont() const { return mSelectedLabelFont; }
+  QColor selectedTickLabelColor() const { return mSelectedTickLabelColo
