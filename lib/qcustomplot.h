@@ -997,4 +997,8 @@ public:
   SelectableParts selectableParts() const { return mSelectableParts; }
   QFont selectedTickLabelFont() const { return mSelectedTickLabelFont; }
   QFont selectedLabelFont() const { return mSelectedLabelFont; }
-  QColor selectedTickLabelColor() const { return mSelectedTickLabelColo
+  QColor selectedTickLabelColor() const { return mSelectedTickLabelColor; }
+  QColor selectedLabelColor() const { return mSelectedLabelColor; }
+  QPen selectedBasePen() const { return mSelectedBasePen; }
+  QPen selectedTickPen() const { return mSelectedTickPen; }
+  QPen selectedSubTickPen() const { return mSelecte
