@@ -1007,4 +1007,9 @@ public:
   QCPGrid *grid() const { return mGrid; }
   
   // setters:
-  void setScaleType(S
+  void setScaleType(ScaleType type);
+  void setScaleLogBase(double base);
+  Q_SLOT void setRange(const QCPRange &range);
+  void setRange(double lower, double upper);
+  void setRange(double position, double size, Qt::AlignmentFlag alignment);
+  void setRangeLower(double lo
