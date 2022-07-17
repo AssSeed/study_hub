@@ -1001,4 +1001,10 @@ public:
   QColor selectedLabelColor() const { return mSelectedLabelColor; }
   QPen selectedBasePen() const { return mSelectedBasePen; }
   QPen selectedTickPen() const { return mSelectedTickPen; }
-  QPen selectedSubTickPen() const { return mSelecte
+  QPen selectedSubTickPen() const { return mSelectedSubTickPen; }
+  QCPLineEnding lowerEnding() const { return mLowerEnding; }
+  QCPLineEnding upperEnding() const { return mUpperEnding; }
+  QCPGrid *grid() const { return mGrid; }
+  
+  // setters:
+  void setScaleType(S
