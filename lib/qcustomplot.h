@@ -1058,4 +1058,9 @@ public:
   void setSelectedTickPen(const QPen &pen);
   void setSelectedSubTickPen(const QPen &pen);
   Q_SLOT void setSelectableParts(const QCPAxis::SelectableParts &selectableParts);
-  Q_SLOT void setSelectedParts(const QCPAxis:
+  Q_SLOT void setSelectedParts(const QCPAxis::SelectableParts &selectedParts);
+  void setLowerEnding(const QCPLineEnding &ending);
+  void setUpperEnding(const QCPLineEnding &ending);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant
