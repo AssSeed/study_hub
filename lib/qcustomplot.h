@@ -1042,4 +1042,10 @@ public:
   void setSubTickLengthIn(int inside);
   void setSubTickLengthOut(int outside);
   void setBasePen(const QPen &pen);
-  void setTickPen(con
+  void setTickPen(const QPen &pen);
+  void setSubTickPen(const QPen &pen);
+  void setLabelFont(const QFont &font);
+  void setLabelColor(const QColor &color);
+  void setLabel(const QString &str);
+  void setLabelPadding(int padding);
+  void setPadding(int pa
