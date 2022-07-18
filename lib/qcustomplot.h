@@ -1048,4 +1048,9 @@ public:
   void setLabelColor(const QColor &color);
   void setLabel(const QString &str);
   void setLabelPadding(int padding);
-  void setPadding(int pa
+  void setPadding(int padding);
+  void setOffset(int offset);
+  void setSelectedTickLabelFont(const QFont &font);
+  void setSelectedLabelFont(const QFont &font);
+  void setSelectedTickLabelColor(const QColor &color);
+  void setSelectedLabelColor(const QColor &color)
