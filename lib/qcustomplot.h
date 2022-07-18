@@ -1053,4 +1053,9 @@ public:
   void setSelectedTickLabelFont(const QFont &font);
   void setSelectedLabelFont(const QFont &font);
   void setSelectedTickLabelColor(const QColor &color);
-  void setSelectedLabelColor(const QColor &color)
+  void setSelectedLabelColor(const QColor &color);
+  void setSelectedBasePen(const QPen &pen);
+  void setSelectedTickPen(const QPen &pen);
+  void setSelectedSubTickPen(const QPen &pen);
+  Q_SLOT void setSelectableParts(const QCPAxis::SelectableParts &selectableParts);
+  Q_SLOT void setSelectedParts(const QCPAxis:
