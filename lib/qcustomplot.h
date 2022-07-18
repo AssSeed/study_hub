@@ -1031,4 +1031,10 @@ public:
   void setDateTimeSpec(const Qt::TimeSpec &timeSpec);
   void setNumberFormat(const QString &formatCode);
   void setNumberPrecision(int precision);
-  void setTic
+  void setTickStep(double step);
+  void setTickVector(const QVector<double> &vec);
+  void setTickVectorLabels(const QVector<QString> &vec);
+  void setTickLength(int inside, int outside=0);
+  void setTickLengthIn(int inside);
+  void setTickLengthOut(int outside);
+ 
