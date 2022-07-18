@@ -1026,4 +1026,9 @@ public:
   void setTickLabelType(LabelType type);
   void setTickLabelFont(const QFont &font);
   void setTickLabelColor(const QColor &color);
-  void setTickLabel
+  void setTickLabelRotation(double degrees);
+  void setDateTimeFormat(const QString &format);
+  void setDateTimeSpec(const Qt::TimeSpec &timeSpec);
+  void setNumberFormat(const QString &formatCode);
+  void setNumberPrecision(int precision);
+  void setTic
