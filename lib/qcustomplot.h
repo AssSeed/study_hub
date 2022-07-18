@@ -1037,4 +1037,9 @@ public:
   void setTickLength(int inside, int outside=0);
   void setTickLengthIn(int inside);
   void setTickLengthOut(int outside);
- 
+  void setSubTickCount(int count);
+  void setSubTickLength(int inside, int outside=0);
+  void setSubTickLengthIn(int inside);
+  void setSubTickLengthOut(int outside);
+  void setBasePen(const QPen &pen);
+  void setTickPen(con
