@@ -1012,4 +1012,12 @@ public:
   Q_SLOT void setRange(const QCPRange &range);
   void setRange(double lower, double upper);
   void setRange(double position, double size, Qt::AlignmentFlag alignment);
-  void setRangeLower(double lo
+  void setRangeLower(double lower);
+  void setRangeUpper(double upper);
+  void setRangeReversed(bool reversed);
+  void setAutoTicks(bool on);
+  void setAutoTickCount(int approximateCount);
+  void setAutoTickLabels(bool on);
+  void setAutoTickStep(bool on);
+  void setAutoSubTicks(bool on);
+  void setTi
