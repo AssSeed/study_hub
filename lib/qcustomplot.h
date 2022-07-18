@@ -1020,4 +1020,10 @@ public:
   void setAutoTickLabels(bool on);
   void setAutoTickStep(bool on);
   void setAutoSubTicks(bool on);
-  void setTi
+  void setTicks(bool show);
+  void setTickLabels(bool show);
+  void setTickLabelPadding(int padding);
+  void setTickLabelType(LabelType type);
+  void setTickLabelFont(const QFont &font);
+  void setTickLabelColor(const QColor &color);
+  void setTickLabel
