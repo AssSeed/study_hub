@@ -1063,4 +1063,10 @@ public:
   void setUpperEnding(const QCPLineEnding &ending);
   
   // reimplemented virtual methods:
-  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  // non-virtual methods:
+  Qt::Orientation orientation() const { return mOrientation; }
+  void moveRange(double diff);
+  void scaleRange(double factor, double center);
+  void setScaleRatio(const QCPAxis *otherAxis, double ratio=
