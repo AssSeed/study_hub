@@ -1075,4 +1075,12 @@ public:
   double coordToPixel(double value) const;
   SelectablePart getPartAt(const QPointF &pos) const;
   QList<QCPAbstractPlottable*> plottables() const;
-  QList<QC
+  QList<QCPGraph*> graphs() const;
+  QList<QCPAbstractItem*> items() const;
+  
+  static AxisType marginSideToAxisType(QCP::MarginSide side);
+  
+signals:
+  void ticksRequest();
+  void rangeChanged(const QCPRange &newRange);
+  void rangeChan
