@@ -1083,4 +1083,15 @@ public:
 signals:
   void ticksRequest();
   void rangeChanged(const QCPRange &newRange);
-  void rangeChan
+  void rangeChanged(const QCPRange &newRange, const QCPRange &oldRange);
+  void selectionChanged(const QCPAxis::SelectableParts &parts);
+
+protected:
+  struct CachedLabel
+  {
+    QPointF offset;
+    QPixmap pixmap;
+  };
+  struct TickLabelData
+  {
+    QString basePar
