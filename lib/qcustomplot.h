@@ -1094,4 +1094,15 @@ protected:
   };
   struct TickLabelData
   {
-    QString basePar
+    QString basePart, expPart;
+    QRect baseBounds, expBounds, totalBounds, rotatedTotalBounds;
+    QFont baseFont, expFont;
+  };
+  
+  // property members:
+  // axis base:
+  AxisType mAxisType;
+  QCPAxisRect *mAxisRect;
+  int mOffset, mPadding;
+  Qt::Orientation mOrientation;
+  Selectable
