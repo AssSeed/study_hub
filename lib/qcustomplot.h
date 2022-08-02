@@ -1150,4 +1150,12 @@ protected:
   QVector<double> mSubTickVector;
   QRect mAxisSelectionBox, mTickLabelsSelectionBox, mLabelSelectionBox;
   bool mCachedMarginValid;
-  int mCachedMarg
+  int mCachedMargin;
+  
+  // introduced virtual methods:
+  virtual void setupTickVectors();
+  virtual void generateAutoTicks();
+  virtual int calculateAutoSubTickCount(double tickStep) const;
+  virtual int calculateMargin();
+  // tick label drawing/caching:
+  virtua
