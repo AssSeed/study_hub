@@ -1112,4 +1112,11 @@ protected:
   int mLabelPadding;
   QString mLabel;
   QFont mLabelFont, mSelectedLabelFont;
-  QColor mLabelColor, m
+  QColor mLabelColor, mSelectedLabelColor;
+  // tick labels:
+  int mTickLabelPadding;
+  bool mTickLabels, mAutoTickLabels;
+  double mTickLabelRotation;
+  LabelType mTickLabelType;
+  QFont mTickLabelFont, mSelectedTickLabelFont;
+  QColor mTickLabelColor, mSelectedTickLabelCo
