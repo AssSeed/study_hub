@@ -1129,4 +1129,9 @@ protected:
   // ticks and subticks:
   bool mTicks;
   double mTickStep;
-  int mSub
+  int mSubTickCount, mAutoTickCount;
+  bool mAutoTicks, mAutoTickStep, mAutoSubTicks;
+  int mTickLengthIn, mTickLengthOut, mSubTickLengthIn, mSubTickLengthOut;
+  QPen mTickPen, mSelectedTickPen;
+  QPen mSubTickPen, mSelectedSubTickPen;
+  // scale and ran
