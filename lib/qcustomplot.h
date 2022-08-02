@@ -1134,4 +1134,14 @@ protected:
   int mTickLengthIn, mTickLengthOut, mSubTickLengthIn, mSubTickLengthOut;
   QPen mTickPen, mSelectedTickPen;
   QPen mSubTickPen, mSelectedSubTickPen;
-  // scale and ran
+  // scale and range:
+  QCPRange mRange;
+  bool mRangeReversed;
+  ScaleType mScaleType;
+  double mScaleLogBase, mScaleLogBaseLogInv;
+  
+  // non-property members:
+  QCPGrid *mGrid;
+  QCache<QString, CachedLabel> mLabelCache;
+  int mLowestVisibleTick, mHighestVisibleTick;
+  QChar mExpon
