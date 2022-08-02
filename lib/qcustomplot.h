@@ -1144,4 +1144,10 @@ protected:
   QCPGrid *mGrid;
   QCache<QString, CachedLabel> mLabelCache;
   int mLowestVisibleTick, mHighestVisibleTick;
-  QChar mExpon
+  QChar mExponentialChar, mPositiveSignChar;
+  QVector<double> mTickVector;
+  QVector<QString> mTickVectorLabels;
+  QVector<double> mSubTickVector;
+  QRect mAxisSelectionBox, mTickLabelsSelectionBox, mLabelSelectionBox;
+  bool mCachedMarginValid;
+  int mCachedMarg
