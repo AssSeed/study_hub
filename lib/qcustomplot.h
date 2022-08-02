@@ -1160,4 +1160,6 @@ protected:
   // tick label drawing/caching:
   virtual void placeTickLabel(QCPPainter *painter, double position, int distanceToAxis, const QString &text, QSize *tickLabelsSize);
   virtual void drawTickLabel(QCPPainter *painter, double x, double y, const TickLabelData &labelData) const;
-  virtual Tic
+  virtual TickLabelData getTickLabelData(const QFont &font, const QString &text) const;
+  virtual QPointF getTickLabelDrawOffset(const TickLabelData &labelData) const;
+  virtual void getMaxTickLabelSize(const QFont &font, const QString &text, QSize *tickLabelsSize) const
