@@ -1119,4 +1119,14 @@ protected:
   double mTickLabelRotation;
   LabelType mTickLabelType;
   QFont mTickLabelFont, mSelectedTickLabelFont;
-  QColor mTickLabelColor, mSelectedTickLabelCo
+  QColor mTickLabelColor, mSelectedTickLabelColor;
+  QString mDateTimeFormat;
+  Qt::TimeSpec mDateTimeSpec;
+  int mNumberPrecision;
+  char mNumberFormatChar;
+  bool mNumberBeautifulPowers;
+  bool mNumberMultiplyCross;
+  // ticks and subticks:
+  bool mTicks;
+  double mTickStep;
+  int mSub
