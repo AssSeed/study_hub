@@ -1105,4 +1105,11 @@ protected:
   QCPAxisRect *mAxisRect;
   int mOffset, mPadding;
   Qt::Orientation mOrientation;
-  Selectable
+  SelectableParts mSelectableParts, mSelectedParts;
+  QPen mBasePen, mSelectedBasePen;
+  QCPLineEnding mLowerEnding, mUpperEnding;
+  // axis label:
+  int mLabelPadding;
+  QString mLabel;
+  QFont mLabelFont, mSelectedLabelFont;
+  QColor mLabelColor, m
