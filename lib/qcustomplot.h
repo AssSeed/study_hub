@@ -1181,4 +1181,14 @@ protected:
   QPen getSubTickPen() const;
   QFont getTickLabelFont() const;
   QFont getLabelFont() const;
-  QCo
+  QColor getTickLabelColor() const;
+  QColor getLabelColor() const;
+  
+private:
+  Q_DISABLE_COPY(QCPAxis)
+  
+  friend class QCustomPlot;
+  friend class QCPGrid;
+  friend class QCPAxisRect;
+};
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCPAxis::Select
