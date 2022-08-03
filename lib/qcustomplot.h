@@ -1162,4 +1162,11 @@ protected:
   virtual void drawTickLabel(QCPPainter *painter, double x, double y, const TickLabelData &labelData) const;
   virtual TickLabelData getTickLabelData(const QFont &font, const QString &text) const;
   virtual QPointF getTickLabelDrawOffset(const TickLabelData &labelData) const;
-  virtual void getMaxTickLabelSize(const QFont &font, const QString &text, QSize *tickLabelsSize) const
+  virtual void getMaxTickLabelSize(const QFont &font, const QString &text, QSize *tickLabelsSize) const;
+  
+  // reimplemented virtual methods:
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
+  virtual void draw(QCPPainter *painter); 
+  virtual QCP::Interaction selectionCategory() const;
+  // events:
+  virtual void selectEvent
