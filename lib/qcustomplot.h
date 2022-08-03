@@ -1173,4 +1173,12 @@ protected:
   virtual void deselectEvent(bool *selectionStateChanged);
   
   // non-virtual methods:
-  void visibleTickBounds(int &lowIndex, int &hi
+  void visibleTickBounds(int &lowIndex, int &highIndex) const;
+  double baseLog(double value) const;
+  double basePow(double value) const;
+  QPen getBasePen() const;
+  QPen getTickPen() const;
+  QPen getSubTickPen() const;
+  QFont getTickLabelFont() const;
+  QFont getLabelFont() const;
+  QCo
