@@ -1169,4 +1169,8 @@ protected:
   virtual void draw(QCPPainter *painter); 
   virtual QCP::Interaction selectionCategory() const;
   // events:
-  virtual void selectEvent
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *selectionStateChanged);
+  
+  // non-virtual methods:
+  void visibleTickBounds(int &lowIndex, int &hi
