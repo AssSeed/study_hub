@@ -1191,4 +1191,13 @@ private:
   friend class QCPGrid;
   friend class QCPAxisRect;
 };
-Q_DECLARE_OPERATORS_FOR_FLAGS(QCPAxis::Select
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCPAxis::SelectableParts)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCPAxis::AxisTypes)
+Q_DECLARE_METATYPE(QCPAxis::SelectablePart)
+
+
+class QCP_LIB_DECL QCPAbstractPlottable : public QCPLayerable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QStr
