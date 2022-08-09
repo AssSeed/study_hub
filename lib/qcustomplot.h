@@ -1200,4 +1200,7 @@ class QCP_LIB_DECL QCPAbstractPlottable : public QCPLayerable
 {
   Q_OBJECT
   /// \cond INCLUDE_QPROPERTIES
-  Q_PROPERTY(QStr
+  Q_PROPERTY(QString name READ name WRITE setName)
+  Q_PROPERTY(bool antialiasedFill READ antialiasedFill WRITE setAntialiasedFill)
+  Q_PROPERTY(bool antialiasedScatters READ antialiasedScatters WRITE setAntialiasedScatters)
+  Q_PROPERTY(bool antialiasedErrorBars READ antialiased
