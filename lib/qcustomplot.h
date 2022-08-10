@@ -1222,4 +1222,8 @@ public:
   bool antialiasedScatters() const { return mAntialiasedScatters; }
   bool antialiasedErrorBars() const { return mAntialiasedErrorBars; }
   QPen pen() const { return mPen; }
-  QPen selectedPen() c
+  QPen selectedPen() const { return mSelectedPen; }
+  QBrush brush() const { return mBrush; }
+  QBrush selectedBrush() const { return mSelectedBrush; }
+  QCPAxis *keyAxis() const { return mKeyAxis.data(); }
+  QCPAxis *valueAxis() const { return mValueAxis.data
