@@ -1207,4 +1207,7 @@ class QCP_LIB_DECL QCPAbstractPlottable : public QCPLayerable
   Q_PROPERTY(QPen pen READ pen WRITE setPen)
   Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedPen)
   Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
-  Q_PROPERTY(QBr
+  Q_PROPERTY(QBrush selectedBrush READ selectedBrush WRITE setSelectedBrush)
+  Q_PROPERTY(QCPAxis* keyAxis READ keyAxis WRITE setKeyAxis)
+  Q_PROPERTY(QCPAxis* valueAxis READ valueAxis WRITE setValueAxis)
+  Q_PROPERTY(bool selectable READ selectable WRITE 
