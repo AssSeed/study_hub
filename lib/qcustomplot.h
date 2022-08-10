@@ -1218,4 +1218,8 @@ public:
   
   // getters:
   QString name() const { return mName; }
-  bool 
+  bool antialiasedFill() const { return mAntialiasedFill; }
+  bool antialiasedScatters() const { return mAntialiasedScatters; }
+  bool antialiasedErrorBars() const { return mAntialiasedErrorBars; }
+  QPen pen() const { return mPen; }
+  QPen selectedPen() c
