@@ -1226,4 +1226,11 @@ public:
   QBrush brush() const { return mBrush; }
   QBrush selectedBrush() const { return mSelectedBrush; }
   QCPAxis *keyAxis() const { return mKeyAxis.data(); }
-  QCPAxis *valueAxis() const { return mValueAxis.data
+  QCPAxis *valueAxis() const { return mValueAxis.data(); }
+  bool selectable() const { return mSelectable; }
+  bool selected() const { return mSelected; }
+  
+  // setters:
+  void setName(const QString &name);
+  void setAntialiasedFill(bool enabled);
+  void setAntialiasedScatters(bool enable
