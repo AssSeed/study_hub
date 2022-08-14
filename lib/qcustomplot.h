@@ -1233,4 +1233,11 @@ public:
   // setters:
   void setName(const QString &name);
   void setAntialiasedFill(bool enabled);
-  void setAntialiasedScatters(bool enable
+  void setAntialiasedScatters(bool enabled);
+  void setAntialiasedErrorBars(bool enabled);
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  void setBrush(const QBrush &brush);
+  void setSelectedBrush(const QBrush &brush);
+  void setKeyAxis(QCPAxis *axis);
+  void setValueAxis
