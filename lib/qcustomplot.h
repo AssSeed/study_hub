@@ -1240,4 +1240,10 @@ public:
   void setBrush(const QBrush &brush);
   void setSelectedBrush(const QBrush &brush);
   void setKeyAxis(QCPAxis *axis);
-  void setValueAxis
+  void setValueAxis(QCPAxis *axis);
+  Q_SLOT void setSelectable(bool selectable);
+  Q_SLOT void setSelected(bool selected);
+
+  // introduced virtual methods:
+  virtual void clearData() = 0;
+  virtual double selectTest(const QPointF &pos, bool o
