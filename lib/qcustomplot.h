@@ -1252,4 +1252,12 @@ public:
   
   // non-property methods:
   void rescaleAxes(bool onlyEnlarge=false) const;
-  void rescaleKeyAxis(bool onlyEnlar
+  void rescaleKeyAxis(bool onlyEnlarge=false) const;
+  void rescaleValueAxis(bool onlyEnlarge=false) const;
+  
+signals:
+  void selectionChanged(bool selected);
+  
+protected:
+  /*!
+    Represents negative and positive sign domain for passing to \ref getKeyRange and \
