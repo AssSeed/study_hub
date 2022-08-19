@@ -1260,4 +1260,8 @@ signals:
   
 protected:
   /*!
-    Represents negative and positive sign domain for passing to \ref getKeyRange and \
+    Represents negative and positive sign domain for passing to \ref getKeyRange and \ref getValueRange.
+  */
+  enum SignDomain { sdNegative  ///< The negative sign domain, i.e. numbers smaller than zero
+                    ,sdBoth     ///< Both sign domains, including zero, i.e. all (rational) numbers
+               
