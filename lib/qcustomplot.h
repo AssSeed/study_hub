@@ -1264,4 +1264,11 @@ protected:
   */
   enum SignDomain { sdNegative  ///< The negative sign domain, i.e. numbers smaller than zero
                     ,sdBoth     ///< Both sign domains, including zero, i.e. all (rational) numbers
-               
+                    ,sdPositive ///< The positive sign domain, i.e. numbers greater than zero
+                  };
+  
+  // property members:
+  QString mName;
+  bool mAntialiasedFill, mAntialiasedScatters, mAntialiasedErrorBars;
+  QPen mPen, mSelectedPen;
+  
