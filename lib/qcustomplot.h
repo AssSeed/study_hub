@@ -1271,4 +1271,11 @@ protected:
   QString mName;
   bool mAntialiasedFill, mAntialiasedScatters, mAntialiasedErrorBars;
   QPen mPen, mSelectedPen;
+  QBrush mBrush, mSelectedBrush;
+  QPointer<QCPAxis> mKeyAxis, mValueAxis;
+  bool mSelectable, mSelected;
   
+  // reimplemented virtual methods:
+  virtual QRect clipRect() const;
+  virtual void draw(QCPPainter *painter) = 0;
+ 
