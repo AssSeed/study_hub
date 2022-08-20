@@ -1281,4 +1281,9 @@ protected:
   virtual QCP::Interaction selectionCategory() const;
   void applyDefaultAntialiasingHint(QCPPainter *painter) const;
   // events:
-  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *s
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *selectionStateChanged);
+  
+  // introduced virtual methods:
+  virtual void drawLegendIcon(QCPPainter *painter, const QRectF &rect) const = 0;
+  virtual QCPRange getKe
