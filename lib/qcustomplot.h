@@ -1306,4 +1306,15 @@ private:
   
   friend class QCustomPlot;
   friend class QCPAxis;
-  friend class QCPPlo
+  friend class QCPPlottableLegendItem;
+};
+
+
+class QCP_LIB_DECL QCPItemAnchor
+{
+public:
+  QCPItemAnchor(QCustomPlot *parentPlot, QCPAbstractItem *parentItem, const QString name, int anchorId=-1);
+  virtual ~QCPItemAnchor();
+  
+  // getters:
+  QString name() const { return mName; }
