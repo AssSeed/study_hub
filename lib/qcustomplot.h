@@ -1293,4 +1293,9 @@ protected:
   void coordsToPixels(double key, double value, double &x, double &y) const;
   const QPointF coordsToPixels(double key, double value) const;
   void pixelsToCoords(double x, double y, double &key, double &value) const;
-  void pixelsToCoords(const QPointF &pixelPos,
+  void pixelsToCoords(const QPointF &pixelPos, double &key, double &value) const;
+  QPen mainPen() const;
+  QBrush mainBrush() const;
+  void applyFillAntialiasingHint(QCPPainter *painter) const;
+  void applyScattersAntialiasingHint(QCPPainter *painter) const;
+  void applyErrorBarsAntialiasingHint(QCPPainte
