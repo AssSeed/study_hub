@@ -1298,4 +1298,12 @@ protected:
   QBrush mainBrush() const;
   void applyFillAntialiasingHint(QCPPainter *painter) const;
   void applyScattersAntialiasingHint(QCPPainter *painter) const;
-  void applyErrorBarsAntialiasingHint(QCPPainte
+  void applyErrorBarsAntialiasingHint(QCPPainter *painter) const;
+  double distSqrToLine(const QPointF &start, const QPointF &end, const QPointF &point) const;
+
+private:
+  Q_DISABLE_COPY(QCPAbstractPlottable)
+  
+  friend class QCustomPlot;
+  friend class QCPAxis;
+  friend class QCPPlo
