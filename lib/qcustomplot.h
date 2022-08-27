@@ -1318,3 +1318,16 @@ public:
   
   // getters:
   QString name() const { return mName; }
+  virtual QPointF pixelPoint() const;
+  
+protected:
+  // property members:
+  QString mName;
+  
+  // non-property members:
+  QCustomPlot *mParentPlot;
+  QCPAbstractItem *mParentItem;
+  int mAnchorId;
+  QSet<QCPItemPosition*> mChildren;
+  
+  // introduced virtu
