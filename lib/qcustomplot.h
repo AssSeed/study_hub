@@ -1335,4 +1335,16 @@ protected:
   
   // non-virtual methods:
   void addChild(QCPItemPosition* pos); // called from pos when this anchor is set as parent
-  void removeChild(QCPItemPos
+  void removeChild(QCPItemPosition *pos); // called from pos when its parent anchor is reset or pos deleted
+  
+private:
+  Q_DISABLE_COPY(QCPItemAnchor)
+  
+  friend class QCPItemPosition;
+};
+
+
+
+class QCP_LIB_DECL QCPItemPosition : public QCPItemAnchor
+{
+publ
