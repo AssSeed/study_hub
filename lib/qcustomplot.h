@@ -1330,4 +1330,9 @@ protected:
   int mAnchorId;
   QSet<QCPItemPosition*> mChildren;
   
-  // introduced virtu
+  // introduced virtual methods:
+  virtual QCPItemPosition *toQCPItemPosition() { return 0; }
+  
+  // non-virtual methods:
+  void addChild(QCPItemPosition* pos); // called from pos when this anchor is set as parent
+  void removeChild(QCPItemPos
