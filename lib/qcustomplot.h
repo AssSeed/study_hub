@@ -1347,4 +1347,11 @@ private:
 
 class QCP_LIB_DECL QCPItemPosition : public QCPItemAnchor
 {
-publ
+public:
+  /*!
+    Defines the ways an item position can be specified. Thus it defines what the numbers passed to
+    \ref setCoords actually mean.
+    
+    \see setType
+  */
+  enum PositionType { ptAbsolute        ///< Static positioning in pixels, 
