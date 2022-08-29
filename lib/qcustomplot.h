@@ -1354,4 +1354,6 @@ public:
     
     \see setType
   */
-  enum PositionType { ptAbsolute        ///< Static positioning in pixels, 
+  enum PositionType { ptAbsolute        ///< Static positioning in pixels, starting from the top left corner of the viewport/widget.
+                      ,ptViewportRatio  ///< Static positioning given by a fraction of the viewport size.
+                      ,ptAxisRectRatio  ///< Static positioning given by a fracti
