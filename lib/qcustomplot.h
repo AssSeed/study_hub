@@ -1366,4 +1366,9 @@ public:
   // getters:
   PositionType type() const { return mPositionType; }
   QCPItemAnchor *parentAnchor() const { return mParentAnchor; }
-  double key() 
+  double key() const { return mKey; }
+  double value() const { return mValue; }
+  QPointF coords() const { return QPointF(mKey, mValue); }
+  QCPAxis *keyAxis() const { return mKeyAxis.data(); }
+  QCPAxis *valueAxis() const { return mValueAxis.data(); }
+  QCPAxisRec
