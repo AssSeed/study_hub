@@ -1371,4 +1371,11 @@ public:
   QPointF coords() const { return QPointF(mKey, mValue); }
   QCPAxis *keyAxis() const { return mKeyAxis.data(); }
   QCPAxis *valueAxis() const { return mValueAxis.data(); }
-  QCPAxisRec
+  QCPAxisRect *axisRect() const;
+  virtual QPointF pixelPoint() const;
+  
+  // setters:
+  void setType(PositionType type);
+  bool setParentAnchor(QCPItemAnchor *parentAnchor, bool keepPixelPosition=false);
+  void setCoords(double key, double value);
+  void setCoords(const QPoint
