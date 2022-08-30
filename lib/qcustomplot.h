@@ -1360,4 +1360,10 @@ public:
                       ,ptPlotCoords     ///< Dynamic positioning at a plot coordinate defined by two axes (see \ref setAxes).
                     };
   
-  QCPItemPosition(QCustomPlot *
+  QCPItemPosition(QCustomPlot *parentPlot, QCPAbstractItem *parentItem, const QString name);
+  virtual ~QCPItemPosition();
+  
+  // getters:
+  PositionType type() const { return mPositionType; }
+  QCPItemAnchor *parentAnchor() const { return mParentAnchor; }
+  double key() 
