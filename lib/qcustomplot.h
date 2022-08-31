@@ -1386,3 +1386,10 @@ public:
 protected:
   // property members:
   PositionType mPositionType;
+  QPointer<QCPAxis> mKeyAxis, mValueAxis;
+  QPointer<QCPAxisRect> mAxisRect;
+  double mKey, mValue;
+  QCPItemAnchor *mParentAnchor;
+  
+  // reimplemented virtual methods:
+  virtual QCPItemPosition *toQCPItemPosition(
