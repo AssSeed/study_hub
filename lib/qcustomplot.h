@@ -1378,4 +1378,11 @@ public:
   void setType(PositionType type);
   bool setParentAnchor(QCPItemAnchor *parentAnchor, bool keepPixelPosition=false);
   void setCoords(double key, double value);
-  void setCoords(const QPoint
+  void setCoords(const QPointF &coords);
+  void setAxes(QCPAxis* keyAxis, QCPAxis* valueAxis);
+  void setAxisRect(QCPAxisRect *axisRect);
+  void setPixelPoint(const QPointF &pixelPoint);
+  
+protected:
+  // property members:
+  PositionType mPositionType;
