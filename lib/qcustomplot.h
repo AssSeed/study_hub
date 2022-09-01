@@ -1392,4 +1392,17 @@ protected:
   QCPItemAnchor *mParentAnchor;
   
   // reimplemented virtual methods:
-  virtual QCPItemPosition *toQCPItemPosition(
+  virtual QCPItemPosition *toQCPItemPosition() { return this; }
+  
+private:
+  Q_DISABLE_COPY(QCPItemPosition)
+  
+};
+
+
+class QCP_LIB_DECL QCPAbstractItem : public QCPLayerable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(bool clipToAxisRect READ clipToAxisRect WRITE setClipToAxisRect)
+ 
