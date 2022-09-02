@@ -1410,4 +1410,11 @@ class QCP_LIB_DECL QCPAbstractItem : public QCPLayerable
   Q_PROPERTY(bool selected READ selected WRITE setSelected)
   /// \endcond
 public:
-  QCPAbstractItem
+  QCPAbstractItem(QCustomPlot *parentPlot);
+  virtual ~QCPAbstractItem();
+  
+  // getters:
+  bool clipToAxisRect() const { return mClipToAxisRect; }
+  QCPAxisRect *clipAxisRect() const;
+  bool selectable() const { return mSelectable; }
+  bool selected() const { return mSe
