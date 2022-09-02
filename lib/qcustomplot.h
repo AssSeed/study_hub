@@ -1426,4 +1426,8 @@ public:
   void setSelected(bool selected);
   
   // reimplemented virtual methods:
-  virtual double selectTest(c
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const = 0;
+  
+  // non-virtual methods:
+  QList<QCPItemPosition*> positions() const { return mPositions; }
+  QList<QCPItemAnchor*> anchors() const { return mAnchors;
