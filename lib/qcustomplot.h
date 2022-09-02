@@ -1417,4 +1417,13 @@ public:
   bool clipToAxisRect() const { return mClipToAxisRect; }
   QCPAxisRect *clipAxisRect() const;
   bool selectable() const { return mSelectable; }
-  bool selected() const { return mSe
+  bool selected() const { return mSelected; }
+  
+  // setters:
+  void setClipToAxisRect(bool clip);
+  void setClipAxisRect(QCPAxisRect *rect);
+  void setSelectable(bool selectable);
+  void setSelected(bool selected);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(c
