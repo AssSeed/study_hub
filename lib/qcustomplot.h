@@ -1430,4 +1430,14 @@ public:
   
   // non-virtual methods:
   QList<QCPItemPosition*> positions() const { return mPositions; }
-  QList<QCPItemAnchor*> anchors() const { return mAnchors;
+  QList<QCPItemAnchor*> anchors() const { return mAnchors; }
+  QCPItemPosition *position(const QString &name) const;
+  QCPItemAnchor *anchor(const QString &name) const;
+  bool hasAnchor(const QString &name) const;
+  
+signals:
+  void selectionChanged(bool selected);
+  
+protected:
+  // property members:
+  b
