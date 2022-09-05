@@ -1440,4 +1440,11 @@ signals:
   
 protected:
   // property members:
-  b
+  bool mClipToAxisRect;
+  QPointer<QCPAxisRect> mClipAxisRect;
+  QList<QCPItemPosition*> mPositions;
+  QList<QCPItemAnchor*> mAnchors;
+  bool mSelectable, mSelected;
+  
+  // reimplemented virtual methods:
+  virtual QCP::Interaction selectionCategory() const;
