@@ -1452,4 +1452,11 @@ protected:
   virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
   virtual void draw(QCPPainter *painter) = 0;
   // events:
-  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *se
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *selectionStateChanged);
+  
+  // introduced virtual methods:
+  virtual QPointF anchorPixelPoint(int anchorId) const;
+  
+  // non-virtual methods:
+  double distSqrToLine(const QPointF &start, const QPointF &en
