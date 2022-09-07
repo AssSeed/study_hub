@@ -1459,4 +1459,7 @@ protected:
   virtual QPointF anchorPixelPoint(int anchorId) const;
   
   // non-virtual methods:
-  double distSqrToLine(const QPointF &start, const QPointF &en
+  double distSqrToLine(const QPointF &start, const QPointF &end, const QPointF &point) const;
+  double rectSelectTest(const QRectF &rect, const QPointF &pos, bool filledRect) const;
+  QCPItemPosition *createPosition(const QString &name);
+  QCPItemAnchor *createAnchor(const QString &name, int ancho
