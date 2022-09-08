@@ -1462,4 +1462,18 @@ protected:
   double distSqrToLine(const QPointF &start, const QPointF &end, const QPointF &point) const;
   double rectSelectTest(const QRectF &rect, const QPointF &pos, bool filledRect) const;
   QCPItemPosition *createPosition(const QString &name);
-  QCPItemAnchor *createAnchor(const QString &name, int ancho
+  QCPItemAnchor *createAnchor(const QString &name, int anchorId);
+  
+private:
+  Q_DISABLE_COPY(QCPAbstractItem)
+  
+  friend class QCustomPlot;
+  friend class QCPItemAnchor;
+};
+
+
+class QCP_LIB_DECL QCustomPlot : public QWidget
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QRect viewpor
