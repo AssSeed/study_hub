@@ -1476,4 +1476,7 @@ class QCP_LIB_DECL QCustomPlot : public QWidget
 {
   Q_OBJECT
   /// \cond INCLUDE_QPROPERTIES
-  Q_PROPERTY(QRect viewpor
+  Q_PROPERTY(QRect viewport READ viewport WRITE setViewport)
+  Q_PROPERTY(QPixmap background READ background WRITE setBackground)
+  Q_PROPERTY(bool backgroundScaled READ backgroundScaled WRITE setBackgroundScaled)
+  Q_PROPERTY(Qt::AspectRatioMode backgroundScaledMode READ backgroundScaledMod
