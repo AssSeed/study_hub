@@ -1479,4 +1479,7 @@ class QCP_LIB_DECL QCustomPlot : public QWidget
   Q_PROPERTY(QRect viewport READ viewport WRITE setViewport)
   Q_PROPERTY(QPixmap background READ background WRITE setBackground)
   Q_PROPERTY(bool backgroundScaled READ backgroundScaled WRITE setBackgroundScaled)
-  Q_PROPERTY(Qt::AspectRatioMode backgroundScaledMode READ backgroundScaledMod
+  Q_PROPERTY(Qt::AspectRatioMode backgroundScaledMode READ backgroundScaledMode WRITE setBackgroundScaledMode)
+  Q_PROPERTY(QCPLayoutGrid* plotLayout READ plotLayout)
+  Q_PROPERTY(bool autoAddPlottableToLegend READ autoAddPlottableToLegend WRITE setAutoAddPlottableToLegend)
+  Q_PROPERTY(int selectionTolerance READ sel
