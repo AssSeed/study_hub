@@ -1484,4 +1484,13 @@ class QCP_LIB_DECL QCustomPlot : public QWidget
   Q_PROPERTY(bool autoAddPlottableToLegend READ autoAddPlottableToLegend WRITE setAutoAddPlottableToLegend)
   Q_PROPERTY(int selectionTolerance READ selectionTolerance WRITE setSelectionTolerance)
   Q_PROPERTY(bool noAntialiasingOnDrag READ noAntialiasingOnDrag WRITE setNoAntialiasingOnDrag)
-  Q_PROPERTY(Qt::KeyboardModifier multiSelectModifier READ multiSelectModifier WRITE setMult
+  Q_PROPERTY(Qt::KeyboardModifier multiSelectModifier READ multiSelectModifier WRITE setMultiSelectModifier)
+  /// \endcond
+public:
+  /*!
+    Defines how a layer should be inserted relative to an other layer.
+
+    \see addLayer, moveLayer
+  */
+  enum LayerInsertMode { limBelow  ///< Layer is inserted below other layer
+        
