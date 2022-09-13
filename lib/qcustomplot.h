@@ -1505,4 +1505,7 @@ public:
   QPixmap background() const { return mBackgroundPixmap; }
   bool backgroundScaled() const { return mBackgroundScaled; }
   Qt::AspectRatioMode backgroundScaledMode() const { return mBackgroundScaledMode; }
-  QCPLayoutGrid *plotLayout() const { retu
+  QCPLayoutGrid *plotLayout() const { return mPlotLayout; }
+  QCP::AntialiasedElements antialiasedElements() const { return mAntialiasedElements; }
+  QCP::AntialiasedElements notAntialiasedElements() const { return mNotAntialiasedElements; }
+  bool autoAddPlottableToLegend() c
