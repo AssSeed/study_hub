@@ -1508,4 +1508,7 @@ public:
   QCPLayoutGrid *plotLayout() const { return mPlotLayout; }
   QCP::AntialiasedElements antialiasedElements() const { return mAntialiasedElements; }
   QCP::AntialiasedElements notAntialiasedElements() const { return mNotAntialiasedElements; }
-  bool autoAddPlottableToLegend() c
+  bool autoAddPlottableToLegend() const { return mAutoAddPlottableToLegend; }
+  const QCP::Interactions interactions() const { return mInteractions; }
+  int selectionTolerance() const { return mSelectionTolerance; }
+  bool noAntialiasingOnDrag() const { retur
