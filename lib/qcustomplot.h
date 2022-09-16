@@ -1521,4 +1521,6 @@ public:
   void setBackground(const QPixmap &pm, bool scaled, Qt::AspectRatioMode mode=Qt::KeepAspectRatioByExpanding);
   void setBackground(const QBrush &brush);
   void setBackgroundScaled(bool scaled);
-  void s
+  void setBackgroundScaledMode(Qt::AspectRatioMode mode);
+  void setAntialiasedElements(const QCP::AntialiasedElements &antialiasedElements);
+  void setAntialiasedElement(QCP::AntialiasedElement antialiasedElement, bool enabled=
