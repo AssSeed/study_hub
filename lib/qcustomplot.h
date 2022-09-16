@@ -1523,4 +1523,8 @@ public:
   void setBackgroundScaled(bool scaled);
   void setBackgroundScaledMode(Qt::AspectRatioMode mode);
   void setAntialiasedElements(const QCP::AntialiasedElements &antialiasedElements);
-  void setAntialiasedElement(QCP::AntialiasedElement antialiasedElement, bool enabled=
+  void setAntialiasedElement(QCP::AntialiasedElement antialiasedElement, bool enabled=true);
+  void setNotAntialiasedElements(const QCP::AntialiasedElements &notAntialiasedElements);
+  void setNotAntialiasedElement(QCP::AntialiasedElement notAntialiasedElement, bool enabled=true);
+  void setAutoAddPlottableToLegend(bool on);
+  void 
