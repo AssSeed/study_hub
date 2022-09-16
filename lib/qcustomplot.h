@@ -1517,4 +1517,8 @@ public:
 
   // setters:
   void setViewport(const QRect &rect);
-  void se
+  void setBackground(const QPixmap &pm);
+  void setBackground(const QPixmap &pm, bool scaled, Qt::AspectRatioMode mode=Qt::KeepAspectRatioByExpanding);
+  void setBackground(const QBrush &brush);
+  void setBackgroundScaled(bool scaled);
+  void s
