@@ -1511,4 +1511,10 @@ public:
   bool autoAddPlottableToLegend() const { return mAutoAddPlottableToLegend; }
   const QCP::Interactions interactions() const { return mInteractions; }
   int selectionTolerance() const { return mSelectionTolerance; }
-  bool noAntialiasingOnDrag() const { retur
+  bool noAntialiasingOnDrag() const { return mNoAntialiasingOnDrag; }
+  QCP::PlottingHints plottingHints() const { return mPlottingHints; }
+  Qt::KeyboardModifier multiSelectModifier() const { return mMultiSelectModifier; }
+
+  // setters:
+  void setViewport(const QRect &rect);
+  void se
