@@ -1531,4 +1531,10 @@ public:
   void setInteraction(const QCP::Interaction &interaction, bool enabled=true);
   void setSelectionTolerance(int pixels);
   void setNoAntialiasingOnDrag(bool enabled);
-  void setPlottingHints(c
+  void setPlottingHints(const QCP::PlottingHints &hints);
+  void setPlottingHint(QCP::PlottingHint hint, bool enabled=true);
+  void setMultiSelectModifier(Qt::KeyboardModifier modifier);
+  
+  // non-property methods:
+  // plottable interface:
+  QCPAbstractPlottable *plottable(int index);
