@@ -1527,4 +1527,8 @@ public:
   void setNotAntialiasedElements(const QCP::AntialiasedElements &notAntialiasedElements);
   void setNotAntialiasedElement(QCP::AntialiasedElement notAntialiasedElement, bool enabled=true);
   void setAutoAddPlottableToLegend(bool on);
-  void 
+  void setInteractions(const QCP::Interactions &interactions);
+  void setInteraction(const QCP::Interaction &interaction, bool enabled=true);
+  void setSelectionTolerance(int pixels);
+  void setNoAntialiasingOnDrag(bool enabled);
+  void setPlottingHints(c
