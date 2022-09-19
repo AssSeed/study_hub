@@ -1544,4 +1544,9 @@ public:
   bool removePlottable(int index);
   int clearPlottables();
   int plottableCount() const;
-  QList<QCPAbstrac
+  QList<QCPAbstractPlottable*> selectedPlottables() const;
+  QCPAbstractPlottable *plottableAt(const QPointF &pos, bool onlySelectable=false) const;
+  bool hasPlottable(QCPAbstractPlottable *plottable) const;
+ 
+  // specialized interface for QCPGraph:
+  QCPGraph
