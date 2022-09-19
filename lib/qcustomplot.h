@@ -1549,4 +1549,11 @@ public:
   bool hasPlottable(QCPAbstractPlottable *plottable) const;
  
   // specialized interface for QCPGraph:
-  QCPGraph
+  QCPGraph *graph(int index) const;
+  QCPGraph *graph() const;
+  QCPGraph *addGraph(QCPAxis *keyAxis=0, QCPAxis *valueAxis=0);
+  bool removeGraph(QCPGraph *graph);
+  bool removeGraph(int index);
+  int clearGraphs();
+  int graphCount() const;
+  QList<QCPGraph*> s
