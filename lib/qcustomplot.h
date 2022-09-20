@@ -1556,4 +1556,12 @@ public:
   bool removeGraph(int index);
   int clearGraphs();
   int graphCount() const;
-  QList<QCPGraph*> s
+  QList<QCPGraph*> selectedGraphs() const;
+
+  // item interface:
+  QCPAbstractItem *item(int index) const;
+  QCPAbstractItem *item() const;
+  bool addItem(QCPAbstractItem* item);
+  bool removeItem(QCPAbstractItem *item);
+  bool removeItem(int index);
+  int clea
