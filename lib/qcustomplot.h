@@ -1576,4 +1576,9 @@ public:
   QCPLayer *currentLayer() const;
   bool setCurrentLayer(const QString &name);
   bool setCurrentLayer(QCPLayer *layer);
-  int layerCount() co
+  int layerCount() const;
+  bool addLayer(const QString &name, QCPLayer *otherLayer=0, LayerInsertMode insertMode=limAbove);
+  bool removeLayer(QCPLayer *layer);
+  bool moveLayer(QCPLayer *layer, QCPLayer *otherLayer, LayerInsertMode insertMode=limAbove);
+  
+  //
