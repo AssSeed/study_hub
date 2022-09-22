@@ -1570,4 +1570,10 @@ public:
   QCPAbstractItem *itemAt(const QPointF &pos, bool onlySelectable=false) const;
   bool hasItem(QCPAbstractItem *item) const;
   
-  // layer interface
+  // layer interface:
+  QCPLayer *layer(const QString &name) const;
+  QCPLayer *layer(int index) const;
+  QCPLayer *currentLayer() const;
+  bool setCurrentLayer(const QString &name);
+  bool setCurrentLayer(QCPLayer *layer);
+  int layerCount() co
