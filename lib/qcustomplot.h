@@ -1564,4 +1564,10 @@ public:
   bool addItem(QCPAbstractItem* item);
   bool removeItem(QCPAbstractItem *item);
   bool removeItem(int index);
-  int clea
+  int clearItems();
+  int itemCount() const;
+  QList<QCPAbstractItem*> selectedItems() const;
+  QCPAbstractItem *itemAt(const QPointF &pos, bool onlySelectable=false) const;
+  bool hasItem(QCPAbstractItem *item) const;
+  
+  // layer interface
