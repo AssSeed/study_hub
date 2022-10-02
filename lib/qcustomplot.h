@@ -1581,4 +1581,9 @@ public:
   bool removeLayer(QCPLayer *layer);
   bool moveLayer(QCPLayer *layer, QCPLayer *otherLayer, LayerInsertMode insertMode=limAbove);
   
-  //
+  // axis rect/layout interface:
+  int axisRectCount() const;
+  QCPAxisRect* axisRect(int index=0) const;
+  QList<QCPAxisRect*> axisRects() const;
+  QCPLayoutElement* layoutElementAt(const QPointF &pos) const;
+  Q_SLOT void rescaleAx
