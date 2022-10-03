@@ -1586,4 +1586,10 @@ public:
   QCPAxisRect* axisRect(int index=0) const;
   QList<QCPAxisRect*> axisRects() const;
   QCPLayoutElement* layoutElementAt(const QPointF &pos) const;
-  Q_SLOT void rescaleAx
+  Q_SLOT void rescaleAxes(bool onlyVisiblePlottables=false);
+  
+  QList<QCPAxis*> selectedAxes() const;
+  QList<QCPLegend*> selectedLegends() const;
+  Q_SLOT void deselectAll();
+  
+  bool savePdf(const QString &fileName, bool noCosmeticPen=false, int width=0, int h
