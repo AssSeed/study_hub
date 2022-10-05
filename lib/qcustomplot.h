@@ -1607,4 +1607,9 @@ public:
 signals:
   void mouseDoubleClick(QMouseEvent *event);
   void mousePress(QMouseEvent *event);
-  void mouseM
+  void mouseMove(QMouseEvent *event);
+  void mouseRelease(QMouseEvent *event);
+  void mouseWheel(QWheelEvent *event);
+  
+  void plottableClick(QCPAbstractPlottable *plottable, QMouseEvent *event);
+  void plottableDoubleClick(QCPAbstractPlottable 
