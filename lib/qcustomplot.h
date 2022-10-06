@@ -1612,4 +1612,7 @@ signals:
   void mouseWheel(QWheelEvent *event);
   
   void plottableClick(QCPAbstractPlottable *plottable, QMouseEvent *event);
-  void plottableDoubleClick(QCPAbstractPlottable 
+  void plottableDoubleClick(QCPAbstractPlottable *plottable, QMouseEvent *event);
+  void itemClick(QCPAbstractItem *item, QMouseEvent *event);
+  void itemDoubleClick(QCPAbstractItem *item, QMouseEvent *event);
+  void axisClick(QCPAxis *axis, QCPAxis::SelectablePart part, Q
