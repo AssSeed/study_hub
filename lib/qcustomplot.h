@@ -1615,4 +1615,7 @@ signals:
   void plottableDoubleClick(QCPAbstractPlottable *plottable, QMouseEvent *event);
   void itemClick(QCPAbstractItem *item, QMouseEvent *event);
   void itemDoubleClick(QCPAbstractItem *item, QMouseEvent *event);
-  void axisClick(QCPAxis *axis, QCPAxis::SelectablePart part, Q
+  void axisClick(QCPAxis *axis, QCPAxis::SelectablePart part, QMouseEvent *event);
+  void axisDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart part, QMouseEvent *event);
+  void legendClick(QCPLegend *legend, QCPAbstractLegendItem *item, QMouseEvent *event);
+  void legendDoubleClick(QCPLegend *legend,  QCPAbstr
