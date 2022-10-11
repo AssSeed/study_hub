@@ -1618,4 +1618,13 @@ signals:
   void axisClick(QCPAxis *axis, QCPAxis::SelectablePart part, QMouseEvent *event);
   void axisDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart part, QMouseEvent *event);
   void legendClick(QCPLegend *legend, QCPAbstractLegendItem *item, QMouseEvent *event);
-  void legendDoubleClick(QCPLegend *legend,  QCPAbstr
+  void legendDoubleClick(QCPLegend *legend,  QCPAbstractLegendItem *item, QMouseEvent *event);
+  void titleClick(QMouseEvent *event, QCPPlotTitle *title);
+  void titleDoubleClick(QMouseEvent *event, QCPPlotTitle *title);
+  
+  void selectionChangedByUser();
+  void beforeReplot();
+  void afterReplot();
+  
+protected:
+  // pr
