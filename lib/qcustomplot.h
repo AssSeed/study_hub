@@ -1627,4 +1627,9 @@ signals:
   void afterReplot();
   
 protected:
-  // pr
+  // property members:
+  QRect mViewport;
+  QCPLayoutGrid *mPlotLayout;
+  bool mAutoAddPlottableToLegend;
+  QList<QCPAbstractPlottable*> mPlottables;
+  QList<QCPGraph*> mGraphs; // extra list of plottables also in mPlottables that are of type Q
