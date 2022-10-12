@@ -1632,4 +1632,12 @@ protected:
   QCPLayoutGrid *mPlotLayout;
   bool mAutoAddPlottableToLegend;
   QList<QCPAbstractPlottable*> mPlottables;
-  QList<QCPGraph*> mGraphs; // extra list of plottables also in mPlottables that are of type Q
+  QList<QCPGraph*> mGraphs; // extra list of plottables also in mPlottables that are of type QCPGraph
+  QList<QCPAbstractItem*> mItems;
+  QList<QCPLayer*> mLayers;
+  QCP::AntialiasedElements mAntialiasedElements, mNotAntialiasedElements;
+  QCP::Interactions mInteractions;
+  int mSelectionTolerance;
+  bool mNoAntialiasingOnDrag;
+  QBrush mBackgroundBrush;
+  QPixm
