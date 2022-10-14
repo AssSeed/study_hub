@@ -1640,4 +1640,10 @@ protected:
   int mSelectionTolerance;
   bool mNoAntialiasingOnDrag;
   QBrush mBackgroundBrush;
-  QPixm
+  QPixmap mBackgroundPixmap;
+  QPixmap mScaledBackgroundPixmap;
+  bool mBackgroundScaled;
+  Qt::AspectRatioMode mBackgroundScaledMode;
+  QCPLayer *mCurrentLayer;
+  QCP::PlottingHints mPlottingHints;
+  Qt::KeyboardModifier 
