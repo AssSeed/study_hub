@@ -1646,4 +1646,13 @@ protected:
   Qt::AspectRatioMode mBackgroundScaledMode;
   QCPLayer *mCurrentLayer;
   QCP::PlottingHints mPlottingHints;
-  Qt::KeyboardModifier 
+  Qt::KeyboardModifier mMultiSelectModifier;
+  
+  // non-property members:
+  QPixmap mPaintBuffer;
+  QPoint mMousePressPos;
+  QCPLayoutElement *mMouseEventElement;
+  bool mReplotting;
+  
+  // reimplemented virtual methods:
+  virtual QSize 
