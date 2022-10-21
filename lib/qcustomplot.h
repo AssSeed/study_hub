@@ -1690,4 +1690,12 @@ class QCP_LIB_DECL QCPData
 {
 public:
   QCPData();
-  QCPData(dou
+  QCPData(double key, double value);
+  double key, value;
+  double keyErrorPlus, keyErrorMinus;
+  double valueErrorPlus, valueErrorMinus;
+};
+Q_DECLARE_TYPEINFO(QCPData, Q_MOVABLE_TYPE);
+
+/*! \typedef QCPDataMap
+  Container for storing QCPData items in a sort
