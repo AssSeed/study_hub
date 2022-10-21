@@ -1666,4 +1666,10 @@ protected:
   virtual void wheelEvent(QWheelEvent *event);
   
   // introduced virtual methods:
-  virtual void draw(QCPPainter *painter
+  virtual void draw(QCPPainter *painter);
+  virtual void axisRemoved(QCPAxis *axis);
+  virtual void legendRemoved(QCPLegend *legend);
+  
+  // non-virtual methods:
+  void updateLayerIndices() const;
+  QCPLayerable *layerableAt(const QPointF &pos, bool onlySelectable, QVariant *selectionDet
