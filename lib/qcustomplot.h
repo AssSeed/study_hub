@@ -1672,4 +1672,22 @@ protected:
   
   // non-virtual methods:
   void updateLayerIndices() const;
-  QCPLayerable *layerableAt(const QPointF &pos, bool onlySelectable, QVariant *selectionDet
+  QCPLayerable *layerableAt(const QPointF &pos, bool onlySelectable, QVariant *selectionDetails=0) const;
+  void drawBackground(QCPPainter *painter);
+  
+  friend class QCPLegend;
+  friend class QCPAxis;
+  friend class QCPLayer;
+  friend class QCPAxisRect;
+};
+
+
+/*! \file */
+
+
+
+class QCP_LIB_DECL QCPData
+{
+public:
+  QCPData();
+  QCPData(dou
