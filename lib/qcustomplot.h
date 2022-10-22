@@ -1705,4 +1705,12 @@ Q_DECLARE_TYPEINFO(QCPData, Q_MOVABLE_TYPE);
   \see QCPData, QCPGraph::setData
 */
 typedef QMap<double, QCPData> QCPDataMap;
-typedef QMapIterator<double, QCPDat
+typedef QMapIterator<double, QCPData> QCPDataMapIterator;
+typedef QMutableMapIterator<double, QCPData> QCPDataMutableMapIterator;
+
+
+class QCP_LIB_DECL QCPGraph : public QCPAbstractPlottable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(LineStyle lineStyle READ lineStyle WRITE setLi
