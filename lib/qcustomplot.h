@@ -1698,4 +1698,11 @@ public:
 Q_DECLARE_TYPEINFO(QCPData, Q_MOVABLE_TYPE);
 
 /*! \typedef QCPDataMap
-  Container for storing QCPData items in a sort
+  Container for storing QCPData items in a sorted fashion. The key of the map
+  is the key member of the QCPData instance.
+  
+  This is the container in which QCPGraph holds its data.
+  \see QCPData, QCPGraph::setData
+*/
+typedef QMap<double, QCPData> QCPDataMap;
+typedef QMapIterator<double, QCPDat
