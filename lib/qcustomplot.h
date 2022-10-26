@@ -1713,4 +1713,8 @@ class QCP_LIB_DECL QCPGraph : public QCPAbstractPlottable
 {
   Q_OBJECT
   /// \cond INCLUDE_QPROPERTIES
-  Q_PROPERTY(LineStyle lineStyle READ lineStyle WRITE setLi
+  Q_PROPERTY(LineStyle lineStyle READ lineStyle WRITE setLineStyle)
+  Q_PROPERTY(QCPScatterStyle scatterStyle READ scatterStyle WRITE setScatterStyle)
+  Q_PROPERTY(ErrorType errorType READ errorType WRITE setErrorType)
+  Q_PROPERTY(QPen errorPen READ errorPen WRITE setErrorPen)
+  Q_PROPERTY(do
