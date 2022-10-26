@@ -1722,4 +1722,9 @@ class QCP_LIB_DECL QCPGraph : public QCPAbstractPlottable
   Q_PROPERTY(QCPGraph* channelFillGraph READ channelFillGraph WRITE setChannelFillGraph)
   /// \endcond
 public:
-  
+  /*!
+    Defines how the graph's line is represented visually in the plot. The line is drawn with the
+    current pen of the graph (\ref setPen).
+    \see setLineStyle
+  */
+  enum LineStyle { lsNone        ///< data points are not connected with any 
