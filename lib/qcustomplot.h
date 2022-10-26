@@ -1717,4 +1717,9 @@ class QCP_LIB_DECL QCPGraph : public QCPAbstractPlottable
   Q_PROPERTY(QCPScatterStyle scatterStyle READ scatterStyle WRITE setScatterStyle)
   Q_PROPERTY(ErrorType errorType READ errorType WRITE setErrorType)
   Q_PROPERTY(QPen errorPen READ errorPen WRITE setErrorPen)
-  Q_PROPERTY(do
+  Q_PROPERTY(double errorBarSize READ errorBarSize WRITE setErrorBarSize)
+  Q_PROPERTY(bool errorBarSkipSymbol READ errorBarSkipSymbol WRITE setErrorBarSkipSymbol)
+  Q_PROPERTY(QCPGraph* channelFillGraph READ channelFillGraph WRITE setChannelFillGraph)
+  /// \endcond
+public:
+  
