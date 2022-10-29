@@ -1732,4 +1732,5 @@ public:
                   ,lsLine        ///< data points are connected by a straight line
                   ,lsStepLeft    ///< line is drawn as steps where the step height is the value of the left data point
                   ,lsStepRight   ///< line is drawn as steps where the step height is the value of the right data point
-               
+                  ,lsStepCenter  ///< line is drawn as steps where the step is in between two data points
+                  ,lsImpulse     ///< each data point is represented by a line parallel to the value axis, which reaches from the data point to the zero-value
