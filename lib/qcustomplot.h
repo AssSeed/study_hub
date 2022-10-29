@@ -1730,4 +1730,6 @@ public:
   enum LineStyle { lsNone        ///< data points are not connected with any lines (e.g. data only represented
                                  ///< with symbols according to the scatter style, see \ref setScatterStyle)
                   ,lsLine        ///< data points are connected by a straight line
-              
+                  ,lsStepLeft    ///< line is drawn as steps where the step height is the value of the left data point
+                  ,lsStepRight   ///< line is drawn as steps where the step height is the value of the right data point
+               
