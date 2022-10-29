@@ -1727,4 +1727,7 @@ public:
     current pen of the graph (\ref setPen).
     \see setLineStyle
   */
-  enum LineStyle { lsNone        ///< data points are not connected with any 
+  enum LineStyle { lsNone        ///< data points are not connected with any lines (e.g. data only represented
+                                 ///< with symbols according to the scatter style, see \ref setScatterStyle)
+                  ,lsLine        ///< data points are connected by a straight line
+              
