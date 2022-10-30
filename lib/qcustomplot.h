@@ -1743,4 +1743,12 @@ public:
                   ,etKey    ///< Error bars for the key dimension of the data point are shown
                   ,etValue  ///< Error bars for the value dimension of the data point are shown
                   ,etBoth   ///< Error bars for both key and value dimensions of the data point are shown
-     
+                 };
+  Q_ENUMS(ErrorType)
+  
+  explicit QCPGraph(QCPAxis *keyAxis, QCPAxis *valueAxis);
+  virtual ~QCPGraph();
+  
+  // getters:
+  const QCPDataMap *data() const { return mData; }
+  LineStyle lineStyle() const { return mLineS
