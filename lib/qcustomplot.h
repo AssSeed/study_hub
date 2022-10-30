@@ -1740,4 +1740,7 @@ public:
     Defines what kind of error bars are drawn for each data point
   */
   enum ErrorType { etNone   ///< No error bars are shown
-                  ,etKey    ///< Error bars for the key dimension 
+                  ,etKey    ///< Error bars for the key dimension of the data point are shown
+                  ,etValue  ///< Error bars for the value dimension of the data point are shown
+                  ,etBoth   ///< Error bars for both key and value dimensions of the data point are shown
+     
