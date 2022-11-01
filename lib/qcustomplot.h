@@ -1755,4 +1755,10 @@ public:
   QCPScatterStyle scatterStyle() const { return mScatterStyle; }
   ErrorType errorType() const { return mErrorType; }
   QPen errorPen() const { return mErrorPen; }
-  double errorBarSize() const { return mErrorBarS
+  double errorBarSize() const { return mErrorBarSize; }
+  bool errorBarSkipSymbol() const { return mErrorBarSkipSymbol; }
+  QCPGraph *channelFillGraph() const { return mChannelFillGraph.data(); }
+  
+  // setters:
+  void setData(QCPDataMap *data, bool copy=false);
+  void setData(const QVector<double> &key, const QVector<double>
