@@ -1751,4 +1751,8 @@ public:
   
   // getters:
   const QCPDataMap *data() const { return mData; }
-  LineStyle lineStyle() const { return mLineS
+  LineStyle lineStyle() const { return mLineStyle; }
+  QCPScatterStyle scatterStyle() const { return mScatterStyle; }
+  ErrorType errorType() const { return mErrorType; }
+  QPen errorPen() const { return mErrorPen; }
+  double errorBarSize() const { return mErrorBarS
