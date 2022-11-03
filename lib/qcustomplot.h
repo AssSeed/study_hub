@@ -1765,4 +1765,5 @@ public:
   void setDataKeyError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyError);
   void setDataKeyError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyErrorMinus, const QVector<double> &keyErrorPlus);
   void setDataValueError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &valueError);
-  void setDataValueError(const QVector<double> &key, const Q
+  void setDataValueError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &valueErrorMinus, const QVector<double> &valueErrorPlus);
+  void setDataBothError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyError, const QVector<double> &valueEr
