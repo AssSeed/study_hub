@@ -1773,4 +1773,11 @@ public:
   void setErrorType(ErrorType errorType);
   void setErrorPen(const QPen &pen);
   void setErrorBarSize(double size);
-  void setErrorBarSkipSymbol(bool enabled)
+  void setErrorBarSkipSymbol(bool enabled);
+  void setChannelFillGraph(QCPGraph *targetGraph);
+  
+  // non-property methods:
+  void addData(const QCPDataMap &dataMap);
+  void addData(const QCPData &data);
+  void addData(double key, double value);
+  void addData(const QVector<double> &keys, const QVecto
