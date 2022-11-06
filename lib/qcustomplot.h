@@ -1768,4 +1768,9 @@ public:
   void setDataValueError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &valueErrorMinus, const QVector<double> &valueErrorPlus);
   void setDataBothError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyError, const QVector<double> &valueError);
   void setDataBothError(const QVector<double> &key, const QVector<double> &value, const QVector<double> &keyErrorMinus, const QVector<double> &keyErrorPlus, const QVector<double> &valueErrorMinus, const QVector<double> &valueErrorPlus);
-  void setLineStyle(Li
+  void setLineStyle(LineStyle ls);
+  void setScatterStyle(const QCPScatterStyle &style);
+  void setErrorType(ErrorType errorType);
+  void setErrorPen(const QPen &pen);
+  void setErrorBarSize(double size);
+  void setErrorBarSkipSymbol(bool enabled)
