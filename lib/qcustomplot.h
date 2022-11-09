@@ -1813,4 +1813,8 @@ protected:
   virtual QCPRange getKeyRange(bool &validRange, SignDomain inSignDomain=sdBoth) const;
   virtual QCPRange getValueRange(bool &validRange, SignDomain inSignDomain=sdBoth) const;
   virtual QCPRange getKeyRange(bool &validRange, SignDomain inSignDomain, bool includeErrors) const; // overloads base class interface
-  virtual QCPRange getValueRange(bool &validRange, SignDomain inSignDomai
+  virtual QCPRange getValueRange(bool &validRange, SignDomain inSignDomain, bool includeErrors) const; // overloads base class interface
+  
+  // introduced virtual methods:
+  virtual void drawFill(QCPPainter *painter, QVector<QPointF> *lineData) const;
+  virtual void drawScatterPlot(QCPPainter *painter, QVector<Q
