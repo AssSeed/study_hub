@@ -1795,4 +1795,16 @@ public:
   void rescaleAxes(bool onlyEnlarge, bool includeErrorBars) const; // overloads base class interface
   void rescaleKeyAxis(bool onlyEnlarge, bool includeErrorBars) const; // overloads base class interface
   void rescaleValueAxis(bool onlyEnlarge, bool includeErrorBars) const; // overloads base class interface
- 
+  
+protected:
+  // property members:
+  QCPDataMap *mData;
+  QPen mErrorPen;
+  LineStyle mLineStyle;
+  QCPScatterStyle mScatterStyle;
+  ErrorType mErrorType;
+  double mErrorBarSize;
+  bool mErrorBarSkipSymbol;
+  QPointer<QCPGraph> mChannelFillGraph;
+  
+  // reimplemented 
