@@ -1821,4 +1821,8 @@ protected:
   virtual void drawLinePlot(QCPPainter *painter, QVector<QPointF> *lineData) const;
   virtual void drawImpulsePlot(QCPPainter *painter, QVector<QPointF> *lineData) const;
   
-  // non-virtual metho
+  // non-virtual methods:
+  void getPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
+  void getScatterPlotData(QVector<QCPData> *pointData) const;
+  void getLinePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
+  void getStepLeftPlo
