@@ -1827,4 +1827,7 @@ protected:
   void getLinePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
   void getStepLeftPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
   void getStepRightPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
-  void getStepCenterPlotData(QVector<QPointF> *lineData, QVect
+  void getStepCenterPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
+  void getImpulsePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
+  void drawError(QCPPainter *painter, double x, double y, const QCPData &data) const;
+  void getVisibleDataBo
