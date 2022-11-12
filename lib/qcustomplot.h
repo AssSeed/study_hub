@@ -1825,4 +1825,6 @@ protected:
   void getPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
   void getScatterPlotData(QVector<QCPData> *pointData) const;
   void getLinePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
-  void getStepLeftPlo
+  void getStepLeftPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
+  void getStepRightPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
+  void getStepCenterPlotData(QVector<QPointF> *lineData, QVect
