@@ -1817,4 +1817,8 @@ protected:
   
   // introduced virtual methods:
   virtual void drawFill(QCPPainter *painter, QVector<QPointF> *lineData) const;
-  virtual void drawScatterPlot(QCPPainter *painter, QVector<Q
+  virtual void drawScatterPlot(QCPPainter *painter, QVector<QCPData> *pointData) const;
+  virtual void drawLinePlot(QCPPainter *painter, QVector<QPointF> *lineData) const;
+  virtual void drawImpulsePlot(QCPPainter *painter, QVector<QPointF> *lineData) const;
+  
+  // non-virtual metho
