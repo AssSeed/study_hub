@@ -1830,4 +1830,7 @@ protected:
   void getStepCenterPlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
   void getImpulsePlotData(QVector<QPointF> *lineData, QVector<QCPData> *pointData) const;
   void drawError(QCPPainter *painter, double x, double y, const QCPData &data) const;
-  void getVisibleDataBo
+  void getVisibleDataBounds(QCPDataMap::const_iterator &lower, QCPDataMap::const_iterator &upper, int &count) const;
+  void addFillBasePoints(QVector<QPointF> *lineData) const;
+  void removeFillBasePoints(QVector<QPointF> *lineData) const;
+  QPointF 
