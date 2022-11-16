@@ -1833,4 +1833,8 @@ protected:
   void getVisibleDataBounds(QCPDataMap::const_iterator &lower, QCPDataMap::const_iterator &upper, int &count) const;
   void addFillBasePoints(QVector<QPointF> *lineData) const;
   void removeFillBasePoints(QVector<QPointF> *lineData) const;
-  QPointF 
+  QPointF lowerFillBasePoint(double lowerKey) const;
+  QPointF upperFillBasePoint(double upperKey) const;
+  const QPolygonF getChannelFillPolygon(const QVector<QPointF> *lineData) const;
+  int findIndexBelowX(const QVector<QPointF> *data, double x) const;
+  int fi
