@@ -1837,4 +1837,7 @@ protected:
   QPointF upperFillBasePoint(double upperKey) const;
   const QPolygonF getChannelFillPolygon(const QVector<QPointF> *lineData) const;
   int findIndexBelowX(const QVector<QPointF> *data, double x) const;
-  int fi
+  int findIndexAboveX(const QVector<QPointF> *data, double x) const;
+  int findIndexBelowY(const QVector<QPointF> *data, double y) const;
+  int findIndexAboveY(const QVector<QPointF> *data, double y) const;
+  double pointDistan
