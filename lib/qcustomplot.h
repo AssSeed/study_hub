@@ -1840,4 +1840,20 @@ protected:
   int findIndexAboveX(const QVector<QPointF> *data, double x) const;
   int findIndexBelowY(const QVector<QPointF> *data, double y) const;
   int findIndexAboveY(const QVector<QPointF> *data, double y) const;
-  double pointDistan
+  double pointDistance(const QPointF &pixelPoint) const;
+  
+  friend class QCustomPlot;
+  friend class QCPLegend;
+};
+
+
+/*! \file */
+
+
+
+class QCP_LIB_DECL QCPCurveData
+{
+public:
+  QCPCurveData();
+  QCPCurveData(double t, double key, double value);
+  double t, key
