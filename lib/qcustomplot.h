@@ -1856,4 +1856,10 @@ class QCP_LIB_DECL QCPCurveData
 public:
   QCPCurveData();
   QCPCurveData(double t, double key, double value);
-  double t, key
+  double t, key, value;
+};
+Q_DECLARE_TYPEINFO(QCPCurveData, Q_MOVABLE_TYPE);
+
+/*! \typedef QCPCurveDataMap
+  Container for storing QCPCurveData items in a sorted fashion. The key of the map
+  is the t member of the QCPCurveData instance.
