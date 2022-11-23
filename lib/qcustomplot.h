@@ -1883,4 +1883,9 @@ class QCP_LIB_DECL QCPCurve : public QCPAbstractPlottable
 public:
   /*!
     Defines how the curve's line is represented visually in the plot. The line is drawn with the
-    current pen 
+    current pen of the curve (\ref setPen).
+    \see setLineStyle
+  */
+  enum LineStyle { lsNone, ///< No line is drawn between data points (e.g. only scatters)
+                   lsLine  ///< Data points are connected with a straight line
+                 };
