@@ -1870,4 +1870,11 @@ Q_DECLARE_TYPEINFO(QCPCurveData, Q_MOVABLE_TYPE);
 
 typedef QMap<double, QCPCurveData> QCPCurveDataMap;
 typedef QMapIterator<double, QCPCurveData> QCPCurveDataMapIterator;
-typedef
+typedef QMutableMapIterator<double, QCPCurveData> QCPCurveDataMutableMapIterator;
+
+
+class QCP_LIB_DECL QCPCurve : public QCPAbstractPlottable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QCPScatterStyle scatterStyle READ scatterStyle WRITE 
