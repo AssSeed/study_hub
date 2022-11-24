@@ -1889,3 +1889,10 @@ public:
   enum LineStyle { lsNone, ///< No line is drawn between data points (e.g. only scatters)
                    lsLine  ///< Data points are connected with a straight line
                  };
+  explicit QCPCurve(QCPAxis *keyAxis, QCPAxis *valueAxis);
+  virtual ~QCPCurve();
+  
+  // getters:
+  QCPCurveDataMap *data() const { return mData; }
+  QCPScatterStyle scatterStyle() const { return mScatterStyle; }
+  LineStyle lineStyle() const { re
