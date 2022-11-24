@@ -1895,4 +1895,10 @@ public:
   // getters:
   QCPCurveDataMap *data() const { return mData; }
   QCPScatterStyle scatterStyle() const { return mScatterStyle; }
-  LineStyle lineStyle() const { re
+  LineStyle lineStyle() const { return mLineStyle; }
+  
+  // setters:
+  void setData(QCPCurveDataMap *data, bool copy=false);
+  void setData(const QVector<double> &t, const QVector<double> &key, const QVector<double> &value);
+  void setData(const QVector<double> &key, const QVector<double> &value);
+  v
