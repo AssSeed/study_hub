@@ -1901,4 +1901,10 @@ public:
   void setData(QCPCurveDataMap *data, bool copy=false);
   void setData(const QVector<double> &t, const QVector<double> &key, const QVector<double> &value);
   void setData(const QVector<double> &key, const QVector<double> &value);
+  void setScatterStyle(const QCPScatterStyle &style);
+  void setLineStyle(LineStyle style);
+  
+  // non-property methods:
+  void addData(const QCPCurveDataMap &dataMap);
+  void addData(const QCPCurveData &data);
   v
