@@ -1907,4 +1907,9 @@ public:
   // non-property methods:
   void addData(const QCPCurveDataMap &dataMap);
   void addData(const QCPCurveData &data);
-  v
+  void addData(double t, double key, double value);
+  void addData(double key, double value);
+  void addData(const QVector<double> &ts, const QVector<double> &keys, const QVector<double> &values);
+  void removeDataBefore(double t);
+  void removeDataAfter(double t);
+  void removeData(doub
