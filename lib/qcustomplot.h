@@ -1921,4 +1921,11 @@ public:
   
 protected:
   // property members:
-  QCPC
+  QCPCurveDataMap *mData;
+  QCPScatterStyle mScatterStyle;
+  LineStyle mLineStyle;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  virtual void drawLegendIcon(QCPPainter *painter, const QRectF &rect) const;
+  virtual 
