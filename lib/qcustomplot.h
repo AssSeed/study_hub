@@ -1912,4 +1912,13 @@ public:
   void addData(const QVector<double> &ts, const QVector<double> &keys, const QVector<double> &values);
   void removeDataBefore(double t);
   void removeDataAfter(double t);
-  void removeData(doub
+  void removeData(double fromt, double tot);
+  void removeData(double t);
+  
+  // reimplemented virtual methods:
+  virtual void clearData();
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+protected:
+  // property members:
+  QCPC
