@@ -1939,4 +1939,20 @@ protected:
   double pointDistance(const QPointF &pixelPoint) const;
   QPointF outsideCoordsToPixels(double key, double value, int region, QRect axisRect) const;
   
-  frien
+  friend class QCustomPlot;
+  friend class QCPLegend;
+};
+
+
+/*! \file */
+
+
+
+class QCP_LIB_DECL QCPBarData
+{
+public:
+  QCPBarData();
+  QCPBarData(double key, double value);
+  double key, value;
+};
+Q_DECLARE_TYPEINFO(QCPBarData, Q_MOVABLE_TYPE);
