@@ -1932,4 +1932,11 @@ protected:
   virtual QCPRange getValueRange(bool &validRange, SignDomain inSignDomain=sdBoth) const;
   
   // introduced virtual methods:
-  virtual void drawScatterPlot(QCPPainter *painter
+  virtual void drawScatterPlot(QCPPainter *painter, const QVector<QPointF> *pointData) const;
+  
+  // non-virtual methods:
+  void getCurveData(QVector<QPointF> *lineData) const;
+  double pointDistance(const QPointF &pixelPoint) const;
+  QPointF outsideCoordsToPixels(double key, double value, int region, QRect axisRect) const;
+  
+  frien
