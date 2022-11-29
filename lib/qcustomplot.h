@@ -1956,3 +1956,10 @@ public:
   double key, value;
 };
 Q_DECLARE_TYPEINFO(QCPBarData, Q_MOVABLE_TYPE);
+
+/*! \typedef QCPBarDataMap
+  Container for storing QCPBarData items in a sorted fashion. The key of the map
+  is the key member of the QCPBarData instance.
+  
+  This is the container in which QCPBars holds its data.
+  \see QCPBarData, QCPBar
