@@ -1962,4 +1962,11 @@ Q_DECLARE_TYPEINFO(QCPBarData, Q_MOVABLE_TYPE);
   is the key member of the QCPBarData instance.
   
   This is the container in which QCPBars holds its data.
-  \see QCPBarData, QCPBar
+  \see QCPBarData, QCPBars::setData
+*/
+typedef QMap<double, QCPBarData> QCPBarDataMap;
+typedef QMapIterator<double, QCPBarData> QCPBarDataMapIterator;
+typedef QMutableMapIterator<double, QCPBarData> QCPBarDataMutableMapIterator;
+
+
+class
