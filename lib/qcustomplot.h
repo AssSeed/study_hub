@@ -1975,4 +1975,12 @@ class QCP_LIB_DECL QCPBars : public QCPAbstractPlottable
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(double width READ width WRITE setWidth)
   Q_PROPERTY(QCPBars* barBelow READ barBelow)
-  Q_PROPERTY(
+  Q_PROPERTY(QCPBars* barAbove READ barAbove)
+  /// \endcond
+public:
+  explicit QCPBars(QCPAxis *keyAxis, QCPAxis *valueAxis);
+  virtual ~QCPBars();
+  
+  // getters:
+  double width() const { return mWidth; }
+  QCPBars *barBelow() const { return mBarBelow.da
