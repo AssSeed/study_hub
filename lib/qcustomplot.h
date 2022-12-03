@@ -2005,4 +2005,11 @@ public:
   void removeData(double key);
   
   // reimplemented virtual methods:
-  virtua
+  virtual void clearData();
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+protected:
+  // property members:
+  QCPBarDataMap *mData;
+  double mWidth;
+  QPointer<QCPBars
