@@ -1983,4 +1983,11 @@ public:
   
   // getters:
   double width() const { return mWidth; }
-  QCPBars *barBelow() const { return mBarBelow.da
+  QCPBars *barBelow() const { return mBarBelow.data(); }
+  QCPBars *barAbove() const { return mBarAbove.data(); }
+  QCPBarDataMap *data() const { return mData; }
+  
+  // setters:
+  void setWidth(double width);
+  void setData(QCPBarDataMap *data, bool copy=false);
+  void setData(const QVector<do
