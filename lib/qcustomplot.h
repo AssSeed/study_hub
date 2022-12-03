@@ -1990,4 +1990,11 @@ public:
   // setters:
   void setWidth(double width);
   void setData(QCPBarDataMap *data, bool copy=false);
-  void setData(const QVector<do
+  void setData(const QVector<double> &key, const QVector<double> &value);
+  
+  // non-property methods:
+  void moveBelow(QCPBars *bars);
+  void moveAbove(QCPBars *bars);
+  void addData(const QCPBarDataMap &dataMap);
+  void addData(const QCPBarData &data);
+  void addData(double key, double value);
