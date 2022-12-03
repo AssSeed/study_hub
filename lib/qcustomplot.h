@@ -1998,3 +1998,11 @@ public:
   void addData(const QCPBarDataMap &dataMap);
   void addData(const QCPBarData &data);
   void addData(double key, double value);
+  void addData(const QVector<double> &keys, const QVector<double> &values);
+  void removeDataBefore(double key);
+  void removeDataAfter(double key);
+  void removeData(double fromKey, double toKey);
+  void removeData(double key);
+  
+  // reimplemented virtual methods:
+  virtua
