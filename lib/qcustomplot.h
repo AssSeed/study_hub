@@ -2022,4 +2022,16 @@ protected:
   
   // non-virtual methods:
   QPolygonF getBarPolygon(double key, double value) const;
-  dou
+  double getBaseValue(double key, bool positive) const;
+  static void connectBars(QCPBars* lower, QCPBars* upper);
+  
+  friend class QCustomPlot;
+  friend class QCPLegend;
+};
+
+
+/*! \file */
+
+
+
+class QCP_LIB_DECL QCPStatisticalBox : public QCPAbstr
