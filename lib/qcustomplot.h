@@ -2012,4 +2012,9 @@ protected:
   // property members:
   QCPBarDataMap *mData;
   double mWidth;
-  QPointer<QCPBars
+  QPointer<QCPBars> mBarBelow, mBarAbove;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  virtual void drawLegendIcon(QCPPainter *painter, const QRectF &rect) const;
+  virtual QCPRange getKeyRange(bool &validRange
