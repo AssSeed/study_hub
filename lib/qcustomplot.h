@@ -2034,4 +2034,10 @@ protected:
 
 
 
-class QCP_LIB_DECL QCPStatisticalBox : public QCPAbstr
+class QCP_LIB_DECL QCPStatisticalBox : public QCPAbstractPlottable
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(double key READ key WRITE setKey)
+  Q_PROPERTY(double minimum READ minimum WRITE setMinimum)
+  Q_PROPERTY(double lowerQuartile READ lowerQuartile WRITE setLow
