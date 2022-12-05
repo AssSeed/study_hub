@@ -2044,4 +2044,8 @@ class QCP_LIB_DECL QCPStatisticalBox : public QCPAbstractPlottable
   Q_PROPERTY(double median READ median WRITE setMedian)
   Q_PROPERTY(double upperQuartile READ upperQuartile WRITE setUpperQuartile)
   Q_PROPERTY(double maximum READ maximum WRITE setMaximum)
-  Q_PROPERTY(QVector<double> outliers READ ou
+  Q_PROPERTY(QVector<double> outliers READ outliers WRITE setOutliers)
+  Q_PROPERTY(double width READ width WRITE setWidth)
+  Q_PROPERTY(double whiskerWidth READ whiskerWidth WRITE setWhiskerWidth)
+  Q_PROPERTY(QPen whiskerPen READ whiskerPen WRITE setWhiskerPen)
+  Q_PROPERTY(QPen whiskerBarPen READ whiskerB
