@@ -2053,4 +2053,11 @@ class QCP_LIB_DECL QCPStatisticalBox : public QCPAbstractPlottable
   Q_PROPERTY(QCPScatterStyle outlierStyle READ outlierStyle WRITE setOutlierStyle)
   /// \endcond
 public:
-  explicit QCPStatisticalBox(QCPAxis *keyAxis, QCPAxis *valueA
+  explicit QCPStatisticalBox(QCPAxis *keyAxis, QCPAxis *valueAxis);
+  
+  // getters:
+  double key() const { return mKey; }
+  double minimum() const { return mMinimum; }
+  double lowerQuartile() const { return mLowerQuartile; }
+  double median() const { return mMedian; }
+  double u
