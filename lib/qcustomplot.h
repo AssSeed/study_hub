@@ -2048,4 +2048,9 @@ class QCP_LIB_DECL QCPStatisticalBox : public QCPAbstractPlottable
   Q_PROPERTY(double width READ width WRITE setWidth)
   Q_PROPERTY(double whiskerWidth READ whiskerWidth WRITE setWhiskerWidth)
   Q_PROPERTY(QPen whiskerPen READ whiskerPen WRITE setWhiskerPen)
-  Q_PROPERTY(QPen whiskerBarPen READ whiskerB
+  Q_PROPERTY(QPen whiskerBarPen READ whiskerBarPen WRITE setWhiskerBarPen)
+  Q_PROPERTY(QPen medianPen READ medianPen WRITE setMedianPen)
+  Q_PROPERTY(QCPScatterStyle outlierStyle READ outlierStyle WRITE setOutlierStyle)
+  /// \endcond
+public:
+  explicit QCPStatisticalBox(QCPAxis *keyAxis, QCPAxis *valueA
