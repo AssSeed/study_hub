@@ -2060,4 +2060,9 @@ public:
   double minimum() const { return mMinimum; }
   double lowerQuartile() const { return mLowerQuartile; }
   double median() const { return mMedian; }
-  double u
+  double upperQuartile() const { return mUpperQuartile; }
+  double maximum() const { return mMaximum; }
+  QVector<double> outliers() const { return mOutliers; }
+  double width() const { return mWidth; }
+  double whiskerWidth() const { return mWhiskerWidth; }
+  QPen whiskerPen
