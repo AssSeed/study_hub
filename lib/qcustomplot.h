@@ -2065,4 +2065,11 @@ public:
   QVector<double> outliers() const { return mOutliers; }
   double width() const { return mWidth; }
   double whiskerWidth() const { return mWhiskerWidth; }
-  QPen whiskerPen
+  QPen whiskerPen() const { return mWhiskerPen; }
+  QPen whiskerBarPen() const { return mWhiskerBarPen; }
+  QPen medianPen() const { return mMedianPen; }
+  QCPScatterStyle outlierStyle() const { return mOutlierStyle; }
+
+  // setters:
+  void setKey(double key);
+  void setMinimum(d
