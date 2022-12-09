@@ -2072,4 +2072,10 @@ public:
 
   // setters:
   void setKey(double key);
-  void setMinimum(d
+  void setMinimum(double value);
+  void setLowerQuartile(double value);
+  void setMedian(double value);
+  void setUpperQuartile(double value);
+  void setMaximum(double value);
+  void setOutliers(const QVector<double> &values);
+  void setData(double key, do
