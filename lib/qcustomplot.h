@@ -2088,4 +2088,13 @@ public:
   
   // non-property methods:
   virtual void clearData();
-  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0)
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+protected:
+  // property members:
+  QVector<double> mOutliers;
+  double mKey, mMinimum, mLowerQuartile, mMedian, mUpperQuartile, mMaximum;
+  double mWidth;
+  double mWhiskerWidth;
+  QPen mWhiskerPen, mWhiskerBarPen, mMedianPen;
+  QCPScatterSty
