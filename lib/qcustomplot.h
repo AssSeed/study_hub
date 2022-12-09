@@ -2082,4 +2082,10 @@ public:
   void setWidth(double width);
   void setWhiskerWidth(double width);
   void setWhiskerPen(const QPen &pen);
-  void setWhiskerBarPen(const QPen 
+  void setWhiskerBarPen(const QPen &pen);
+  void setMedianPen(const QPen &pen);
+  void setOutlierStyle(const QCPScatterStyle &style);
+  
+  // non-property methods:
+  virtual void clearData();
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0)
