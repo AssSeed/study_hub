@@ -2078,4 +2078,8 @@ public:
   void setUpperQuartile(double value);
   void setMaximum(double value);
   void setOutliers(const QVector<double> &values);
-  void setData(double key, do
+  void setData(double key, double minimum, double lowerQuartile, double median, double upperQuartile, double maximum);
+  void setWidth(double width);
+  void setWhiskerWidth(double width);
+  void setWhiskerPen(const QPen &pen);
+  void setWhiskerBarPen(const QPen 
