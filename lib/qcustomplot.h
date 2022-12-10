@@ -2107,4 +2107,13 @@ protected:
   
   // introduced virtual methods:
   virtual void drawQuartileBox(QCPPainter *painter, QRectF *quartileBox=0) const;
-  virtual void drawMedia
+  virtual void drawMedian(QCPPainter *painter) const;
+  virtual void drawWhiskers(QCPPainter *painter) const;
+  virtual void drawOutliers(QCPPainter *painter) const;
+  
+  friend class QCustomPlot;
+  friend class QCPLegend;
+};
+
+
+class QCP_LIB_DECL QCPIt
