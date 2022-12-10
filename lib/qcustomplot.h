@@ -2102,4 +2102,9 @@ protected:
   // reimplemented virtual methods:
   virtual void draw(QCPPainter *painter);
   virtual void drawLegendIcon(QCPPainter *painter, const QRectF &rect) const;
-  virtual QCPRange getKeyRange(bool &validRange, SignDomain inSignDomain=sdBoth) 
+  virtual QCPRange getKeyRange(bool &validRange, SignDomain inSignDomain=sdBoth) const;
+  virtual QCPRange getValueRange(bool &validRange, SignDomain inSignDomain=sdBoth) const;
+  
+  // introduced virtual methods:
+  virtual void drawQuartileBox(QCPPainter *painter, QRectF *quartileBox=0) const;
+  virtual void drawMedia
