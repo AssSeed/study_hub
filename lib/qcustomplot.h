@@ -2097,4 +2097,9 @@ protected:
   double mWidth;
   double mWhiskerWidth;
   QPen mWhiskerPen, mWhiskerBarPen, mMedianPen;
-  QCPScatterSty
+  QCPScatterStyle mOutlierStyle;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  virtual void drawLegendIcon(QCPPainter *painter, const QRectF &rect) const;
+  virtual QCPRange getKeyRange(bool &validRange, SignDomain inSignDomain=sdBoth) 
