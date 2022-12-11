@@ -2134,3 +2134,12 @@ public:
   // setters;
   void setPen(const QPen &pen);
   void setSelectedPen(const QPen &pen);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  QCPItemPosition * const point1;
+  QCPItemPosition * const point2;
+  
+protected:
+  // property members
