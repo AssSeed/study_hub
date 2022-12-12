@@ -2149,4 +2149,13 @@ protected:
   virtual void draw(QCPPainter *painter);
   
   // non-virtual methods:
-  double distToStraightLine(const QVector2D &point1, const QVector2D &vec, const QVector2D &point)
+  double distToStraightLine(const QVector2D &point1, const QVector2D &vec, const QVector2D &point) const;
+  QLineF getRectClippedStraightLine(const QVector2D &point1, const QVector2D &vec, const QRect &rect) const;
+  QPen mainPen() const;
+};
+
+
+class QCP_LIB_DECL QCPItemLine : public QCPAbstractItem
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPER
