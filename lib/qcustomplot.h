@@ -2142,4 +2142,11 @@ public:
   QCPItemPosition * const point2;
   
 protected:
-  // property members
+  // property members:
+  QPen mPen, mSelectedPen;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  
+  // non-virtual methods:
+  double distToStraightLine(const QVector2D &point1, const QVector2D &vec, const QVector2D &point)
