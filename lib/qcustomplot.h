@@ -2172,4 +2172,13 @@ public:
   QPen pen() const { return mPen; }
   QPen selectedPen() const { return mSelectedPen; }
   QCPLineEnding head() const { return mHead; }
-  QCPLineEnding tail() const { ret
+  QCPLineEnding tail() const { return mTail; }
+  
+  // setters;
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  void setHead(const QCPLineEnding &head);
+  void setTail(const QCPLineEnding &tail);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QP
