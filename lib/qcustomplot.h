@@ -2165,4 +2165,11 @@ class QCP_LIB_DECL QCPItemLine : public QCPAbstractItem
   Q_PROPERTY(QCPLineEnding tail READ tail WRITE setTail)
   /// \endcond
 public:
-  QCPItemLi
+  QCPItemLine(QCustomPlot *parentPlot);
+  virtual ~QCPItemLine();
+  
+  // getters:
+  QPen pen() const { return mPen; }
+  QPen selectedPen() const { return mSelectedPen; }
+  QCPLineEnding head() const { return mHead; }
+  QCPLineEnding tail() const { ret
