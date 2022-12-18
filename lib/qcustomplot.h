@@ -2200,4 +2200,10 @@ protected:
 };
 
 
-class QCP_LIB_DECL QCPItem
+class QCP_LIB_DECL QCPItemCurve : public QCPAbstractItem
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPen pen READ pen WRITE setPen)
+  Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedPen)
+  Q_PROPERTY(QCPLineEnding head READ head
