@@ -2191,4 +2191,13 @@ protected:
   QPen mPen, mSelectedPen;
   QCPLineEnding mHead, mTail;
   
-  // reimplemented virtual method
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  
+  // non-virtual methods:
+  QLineF getRectClippedLine(const QVector2D &start, const QVector2D &end, const QRect &rect) const;
+  QPen mainPen() const;
+};
+
+
+class QCP_LIB_DECL QCPItem
