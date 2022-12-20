@@ -2215,4 +2215,11 @@ public:
   
   // getters:
   QPen pen() const { return mPen; }
-  QPen selected
+  QPen selectedPen() const { return mSelectedPen; }
+  QCPLineEnding head() const { return mHead; }
+  QCPLineEnding tail() const { return mTail; }
+  
+  // setters;
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  void setHead(const QCPLineEnding &head);
