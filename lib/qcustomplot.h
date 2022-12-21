@@ -2229,4 +2229,14 @@ public:
   virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
   
   QCPItemPosition * const start;
-  QCPItemPosit
+  QCPItemPosition * const startDir;
+  QCPItemPosition * const endDir;
+  QCPItemPosition * const end;
+  
+protected:
+  // property members:
+  QPen mPen, mSelectedPen;
+  QCPLineEnding mHead, mTail;
+  
+  // reimplemented virtual methods:
+  virtual v
