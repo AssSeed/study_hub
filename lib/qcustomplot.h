@@ -2239,4 +2239,16 @@ protected:
   QCPLineEnding mHead, mTail;
   
   // reimplemented virtual methods:
-  virtual v
+  virtual void draw(QCPPainter *painter);
+  
+  // non-virtual methods:
+  QPen mainPen() const;
+};
+
+
+class QCP_LIB_DECL QCPItemRect : public QCPAbstractItem
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPen pen READ pen WRITE setPen)
+  Q_PROPERTY(QPe
