@@ -2259,4 +2259,11 @@ public:
   QCPItemRect(QCustomPlot *parentPlot);
   virtual ~QCPItemRect();
   
+  // getters:
+  QPen pen() const { return mPen; }
+  QPen selectedPen() const { return mSelectedPen; }
+  QBrush brush() const { return mBrush; }
+  QBrush selectedBrush() const { return mSelectedBrush; }
   
+  // setters;
+  void setPen(c
