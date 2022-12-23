@@ -2266,4 +2266,10 @@ public:
   QBrush selectedBrush() const { return mSelectedBrush; }
   
   // setters;
-  void setPen(c
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  void setBrush(const QBrush &brush);
+  void setSelectedBrush(const QBrush &brush);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, boo
