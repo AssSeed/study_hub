@@ -2272,4 +2272,11 @@ public:
   void setSelectedBrush(const QBrush &brush);
   
   // reimplemented virtual methods:
-  virtual double selectTest(const QPointF &pos, boo
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  QCPItemPosition * const topLeft;
+  QCPItemPosition * const bottomRight;
+  QCPItemAnchor * const top;
+  QCPItemAnchor * const topRight;
+  QCPItemAnchor * const right;
+  QCPItemAncho
