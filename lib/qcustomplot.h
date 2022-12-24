@@ -2279,4 +2279,12 @@ public:
   QCPItemAnchor * const top;
   QCPItemAnchor * const topRight;
   QCPItemAnchor * const right;
-  QCPItemAncho
+  QCPItemAnchor * const bottom;
+  QCPItemAnchor * const bottomLeft;
+  QCPItemAnchor * const left;
+  
+protected:
+  enum AnchorIndex {aiTop, aiTopRight, aiRight, aiBottom, aiBottomLeft, aiLeft};
+  
+  // property members:
+  QPen mPen, mS
