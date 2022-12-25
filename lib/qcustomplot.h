@@ -2295,4 +2295,14 @@ protected:
   virtual QPointF anchorPixelPoint(int anchorId) const;
   
   // non-virtual methods:
-  QPen mainPen() con
+  QPen mainPen() const;
+  QBrush mainBrush() const;
+};
+
+
+class QCP_LIB_DECL QCPItemText : public QCPAbstractItem
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QColor color READ color WRITE setColor)
+  Q_PROPERTY(QColor selectedColor
