@@ -2305,4 +2305,8 @@ class QCP_LIB_DECL QCPItemText : public QCPAbstractItem
   Q_OBJECT
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(QColor color READ color WRITE setColor)
-  Q_PROPERTY(QColor selectedColor
+  Q_PROPERTY(QColor selectedColor READ selectedColor WRITE setSelectedColor)
+  Q_PROPERTY(QPen pen READ pen WRITE setPen)
+  Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedPen)
+  Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
+  Q_PROPERTY(QBrush selectedBrush READ selectedBrush WRITE
