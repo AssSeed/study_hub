@@ -2313,4 +2313,7 @@ class QCP_LIB_DECL QCPItemText : public QCPAbstractItem
   Q_PROPERTY(QFont font READ font WRITE setFont)
   Q_PROPERTY(QFont selectedFont READ selectedFont WRITE setSelectedFont)
   Q_PROPERTY(QString text READ text WRITE setText)
-  Q_PROPERTY(Qt::Alignment positionAlignment READ
+  Q_PROPERTY(Qt::Alignment positionAlignment READ positionAlignment WRITE setPositionAlignment)
+  Q_PROPERTY(Qt::Alignment textAlignment READ textAlignment WRITE setTextAlignment)
+  Q_PROPERTY(double rotation READ rotation WRITE setRotation)
+  Q_PROPERTY(QMargins padding READ paddi
