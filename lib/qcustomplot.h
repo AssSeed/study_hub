@@ -2309,4 +2309,8 @@ class QCP_LIB_DECL QCPItemText : public QCPAbstractItem
   Q_PROPERTY(QPen pen READ pen WRITE setPen)
   Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedPen)
   Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
-  Q_PROPERTY(QBrush selectedBrush READ selectedBrush WRITE
+  Q_PROPERTY(QBrush selectedBrush READ selectedBrush WRITE setSelectedBrush)
+  Q_PROPERTY(QFont font READ font WRITE setFont)
+  Q_PROPERTY(QFont selectedFont READ selectedFont WRITE setSelectedFont)
+  Q_PROPERTY(QString text READ text WRITE setText)
+  Q_PROPERTY(Qt::Alignment positionAlignment READ
