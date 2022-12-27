@@ -2316,4 +2316,14 @@ class QCP_LIB_DECL QCPItemText : public QCPAbstractItem
   Q_PROPERTY(Qt::Alignment positionAlignment READ positionAlignment WRITE setPositionAlignment)
   Q_PROPERTY(Qt::Alignment textAlignment READ textAlignment WRITE setTextAlignment)
   Q_PROPERTY(double rotation READ rotation WRITE setRotation)
-  Q_PROPERTY(QMargins padding READ paddi
+  Q_PROPERTY(QMargins padding READ padding WRITE setPadding)
+  /// \endcond
+public:
+  QCPItemText(QCustomPlot *parentPlot);
+  virtual ~QCPItemText();
+  
+  // getters:
+  QColor color() const { return mColor; }
+  QColor selectedColor() const { return mSelectedColor; }
+  QPen pen() const { return mPen; }
+  QPen selectedPen()
