@@ -2331,4 +2331,8 @@ public:
   QBrush selectedBrush() const { return mSelectedBrush; }
   QFont font() const { return mFont; }
   QFont selectedFont() const { return mSelectedFont; }
- 
+  QString text() const { return mText; }
+  Qt::Alignment positionAlignment() const { return mPositionAlignment; }
+  Qt::Alignment textAlignment() const { return mTextAlignment; }
+  double rotation() const { return mRotation; }
+  QMargins padding(
