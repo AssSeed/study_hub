@@ -2326,4 +2326,9 @@ public:
   QColor color() const { return mColor; }
   QColor selectedColor() const { return mSelectedColor; }
   QPen pen() const { return mPen; }
-  QPen selectedPen()
+  QPen selectedPen() const { return mSelectedPen; }
+  QBrush brush() const { return mBrush; }
+  QBrush selectedBrush() const { return mSelectedBrush; }
+  QFont font() const { return mFont; }
+  QFont selectedFont() const { return mSelectedFont; }
+ 
