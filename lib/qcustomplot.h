@@ -2335,4 +2335,11 @@ public:
   Qt::Alignment positionAlignment() const { return mPositionAlignment; }
   Qt::Alignment textAlignment() const { return mTextAlignment; }
   double rotation() const { return mRotation; }
-  QMargins padding(
+  QMargins padding() const { return mPadding; }
+  
+  // setters;
+  void setColor(const QColor &color);
+  void setSelectedColor(const QColor &color);
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  void setBrush(const QBrush &
