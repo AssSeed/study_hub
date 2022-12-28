@@ -2348,4 +2348,11 @@ public:
   void setSelectedFont(const QFont &font);
   void setText(const QString &text);
   void setPositionAlignment(Qt::Alignment alignment);
-  void setTextAlignment(Qt::Ali
+  void setTextAlignment(Qt::Alignment alignment);
+  void setRotation(double degrees);
+  void setPadding(const QMargins &padding);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  QCPItemPosition * c
