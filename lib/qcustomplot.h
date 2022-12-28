@@ -2342,4 +2342,10 @@ public:
   void setSelectedColor(const QColor &color);
   void setPen(const QPen &pen);
   void setSelectedPen(const QPen &pen);
-  void setBrush(const QBrush &
+  void setBrush(const QBrush &brush);
+  void setSelectedBrush(const QBrush &brush);
+  void setFont(const QFont &font);
+  void setSelectedFont(const QFont &font);
+  void setText(const QString &text);
+  void setPositionAlignment(Qt::Alignment alignment);
+  void setTextAlignment(Qt::Ali
