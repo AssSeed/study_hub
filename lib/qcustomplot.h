@@ -2371,4 +2371,13 @@ protected:
   // property members:
   QColor mColor, mSelectedColor;
   QPen mPen, mSelectedPen;
-  QBrush mBrush, mSelecte
+  QBrush mBrush, mSelectedBrush;
+  QFont mFont, mSelectedFont;
+  QString mText;
+  Qt::Alignment mPositionAlignment;
+  Qt::Alignment mTextAlignment;
+  double mRotation;
+  QMargins mPadding;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter
