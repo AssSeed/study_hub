@@ -2363,4 +2363,12 @@ public:
   QCPItemAnchor * const bottomRight;
   QCPItemAnchor * const bottom;
   QCPItemAnchor * const bottomLeft;
-  QCPIt
+  QCPItemAnchor * const left;
+  
+protected:
+  enum AnchorIndex {aiTopLeft, aiTop, aiTopRight, aiRight, aiBottomRight, aiBottom, aiBottomLeft, aiLeft};
+  
+  // property members:
+  QColor mColor, mSelectedColor;
+  QPen mPen, mSelectedPen;
+  QBrush mBrush, mSelecte
