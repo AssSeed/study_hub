@@ -2380,4 +2380,11 @@ protected:
   QMargins mPadding;
   
   // reimplemented virtual methods:
-  virtual void draw(QCPPainter *painter
+  virtual void draw(QCPPainter *painter);
+  virtual QPointF anchorPixelPoint(int anchorId) const;
+  
+  // non-virtual methods:
+  QPointF getTextDrawPoint(const QPointF &pos, const QRectF &rect, Qt::Alignment positionAlignment) const;
+  QFont mainFont() const;
+  QColor mainColor() const;
+  QPen main
