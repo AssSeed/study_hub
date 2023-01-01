@@ -2387,4 +2387,14 @@ protected:
   QPointF getTextDrawPoint(const QPointF &pos, const QRectF &rect, Qt::Alignment positionAlignment) const;
   QFont mainFont() const;
   QColor mainColor() const;
-  QPen main
+  QPen mainPen() const;
+  QBrush mainBrush() const;
+};
+
+
+class QCP_LIB_DECL QCPItemEllipse : public QCPAbstractItem
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPen pen READ pen WRITE setPen)
+  Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedP
