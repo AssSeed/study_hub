@@ -2405,4 +2405,11 @@ public:
   QCPItemEllipse(QCustomPlot *parentPlot);
   virtual ~QCPItemEllipse();
   
-  // g
+  // getters:
+  QPen pen() const { return mPen; }
+  QPen selectedPen() const { return mSelectedPen; }
+  QBrush brush() const { return mBrush; }
+  QBrush selectedBrush() const { return mSelectedBrush; }
+  
+  // setters;
+  void setPen(const Q
