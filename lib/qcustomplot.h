@@ -2433,4 +2433,11 @@ public:
   QCPItemAnchor * const center;
   
 protected:
-  enum AnchorIndex {aiTopLeftRim, aiTop, aiT
+  enum AnchorIndex {aiTopLeftRim, aiTop, aiTopRightRim, aiRight, aiBottomRightRim, aiBottom, aiBottomLeftRim, aiLeft, aiCenter};
+  
+  // property members:
+  QPen mPen, mSelectedPen;
+  QBrush mBrush, mSelectedBrush;
+  
+  // reimplemented virtual methods:
+  virtual void
