@@ -2451,4 +2451,9 @@ protected:
 
 class QCP_LIB_DECL QCPItemPixmap : public QCPAbstractItem
 {
-  
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPixmap pixmap READ pixmap WRITE setPixmap)
+  Q_PROPERTY(bool scaled READ scaled WRITE setScaled)
+  Q_PROPERTY(Qt::AspectRatioMode aspectRatioMode READ aspectRatioMode)
+  Q_PROPERTY(QPen pen 
