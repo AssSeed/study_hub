@@ -2440,4 +2440,15 @@ protected:
   QBrush mBrush, mSelectedBrush;
   
   // reimplemented virtual methods:
-  virtual void
+  virtual void draw(QCPPainter *painter);
+  virtual QPointF anchorPixelPoint(int anchorId) const;
+  
+  // non-virtual methods:
+  QPen mainPen() const;
+  QBrush mainBrush() const;
+};
+
+
+class QCP_LIB_DECL QCPItemPixmap : public QCPAbstractItem
+{
+  
