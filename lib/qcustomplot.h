@@ -2425,4 +2425,12 @@ public:
   QCPItemAnchor * const topLeftRim;
   QCPItemAnchor * const top;
   QCPItemAnchor * const topRightRim;
-  QCPItemAnchor * const 
+  QCPItemAnchor * const right;
+  QCPItemAnchor * const bottomRightRim;
+  QCPItemAnchor * const bottom;
+  QCPItemAnchor * const bottomLeftRim;
+  QCPItemAnchor * const left;
+  QCPItemAnchor * const center;
+  
+protected:
+  enum AnchorIndex {aiTopLeftRim, aiTop, aiT
