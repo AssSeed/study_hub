@@ -2456,4 +2456,12 @@ class QCP_LIB_DECL QCPItemPixmap : public QCPAbstractItem
   Q_PROPERTY(QPixmap pixmap READ pixmap WRITE setPixmap)
   Q_PROPERTY(bool scaled READ scaled WRITE setScaled)
   Q_PROPERTY(Qt::AspectRatioMode aspectRatioMode READ aspectRatioMode)
-  Q_PROPERTY(QPen pen 
+  Q_PROPERTY(QPen pen READ pen WRITE setPen)
+  Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedPen)
+  /// \endcond
+public:
+  QCPItemPixmap(QCustomPlot *parentPlot);
+  virtual ~QCPItemPixmap();
+  
+  // getters:
+  QPixmap pixmap() const { return 
