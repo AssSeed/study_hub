@@ -2484,4 +2484,13 @@ public:
   QCPItemAnchor * const top;
   QCPItemAnchor * const topRight;
   QCPItemAnchor * const right;
-  QCPI
+  QCPItemAnchor * const bottom;
+  QCPItemAnchor * const bottomLeft;
+  QCPItemAnchor * const left;
+  
+protected:
+  enum AnchorIndex {aiTop, aiTopRight, aiRight, aiBottom, aiBottomLeft, aiLeft};
+  
+  // property members:
+  QPixmap mPixmap;
+  QPixmap mScal
