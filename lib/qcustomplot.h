@@ -2471,4 +2471,10 @@ public:
   QPen selectedPen() const { return mSelectedPen; }
   
   // setters;
-  void setPixmap
+  void setPixmap(const QPixmap &pixmap);
+  void setScaled(bool scaled, Qt::AspectRatioMode aspectRatioMode=Qt::KeepAspectRatio);
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const
