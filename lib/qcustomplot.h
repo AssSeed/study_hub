@@ -2464,4 +2464,11 @@ public:
   virtual ~QCPItemPixmap();
   
   // getters:
-  QPixmap pixmap() const { return 
+  QPixmap pixmap() const { return mPixmap; }
+  bool scaled() const { return mScaled; }
+  Qt::AspectRatioMode aspectRatioMode() const { return mAspectRatioMode; }
+  QPen pen() const { return mPen; }
+  QPen selectedPen() const { return mSelectedPen; }
+  
+  // setters;
+  void setPixmap
