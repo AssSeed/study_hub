@@ -2477,4 +2477,11 @@ public:
   void setSelectedPen(const QPen &pen);
   
   // reimplemented virtual methods:
-  virtual double selectTest(const
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  QCPItemPosition * const topLeft;
+  QCPItemPosition * const bottomRight;
+  QCPItemAnchor * const top;
+  QCPItemAnchor * const topRight;
+  QCPItemAnchor * const right;
+  QCPI
