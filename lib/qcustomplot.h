@@ -2502,4 +2502,11 @@ protected:
   virtual void draw(QCPPainter *painter);
   virtual QPointF anchorPixelPoint(int anchorId) const;
   
-  // non-
+  // non-virtual methods:
+  void updateScaledPixmap(QRect finalRect=QRect(), bool flipHorz=false, bool flipVert=false);
+  QRect getFinalRect(bool *flippedHorz=0, bool *flippedVert=0) const;
+  QPen mainPen() const;
+};
+
+
+class QCP_LIB_DECL QCPIt
