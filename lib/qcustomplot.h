@@ -2493,4 +2493,13 @@ protected:
   
   // property members:
   QPixmap mPixmap;
-  QPixmap mScal
+  QPixmap mScaledPixmap;
+  bool mScaled;
+  Qt::AspectRatioMode mAspectRatioMode;
+  QPen mPen, mSelectedPen;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  virtual QPointF anchorPixelPoint(int anchorId) const;
+  
+  // non-
