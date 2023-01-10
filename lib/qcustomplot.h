@@ -2520,4 +2520,9 @@ class QCP_LIB_DECL QCPItemTracer : public QCPAbstractItem
   Q_PROPERTY(double size READ size WRITE setSize)
   Q_PROPERTY(TracerStyle style READ style WRITE setStyle)
   Q_PROPERTY(QCPGraph* graph READ graph WRITE setGraph)
-  Q_PROPERTY(
+  Q_PROPERTY(double graphKey READ graphKey WRITE setGraphKey)
+  Q_PROPERTY(bool interpolating READ interpolating WRITE setInterpolating)
+  /// \endcond
+public:
+  /*!
+    The different visual appearances a tracer item can have. Some styles size may be controlled with \ref setSize
