@@ -2515,4 +2515,9 @@ class QCP_LIB_DECL QCPItemTracer : public QCPAbstractItem
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(QPen pen READ pen WRITE setPen)
   Q_PROPERTY(QPen selectedPen READ selectedPen WRITE setSelectedPen)
-  Q_PROPERTY(QBrush brush READ brush WRIT
+  Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
+  Q_PROPERTY(QBrush selectedBrush READ selectedBrush WRITE setSelectedBrush)
+  Q_PROPERTY(double size READ size WRITE setSize)
+  Q_PROPERTY(TracerStyle style READ style WRITE setStyle)
+  Q_PROPERTY(QCPGraph* graph READ graph WRITE setGraph)
+  Q_PROPERTY(
