@@ -2531,4 +2531,14 @@ public:
   */
   enum TracerStyle { tsNone        ///< The tracer is not visible
                      ,tsPlus       ///< A plus shaped crosshair with limited size
-                     ,tsCrosshair  ///< A plus shaped crosshair which spans th
+                     ,tsCrosshair  ///< A plus shaped crosshair which spans the complete axis rect
+                     ,tsCircle     ///< A circle
+                     ,tsSquare     ///< A square
+                   };
+  Q_ENUMS(TracerStyle)
+
+  QCPItemTracer(QCustomPlot *parentPlot);
+  virtual ~QCPItemTracer();
+
+  // getters:
+  Q
