@@ -2525,4 +2525,10 @@ class QCP_LIB_DECL QCPItemTracer : public QCPAbstractItem
   /// \endcond
 public:
   /*!
-    The different visual appearances a tracer item can have. Some styles size may be controlled with \ref setSize
+    The different visual appearances a tracer item can have. Some styles size may be controlled with \ref setSize.
+    
+    \see setStyle
+  */
+  enum TracerStyle { tsNone        ///< The tracer is not visible
+                     ,tsPlus       ///< A plus shaped crosshair with limited size
+                     ,tsCrosshair  ///< A plus shaped crosshair which spans th
