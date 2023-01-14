@@ -2541,4 +2541,9 @@ public:
   virtual ~QCPItemTracer();
 
   // getters:
-  Q
+  QPen pen() const { return mPen; }
+  QPen selectedPen() const { return mSelectedPen; }
+  QBrush brush() const { return mBrush; }
+  QBrush selectedBrush() const { return mSelectedBrush; }
+  double size() const { return mSize; }
+  TracerStyle sty
