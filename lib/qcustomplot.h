@@ -2546,4 +2546,11 @@ public:
   QBrush brush() const { return mBrush; }
   QBrush selectedBrush() const { return mSelectedBrush; }
   double size() const { return mSize; }
-  TracerStyle sty
+  TracerStyle style() const { return mStyle; }
+  QCPGraph *graph() const { return mGraph; }
+  double graphKey() const { return mGraphKey; }
+  bool interpolating() const { return mInterpolating; }
+
+  // setters;
+  void setPen(const QPen &pen);
+  void se
