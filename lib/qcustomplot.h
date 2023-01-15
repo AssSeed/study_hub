@@ -2559,4 +2559,11 @@ public:
   void setSize(double size);
   void setStyle(TracerStyle style);
   void setGraph(QCPGraph *graph);
-  void setGr
+  void setGraphKey(double key);
+  void setInterpolating(bool enabled);
+
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  // non-virtual methods:
+  void updatePos
