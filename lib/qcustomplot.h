@@ -2553,4 +2553,10 @@ public:
 
   // setters;
   void setPen(const QPen &pen);
-  void se
+  void setSelectedPen(const QPen &pen);
+  void setBrush(const QBrush &brush);
+  void setSelectedBrush(const QBrush &brush);
+  void setSize(double size);
+  void setStyle(TracerStyle style);
+  void setGraph(QCPGraph *graph);
+  void setGr
