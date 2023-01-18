@@ -2580,4 +2580,17 @@ protected:
   double mGraphKey;
   bool mInterpolating;
 
-  // reimplemented virtual 
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+
+  // non-virtual methods:
+  QPen mainPen() const;
+  QBrush mainBrush() const;
+};
+
+
+class QCP_LIB_DECL QCPItemBracket : public QCPAbstractItem
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPen pen READ pen W
