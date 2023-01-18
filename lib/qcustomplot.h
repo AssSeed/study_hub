@@ -2566,4 +2566,18 @@ public:
   virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
   
   // non-virtual methods:
-  void updatePos
+  void updatePosition();
+
+  QCPItemPosition * const position;
+
+protected:
+  // property members:
+  QPen mPen, mSelectedPen;
+  QBrush mBrush, mSelectedBrush;
+  double mSize;
+  TracerStyle mStyle;
+  QCPGraph *mGraph;
+  double mGraphKey;
+  bool mInterpolating;
+
+  // reimplemented virtual 
