@@ -2599,4 +2599,7 @@ class QCP_LIB_DECL QCPItemBracket : public QCPAbstractItem
   Q_PROPERTY(BracketStyle style READ style WRITE setStyle)
   /// \endcond
 public:
-  enum BracketStyle { bs
+  enum BracketStyle { bsSquare  ///< A brace with angled edges
+                      ,bsRound  ///< A brace with round edges
+                      ,bsCurly  ///< A curly brace
+                      ,bsCalligraphic ///< A curly brace with varying stroke width giving a calligraphic impress
