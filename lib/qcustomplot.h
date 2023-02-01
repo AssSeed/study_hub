@@ -2621,4 +2621,15 @@ public:
   void setStyle(BracketStyle style);
   
   // reimplemented virtual methods:
-  virtual double selectTest(const QPointF &pos, bool onlySelectabl
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  QCPItemPosition * const left;
+  QCPItemPosition * const right;
+  QCPItemAnchor * const center;
+  
+protected:
+  // property members:
+  enum AnchorIndex {aiCenter};
+  QPen mPen, mSelectedPen;
+  double mLength;
+  BracketSt
