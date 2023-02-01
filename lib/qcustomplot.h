@@ -2612,4 +2612,13 @@ public:
   QPen pen() const { return mPen; }
   QPen selectedPen() const { return mSelectedPen; }
   double length() const { return mLength; }
-  BracketStyle style() cons
+  BracketStyle style() const { return mStyle; }
+  
+  // setters;
+  void setPen(const QPen &pen);
+  void setSelectedPen(const QPen &pen);
+  void setLength(double length);
+  void setStyle(BracketStyle style);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectabl
