@@ -2602,4 +2602,14 @@ public:
   enum BracketStyle { bsSquare  ///< A brace with angled edges
                       ,bsRound  ///< A brace with round edges
                       ,bsCurly  ///< A curly brace
-                      ,bsCalligraphic ///< A curly brace with varying stroke width giving a calligraphic impress
+                      ,bsCalligraphic ///< A curly brace with varying stroke width giving a calligraphic impression
+  };
+
+  QCPItemBracket(QCustomPlot *parentPlot);
+  virtual ~QCPItemBracket();
+  
+  // getters:
+  QPen pen() const { return mPen; }
+  QPen selectedPen() const { return mSelectedPen; }
+  double length() const { return mLength; }
+  BracketStyle style() cons
