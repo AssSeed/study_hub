@@ -2632,4 +2632,15 @@ protected:
   enum AnchorIndex {aiCenter};
   QPen mPen, mSelectedPen;
   double mLength;
-  BracketSt
+  BracketStyle mStyle;
+  
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  virtual QPointF anchorPixelPoint(int anchorId) const;
+  
+  // non-virtual methods:
+  QPen mainPen() const;
+};
+
+
+class QCP_LIB_DECL QCPAxisR
