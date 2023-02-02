@@ -2643,4 +2643,10 @@ protected:
 };
 
 
-class QCP_LIB_DECL QCPAxisR
+class QCP_LIB_DECL QCPAxisRect : public QCPLayoutElement
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPixmap background READ background WRITE setBackground)
+  Q_PROPERTY(bool backgroundScaled READ backgroundScaled WRITE setBackgroundScaled)
+  Q_PROPERTY(Qt::
