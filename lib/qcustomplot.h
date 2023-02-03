@@ -2649,4 +2649,6 @@ class QCP_LIB_DECL QCPAxisRect : public QCPLayoutElement
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(QPixmap background READ background WRITE setBackground)
   Q_PROPERTY(bool backgroundScaled READ backgroundScaled WRITE setBackgroundScaled)
-  Q_PROPERTY(Qt::
+  Q_PROPERTY(Qt::AspectRatioMode backgroundScaledMode READ backgroundScaledMode WRITE setBackgroundScaledMode)
+  Q_PROPERTY(Qt::Orientations rangeDrag READ rangeDrag WRITE setRangeDrag)
+  Q_PROPERTY(Qt::Orientations rangeZoom RE
