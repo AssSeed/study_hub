@@ -2651,4 +2651,11 @@ class QCP_LIB_DECL QCPAxisRect : public QCPLayoutElement
   Q_PROPERTY(bool backgroundScaled READ backgroundScaled WRITE setBackgroundScaled)
   Q_PROPERTY(Qt::AspectRatioMode backgroundScaledMode READ backgroundScaledMode WRITE setBackgroundScaledMode)
   Q_PROPERTY(Qt::Orientations rangeDrag READ rangeDrag WRITE setRangeDrag)
-  Q_PROPERTY(Qt::Orientations rangeZoom RE
+  Q_PROPERTY(Qt::Orientations rangeZoom READ rangeZoom WRITE setRangeZoom)
+  /// \endcond
+public:
+  explicit QCPAxisRect(QCustomPlot *parentPlot, bool setupDefaultAxes=true);
+  virtual ~QCPAxisRect();
+  
+  // getters:
+  QPixmap background() const { return mBackgroundP
