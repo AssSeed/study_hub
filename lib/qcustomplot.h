@@ -2658,4 +2658,8 @@ public:
   virtual ~QCPAxisRect();
   
   // getters:
-  QPixmap background() const { return mBackgroundP
+  QPixmap background() const { return mBackgroundPixmap; }
+  bool backgroundScaled() const { return mBackgroundScaled; }
+  Qt::AspectRatioMode backgroundScaledMode() const { return mBackgroundScaledMode; }
+  Qt::Orientations rangeDrag() const { return mRangeDrag; }
+  Qt::Orientations rangeZoom() const { return 
