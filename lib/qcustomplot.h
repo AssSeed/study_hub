@@ -2662,4 +2662,11 @@ public:
   bool backgroundScaled() const { return mBackgroundScaled; }
   Qt::AspectRatioMode backgroundScaledMode() const { return mBackgroundScaledMode; }
   Qt::Orientations rangeDrag() const { return mRangeDrag; }
-  Qt::Orientations rangeZoom() const { return 
+  Qt::Orientations rangeZoom() const { return mRangeZoom; }
+  QCPAxis *rangeDragAxis(Qt::Orientation orientation);
+  QCPAxis *rangeZoomAxis(Qt::Orientation orientation);
+  double rangeZoomFactor(Qt::Orientation orientation);
+  
+  // setters:
+  void setBackground(const QPixmap &pm);
+  void setBac
