@@ -2672,4 +2672,9 @@ public:
   void setBackground(const QPixmap &pm, bool scaled, Qt::AspectRatioMode mode=Qt::KeepAspectRatioByExpanding);
   void setBackground(const QBrush &brush);
   void setBackgroundScaled(bool scaled);
-  void setBackgroundScaledMode(Qt::AspectRatioMode mode
+  void setBackgroundScaledMode(Qt::AspectRatioMode mode);
+  void setRangeDrag(Qt::Orientations orientations);
+  void setRangeZoom(Qt::Orientations orientations);
+  void setRangeDragAxes(QCPAxis *horizontal, QCPAxis *vertical);
+  void setRangeZoomAxes(QCPAxis *horizontal, QCPAxis *vertical);
+  voi
