@@ -2677,4 +2677,9 @@ public:
   void setRangeZoom(Qt::Orientations orientations);
   void setRangeDragAxes(QCPAxis *horizontal, QCPAxis *vertical);
   void setRangeZoomAxes(QCPAxis *horizontal, QCPAxis *vertical);
-  voi
+  void setRangeZoomFactor(double horizontalFactor, double verticalFactor);
+  void setRangeZoomFactor(double factor);
+  
+  // non-property methods:
+  int axisCount(QCPAxis::AxisType type) const;
+  QCPAxis *axis(QCPAxis::AxisType type, i
