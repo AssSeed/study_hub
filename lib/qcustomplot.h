@@ -2682,4 +2682,10 @@ public:
   
   // non-property methods:
   int axisCount(QCPAxis::AxisType type) const;
-  QCPAxis *axis(QCPAxis::AxisType type, i
+  QCPAxis *axis(QCPAxis::AxisType type, int index=0) const;
+  QList<QCPAxis*> axes(QCPAxis::AxisTypes types) const;
+  QList<QCPAxis*> axes() const;
+  QCPAxis *addAxis(QCPAxis::AxisType type);
+  QList<QCPAxis*> addAxes(QCPAxis::AxisTypes types);
+  bool removeAxis(QCPAxis *axis);
+  QCPLayoutIns
