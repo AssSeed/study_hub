@@ -2688,4 +2688,9 @@ public:
   QCPAxis *addAxis(QCPAxis::AxisType type);
   QList<QCPAxis*> addAxes(QCPAxis::AxisTypes types);
   bool removeAxis(QCPAxis *axis);
-  QCPLayoutIns
+  QCPLayoutInset *insetLayout() const { return mInsetLayout; }
+  
+  void setupFullAxesBox(bool connectRanges=false);
+  QList<QCPAbstractPlottable*> plottables() const;
+  QList<QCPGraph*> graphs() const;
+  QList<QCPAbstractIte
