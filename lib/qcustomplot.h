@@ -2699,4 +2699,9 @@ public:
   int left() const { return mRect.left(); }
   int right() const { return mRect.right(); }
   int top() const { return mRect.top(); }
-  int bottom() const { return mRect.bottom();
+  int bottom() const { return mRect.bottom(); }
+  int width() const { return mRect.width(); }
+  int height() const { return mRect.height(); }
+  QSize size() const { return mRect.size(); }
+  QPoint topLeft() const { return mRect.topLeft(); }
+  QPoint topRight() const { return mRect.topRight(); }
