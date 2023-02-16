@@ -2693,4 +2693,10 @@ public:
   void setupFullAxesBox(bool connectRanges=false);
   QList<QCPAbstractPlottable*> plottables() const;
   QList<QCPGraph*> graphs() const;
-  QList<QCPAbstractIte
+  QList<QCPAbstractItem*> items() const;
+  
+  // read-only interface imitating a QRect:
+  int left() const { return mRect.left(); }
+  int right() const { return mRect.right(); }
+  int top() const { return mRect.top(); }
+  int bottom() const { return mRect.bottom();
