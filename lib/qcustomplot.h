@@ -2705,3 +2705,10 @@ public:
   QSize size() const { return mRect.size(); }
   QPoint topLeft() const { return mRect.topLeft(); }
   QPoint topRight() const { return mRect.topRight(); }
+  QPoint bottomLeft() const { return mRect.bottomLeft(); }
+  QPoint bottomRight() const { return mRect.bottomRight(); }
+  QPoint center() const { return mRect.center(); }
+  
+  // reimplemented virtual methods:
+  virtual void update();
+  vi
