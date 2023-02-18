@@ -2711,4 +2711,12 @@ public:
   
   // reimplemented virtual methods:
   virtual void update();
-  vi
+  virtual QList<QCPLayoutElement*> elements(bool recursive) const;
+
+protected:
+  // property members:
+  QBrush mBackgroundBrush;
+  QPixmap mBackgroundPixmap;
+  QPixmap mScaledBackgroundPixmap;
+  bool mBackgroundScaled;
+  Qt::AspectRatioMod
