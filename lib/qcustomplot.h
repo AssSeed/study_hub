@@ -2759,4 +2759,10 @@ class QCP_LIB_DECL QCPAbstractLegendItem : public QCPLayoutElement
   Q_PROPERTY(QCPLegend* parentLegend READ parentLegend)
   Q_PROPERTY(QFont font READ font WRITE setFont)
   Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
-  Q_PROPERTY(QFont selectedFont READ selectedFont WRITE setSelectedF
+  Q_PROPERTY(QFont selectedFont READ selectedFont WRITE setSelectedFont)
+  Q_PROPERTY(QColor selectedTextColor READ selectedTextColor WRITE setSelectedTextColor)
+  Q_PROPERTY(bool selectable READ selectable WRITE setSelectable)
+  Q_PROPERTY(bool selected READ selected WRITE setSelected)
+  /// \endcond
+public:
+  explicit Q
