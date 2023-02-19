@@ -2729,4 +2729,11 @@ protected:
   QCP::AntialiasedElements mAADragBackup, mNotAADragBackup;
   QPoint mDragStart;
   bool mDragging;
-  QHash<QCPAxis::AxisType, Q
+  QHash<QCPAxis::AxisType, QList<QCPAxis*> > mAxes;
+  
+  // reimplemented virtual methods:
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
+  virtual void draw(QCPPainter *painter);
+  virtual int calculateAutoMargin(QCP::MarginSide side);
+  // events:
+  virtual void mousePressEvent(QMou
