@@ -2719,4 +2719,8 @@ protected:
   QPixmap mBackgroundPixmap;
   QPixmap mScaledBackgroundPixmap;
   bool mBackgroundScaled;
-  Qt::AspectRatioMod
+  Qt::AspectRatioMode mBackgroundScaledMode;
+  QCPLayoutInset *mInsetLayout;
+  Qt::Orientations mRangeDrag, mRangeZoom;
+  QPointer<QCPAxis> mRangeDragHorzAxis, mRangeDragVertAxis, mRangeZoomHorzAxis, mRangeZoomVertAxis;
+  double mRangeZoo
