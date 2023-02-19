@@ -2723,4 +2723,10 @@ protected:
   QCPLayoutInset *mInsetLayout;
   Qt::Orientations mRangeDrag, mRangeZoom;
   QPointer<QCPAxis> mRangeDragHorzAxis, mRangeDragVertAxis, mRangeZoomHorzAxis, mRangeZoomVertAxis;
-  double mRangeZoo
+  double mRangeZoomFactorHorz, mRangeZoomFactorVert;
+  // non-property members:
+  QCPRange mDragStartHorzRange, mDragStartVertRange;
+  QCP::AntialiasedElements mAADragBackup, mNotAADragBackup;
+  QPoint mDragStart;
+  bool mDragging;
+  QHash<QCPAxis::AxisType, Q
