@@ -2755,4 +2755,8 @@ private:
 class QCP_LIB_DECL QCPAbstractLegendItem : public QCPLayoutElement
 {
   Q_OBJECT
-  /// \cond INCLUDE_QP
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QCPLegend* parentLegend READ parentLegend)
+  Q_PROPERTY(QFont font READ font WRITE setFont)
+  Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
+  Q_PROPERTY(QFont selectedFont READ selectedFont WRITE setSelectedF
