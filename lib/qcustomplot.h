@@ -2742,4 +2742,17 @@ protected:
   virtual void wheelEvent(QWheelEvent *event);
   
   // non-property methods:
-  void drawBackground(QCPPainter *painte
+  void drawBackground(QCPPainter *painter);
+  void updateAxesOffset(QCPAxis::AxisType type);
+  
+private:
+  Q_DISABLE_COPY(QCPAxisRect)
+  
+  friend class QCustomPlot;
+};
+
+
+class QCP_LIB_DECL QCPAbstractLegendItem : public QCPLayoutElement
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QP
