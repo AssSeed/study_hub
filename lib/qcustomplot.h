@@ -2765,4 +2765,10 @@ class QCP_LIB_DECL QCPAbstractLegendItem : public QCPLayoutElement
   Q_PROPERTY(bool selected READ selected WRITE setSelected)
   /// \endcond
 public:
-  explicit Q
+  explicit QCPAbstractLegendItem(QCPLegend *parent);
+  
+  // getters:
+  QCPLegend *parentLegend() const { return mParentLegend; }
+  QFont font() const { return mFont; }
+  QColor textColor() const { return mTextColor; }
+  QFont selectedFont() const { return mSelectedFont
