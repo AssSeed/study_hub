@@ -2778,4 +2778,10 @@ public:
   
   // setters:
   void setFont(const QFont &font);
-  void setTextColor
+  void setTextColor(const QColor &color);
+  void setSelectedFont(const QFont &font);
+  void setSelectedTextColor(const QColor &color);
+  void setSelectable(bool selectable);
+  void setSelected(bool selected);
+  
+  // reimplemented virtual methods
