@@ -2771,4 +2771,11 @@ public:
   QCPLegend *parentLegend() const { return mParentLegend; }
   QFont font() const { return mFont; }
   QColor textColor() const { return mTextColor; }
-  QFont selectedFont() const { return mSelectedFont
+  QFont selectedFont() const { return mSelectedFont; }
+  QColor selectedTextColor() const { return mSelectedTextColor; }
+  bool selectable() const { return mSelectable; }
+  bool selected() const { return mSelected; }
+  
+  // setters:
+  void setFont(const QFont &font);
+  void setTextColor
