@@ -2784,4 +2784,13 @@ public:
   void setSelectable(bool selectable);
   void setSelected(bool selected);
   
-  // reimplemented virtual methods
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+signals:
+  void selectionChanged(bool selected);
+  
+protected:
+  // property members:
+  QCPLegend *mParentLegend;
+  QFont mF
