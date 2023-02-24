@@ -2793,4 +2793,12 @@ signals:
 protected:
   // property members:
   QCPLegend *mParentLegend;
-  QFont mF
+  QFont mFont;
+  QColor mTextColor;
+  QFont mSelectedFont;
+  QColor mSelectedTextColor;
+  bool mSelectable, mSelected;
+  
+  // reimplemented virtual methods:
+  virtual QCP::Interaction selectionCategory() const;
+  virtual 
