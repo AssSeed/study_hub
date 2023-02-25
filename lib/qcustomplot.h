@@ -2852,4 +2852,7 @@ class QCP_LIB_DECL QCPLegend : public QCPLayoutGrid
   Q_PROPERTY(QPen iconBorderPen READ iconBorderPen WRITE setIconBorderPen)
   Q_PROPERTY(SelectableParts selectableParts READ selectableParts WRITE setSelectableParts)
   Q_PROPERTY(SelectableParts selectedParts READ selectedParts WRITE setSelectedParts)
-  Q_PROPERTY(QPen selectedBorderPen READ 
+  Q_PROPERTY(QPen selectedBorderPen READ selectedBorderPen WRITE setSelectedBorderPen)
+  Q_PROPERTY(QPen selectedIconBorderPen READ selectedIconBorderPen WRITE setSelectedIconBorderPen)
+  Q_PROPERTY(QBrush selectedBrush READ selectedBrush WRITE setSelectedBrush)
+  Q
