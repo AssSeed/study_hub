@@ -2839,4 +2839,10 @@ protected:
 };
 
 
-cla
+class QCP_LIB_DECL QCPLegend : public QCPLayoutGrid
+{
+  Q_OBJECT
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QPen borderPen READ borderPen WRITE setBorderPen)
+  Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
+  Q_PROPERTY(QFont font READ fo
