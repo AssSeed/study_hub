@@ -2805,4 +2805,16 @@ protected:
   virtual QRect clipRect() const;
   virtual void draw(QCPPainter *painter) = 0;
   // events:
-  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, boo
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *selectionStateChanged);
+  
+private:
+  Q_DISABLE_COPY(QCPAbstractLegendItem)
+  
+  friend class QCPLegend;
+};
+
+
+class QCP_LIB_DECL QCPPlottableLegendItem : public QCPAbstractLegendItem
+{
+  Q_OBJE
