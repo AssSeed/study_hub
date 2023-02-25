@@ -2828,3 +2828,15 @@ protected:
   // property members:
   QCPAbstractPlottable *mPlottable;
   
+  // reimplemented virtual methods:
+  virtual void draw(QCPPainter *painter);
+  virtual QSize minimumSizeHint() const;
+  
+  // non-virtual methods:
+  QPen getIconBorderPen() const;
+  QColor getTextColor() const;
+  QFont getFont() const;
+};
+
+
+cla
