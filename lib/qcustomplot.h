@@ -2845,4 +2845,8 @@ class QCP_LIB_DECL QCPLegend : public QCPLayoutGrid
   /// \cond INCLUDE_QPROPERTIES
   Q_PROPERTY(QPen borderPen READ borderPen WRITE setBorderPen)
   Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
-  Q_PROPERTY(QFont font READ fo
+  Q_PROPERTY(QFont font READ font WRITE setFont)
+  Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
+  Q_PROPERTY(QSize iconSize READ iconSize WRITE setIconSize)
+  Q_PROPERTY(int iconTextPadding READ iconTextPadding WRITE setIconTextPadding)
+  Q_PROPERTY(QPen
