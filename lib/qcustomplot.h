@@ -2849,4 +2849,7 @@ class QCP_LIB_DECL QCPLegend : public QCPLayoutGrid
   Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
   Q_PROPERTY(QSize iconSize READ iconSize WRITE setIconSize)
   Q_PROPERTY(int iconTextPadding READ iconTextPadding WRITE setIconTextPadding)
-  Q_PROPERTY(QPen
+  Q_PROPERTY(QPen iconBorderPen READ iconBorderPen WRITE setIconBorderPen)
+  Q_PROPERTY(SelectableParts selectableParts READ selectableParts WRITE setSelectableParts)
+  Q_PROPERTY(SelectableParts selectedParts READ selectedParts WRITE setSelectedParts)
+  Q_PROPERTY(QPen selectedBorderPen READ 
