@@ -2872,4 +2872,11 @@ public:
   Q_DECLARE_FLAGS(SelectableParts, SelectablePart)
   
   explicit QCPLegend();
-  virtual ~QCPLegend(
+  virtual ~QCPLegend();
+  
+  // getters:
+  QPen borderPen() const { return mBorderPen; }
+  QBrush brush() const { return mBrush; }
+  QFont font() const { return mFont; }
+  QColor textColor() const { return mTextColor; }
+  Q
