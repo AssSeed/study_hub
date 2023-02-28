@@ -2879,4 +2879,8 @@ public:
   QBrush brush() const { return mBrush; }
   QFont font() const { return mFont; }
   QColor textColor() const { return mTextColor; }
-  Q
+  QSize iconSize() const { return mIconSize; }
+  int iconTextPadding() const { return mIconTextPadding; }
+  QPen iconBorderPen() const { return mIconBorderPen; }
+  SelectableParts selectableParts() const { return mSelectableParts; }
+  S
