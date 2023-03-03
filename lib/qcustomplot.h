@@ -2900,4 +2900,9 @@ public:
   void setIconTextPadding(int padding);
   void setIconBorderPen(const QPen &pen);
   void setSelectableParts(const SelectableParts &selectableParts);
-  void setSelectedPa
+  void setSelectedParts(const SelectableParts &selectedParts);
+  void setSelectedBorderPen(const QPen &pen);
+  void setSelectedIconBorderPen(const QPen &pen);
+  void setSelectedBrush(const QBrush &brush);
+  void setSelectedFont(const QFont &font);
+  void setSelected
