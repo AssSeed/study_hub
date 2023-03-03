@@ -2883,4 +2883,8 @@ public:
   int iconTextPadding() const { return mIconTextPadding; }
   QPen iconBorderPen() const { return mIconBorderPen; }
   SelectableParts selectableParts() const { return mSelectableParts; }
-  S
+  SelectableParts selectedParts() const;
+  QPen selectedBorderPen() const { return mSelectedBorderPen; }
+  QPen selectedIconBorderPen() const { return mSelectedIconBorderPen; }
+  QBrush selectedBrush() const { return mSelectedBrush; }
+  QFont selectedFont() const { return mSel
