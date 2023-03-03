@@ -2895,4 +2895,9 @@ public:
   void setBrush(const QBrush &brush);
   void setFont(const QFont &font);
   void setTextColor(const QColor &color);
-  void setIcon
+  void setIconSize(const QSize &size);
+  void setIconSize(int width, int height);
+  void setIconTextPadding(int padding);
+  void setIconBorderPen(const QPen &pen);
+  void setSelectableParts(const SelectableParts &selectableParts);
+  void setSelectedPa
