@@ -2887,4 +2887,12 @@ public:
   QPen selectedBorderPen() const { return mSelectedBorderPen; }
   QPen selectedIconBorderPen() const { return mSelectedIconBorderPen; }
   QBrush selectedBrush() const { return mSelectedBrush; }
-  QFont selectedFont() const { return mSel
+  QFont selectedFont() const { return mSelectedFont; }
+  QColor selectedTextColor() const { return mSelectedTextColor; }
+  
+  // setters:
+  void setBorderPen(const QPen &pen);
+  void setBrush(const QBrush &brush);
+  void setFont(const QFont &font);
+  void setTextColor(const QColor &color);
+  void setIcon
