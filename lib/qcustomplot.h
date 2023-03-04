@@ -2912,4 +2912,8 @@ public:
   
   // non-virtual methods:
   QCPAbstractLegendItem *item(int index) const;
-  
+  QCPPlottableLegendItem *itemWithPlottable(const QCPAbstractPlottable *plottable) const;
+  int itemCount() const;
+  bool hasItem(QCPAbstractLegendItem *item) const;
+  bool hasItemWithPlottable(const QCPAbstractPlottable *plottable) const;
+  bool addItem(QC
