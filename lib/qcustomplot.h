@@ -2905,4 +2905,11 @@ public:
   void setSelectedIconBorderPen(const QPen &pen);
   void setSelectedBrush(const QBrush &brush);
   void setSelectedFont(const QFont &font);
-  void setSelected
+  void setSelectedTextColor(const QColor &color);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+  // non-virtual methods:
+  QCPAbstractLegendItem *item(int index) const;
+  
