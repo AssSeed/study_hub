@@ -2916,4 +2916,11 @@ public:
   int itemCount() const;
   bool hasItem(QCPAbstractLegendItem *item) const;
   bool hasItemWithPlottable(const QCPAbstractPlottable *plottable) const;
-  bool addItem(QC
+  bool addItem(QCPAbstractLegendItem *item);
+  bool removeItem(int index);
+  bool removeItem(QCPAbstractLegendItem *item);
+  void clearItems();
+  QList<QCPAbstractLegendItem*> selectedItems() const;
+  
+signals:
+  void selectionChanged(QCPLegend::SelectablePa
