@@ -2923,4 +2923,15 @@ public:
   QList<QCPAbstractLegendItem*> selectedItems() const;
   
 signals:
-  void selectionChanged(QCPLegend::SelectablePa
+  void selectionChanged(QCPLegend::SelectableParts selection);
+  
+protected:
+  // property members:
+  QPen mBorderPen, mIconBorderPen;
+  QBrush mBrush;
+  QFont mFont;
+  QColor mTextColor;
+  QSize mIconSize;
+  int mIconTextPadding;
+  SelectableParts mSelectedParts, mSelectableParts;
+  
