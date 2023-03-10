@@ -2934,4 +2934,11 @@ protected:
   QSize mIconSize;
   int mIconTextPadding;
   SelectableParts mSelectedParts, mSelectableParts;
+  QPen mSelectedBorderPen, mSelectedIconBorderPen;
+  QBrush mSelectedBrush;
+  QFont mSelectedFont;
+  QColor mSelectedTextColor;
   
+  // reimplemented virtual methods:
+  virtual void parentPlotInitialized(QCustomPlot *parentPlot);
+  virtual QCP::Interactio
