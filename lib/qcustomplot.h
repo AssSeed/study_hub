@@ -2941,4 +2941,8 @@ protected:
   
   // reimplemented virtual methods:
   virtual void parentPlotInitialized(QCustomPlot *parentPlot);
-  virtual QCP::Interactio
+  virtual QCP::Interaction selectionCategory() const;
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
+  virtual void draw(QCPPainter *painter);
+  // events:
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &d
