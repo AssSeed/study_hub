@@ -2945,4 +2945,14 @@ protected:
   virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
   virtual void draw(QCPPainter *painter);
   // events:
-  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &d
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *selectionStateChanged);
+  
+  // non-virtual methods:
+  QPen getBorderPen() const;
+  QBrush getBrush() const;
+  
+private:
+  Q_DISABLE_COPY(QCPLegend)
+  
+  friend 
