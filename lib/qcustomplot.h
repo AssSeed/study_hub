@@ -2955,4 +2955,14 @@ protected:
 private:
   Q_DISABLE_COPY(QCPLegend)
   
-  friend 
+  friend class QCustomPlot;
+  friend class QCPAbstractLegendItem;
+};
+Q_DECLARE_OPERATORS_FOR_FLAGS(QCPLegend::SelectableParts)
+Q_DECLARE_METATYPE(QCPLegend::SelectablePart)
+
+
+class QCP_LIB_DECL QCPPlotTitle : public QCPLayoutElement
+{
+  Q_OBJECT
+  /// 
