@@ -2965,4 +2965,8 @@ Q_DECLARE_METATYPE(QCPLegend::SelectablePart)
 class QCP_LIB_DECL QCPPlotTitle : public QCPLayoutElement
 {
   Q_OBJECT
-  /// 
+  /// \cond INCLUDE_QPROPERTIES
+  Q_PROPERTY(QString text READ text WRITE setText)
+  Q_PROPERTY(QFont font READ font WRITE setFont)
+  Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
+  Q_PROPERTY(QFont selectedFont READ selectedFont WRITE set
