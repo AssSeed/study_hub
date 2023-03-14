@@ -2980,4 +2980,9 @@ public:
   
   // getters:
   QString text() const { return mText; }
-  QFont font() const
+  QFont font() const { return mFont; }
+  QColor textColor() const { return mTextColor; }
+  QFont selectedFont() const { return mSelectedFont; }
+  QColor selectedTextColor() const { return mSelectedTextColor; }
+  bool selectable() const { return mSelectable; }
+  bool selecte
