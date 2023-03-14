@@ -3002,3 +3002,14 @@ public:
 signals:
   void selectionChanged(bool selected);
   
+protected:
+  // property members:
+  QString mText;
+  QFont mFont;
+  QColor mTextColor;
+  QFont mSelectedFont;
+  QColor mSelectedTextColor;
+  QRect mTextBoundingRect;
+  bool mSelectable, mSelected;
+  
+  // reimplemented virtual meth
