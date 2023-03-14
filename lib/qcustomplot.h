@@ -3012,4 +3012,10 @@ protected:
   QRect mTextBoundingRect;
   bool mSelectable, mSelected;
   
-  // reimplemented virtual meth
+  // reimplemented virtual methods:
+  virtual void applyDefaultAntialiasingHint(QCPPainter *painter) const;
+  virtual void draw(QCPPainter *painter);
+  virtual QSize minimumSizeHint() const;
+  virtual QSize maximumSizeHint() const;
+  // events:
+  virtual vo
