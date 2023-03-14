@@ -2993,3 +2993,12 @@ public:
   void setTextColor(const QColor &color);
   void setSelectedFont(const QFont &font);
   void setSelectedTextColor(const QColor &color);
+  void setSelectable(bool selectable);
+  void setSelected(bool selected);
+  
+  // reimplemented virtual methods:
+  virtual double selectTest(const QPointF &pos, bool onlySelectable, QVariant *details=0) const;
+  
+signals:
+  void selectionChanged(bool selected);
+  
