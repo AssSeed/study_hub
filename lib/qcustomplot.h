@@ -2985,4 +2985,11 @@ public:
   QFont selectedFont() const { return mSelectedFont; }
   QColor selectedTextColor() const { return mSelectedTextColor; }
   bool selectable() const { return mSelectable; }
-  bool selecte
+  bool selected() const { return mSelected; }
+  
+  // setters:
+  void setText(const QString &text);
+  void setFont(const QFont &font);
+  void setTextColor(const QColor &color);
+  void setSelectedFont(const QFont &font);
+  void setSelectedTextColor(const QColor &color);
