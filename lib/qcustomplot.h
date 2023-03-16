@@ -3018,4 +3018,9 @@ protected:
   virtual QSize minimumSizeHint() const;
   virtual QSize maximumSizeHint() const;
   // events:
-  virtual vo
+  virtual void selectEvent(QMouseEvent *event, bool additive, const QVariant &details, bool *selectionStateChanged);
+  virtual void deselectEvent(bool *selectionStateChanged);
+  
+  // non-virtual methods:
+  QFont mainFont() const;
+  QColor mainTex
