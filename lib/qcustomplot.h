@@ -3023,4 +3023,11 @@ protected:
   
   // non-virtual methods:
   QFont mainFont() const;
-  QColor mainTex
+  QColor mainTextColor() const;
+  
+private:
+  Q_DISABLE_COPY(QCPPlotTitle)
+};
+
+#endif // QCUSTOMPLOT_H
+
