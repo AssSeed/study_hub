@@ -12,4 +12,15 @@ Company::Company(void) :
 
 void Company::initCompany(double my)
 {
-    is_bankrupt = fa
+    is_bankrupt = false;
+    price_generator.setRange(my);
+    ymax = price_generator.getRange();
+
+    return;
+}
+
+double Company::updatePrice(void)
+{
+    current_price = price_generator.getPrice();
+
+    if (current_price <= 0.02 * yma
