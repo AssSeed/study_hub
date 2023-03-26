@@ -35,4 +35,21 @@ double Company::updatePrice(void)
 
     recalcAvg();
 
-    return c
+    return current_price;
+}
+
+double Company::getPrice(void)
+{
+    return current_price;
+}
+
+void Company::split(void)
+{
+    current_price /= 2;
+    shares_in_depot *= 2;
+
+    avg_depot_price = total_value / shares_in_depot;
+
+    splitted = true;
+
+    price_generator.setPrice(cu
