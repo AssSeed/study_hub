@@ -69,4 +69,17 @@ void Company::buy(int n)
 void Company::sell(int n)
 {
     total_value -= n * (total_value / shares_in_depot);
-    shares
+    shares_in_depot -= n;
+
+    recalcAvg();
+    return;
+}
+
+void Company::recalcAvg(void)
+{
+    if ( shares_in_depot > 0)
+        avg_depot_price = total_value / shares_in_depot;
+    else avg_depot_price = 0;
+
+    return;
+}
