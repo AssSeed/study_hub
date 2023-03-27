@@ -52,4 +52,21 @@ void Company::split(void)
 
     splitted = true;
 
-    price_generator.setPrice(cu
+    price_generator.setPrice(current_price);
+
+    return;
+}
+
+void Company::buy(int n)
+{
+    shares_in_depot += n;
+    total_value += n * current_price;
+
+    recalcAvg();
+    return;
+}
+
+void Company::sell(int n)
+{
+    total_value -= n * (total_value / shares_in_depot);
+    shares
