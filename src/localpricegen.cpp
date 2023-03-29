@@ -22,4 +22,16 @@ int LocalPriceGen::getRange(void)
     return ymax;
 }
 
-double getRandomDivisor(void
+double getRandomDivisor(void)
+{
+    return 1 + (qrand() % 5);
+}
+
+// This is the core algorithm to produce good-looking stock price diagrams!
+double LocalPriceGen::getPrice(void)
+{
+    int threshold = 0.05 * ymax;
+    double value = current_price;
+
+    if ( value < threshold )
+        v
