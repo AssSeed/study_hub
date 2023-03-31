@@ -41,3 +41,19 @@ double LocalPriceGen::getPrice(void)
 
     current_price = value;
 
+    return value;
+}
+
+void LocalPriceGen::setPrice(double p)
+{
+    current_price = p;
+
+    return;
+}
+
+void LocalPriceGen::newTrendCoeff(void)
+{
+    trend_coeff = 4.1 + 0.2 * (qrand()%5);
+
+    return;
+}
