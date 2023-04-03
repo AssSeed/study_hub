@@ -15,4 +15,5 @@ void MoneyAvailable::changeMoney(double m)
 {
     money = m;
     emit moneyChanged((int)money);
-  
+    return;
+}
