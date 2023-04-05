@@ -19,4 +19,10 @@ SingleStock::SingleStock(QWidget *parent) :
     QObject::connect(&main_timer,SIGNAL( timeout() ),ui->plot,SLOT( setData()));
     QObject::connect(ui->buyButton,SIGNAL( clicked() ),this,SLOT( buyStock() ));
     QObject::connect(ui->sellButton,SIGNAL( clicked() ),this,SLOT( sellStock() ));
-    QObject::connect(ui->orderStep,SIGNAL( valueChanged(int) ),thi
+    QObject::connect(ui->orderStep,SIGNAL( valueChanged(int) ),this,SLOT( changeBuyStep(int) ));
+
+    // Financial signals
+    QObject::connect(ui->plot,SIGNAL( bankrupt(void) ),this,SLOT( bankrupt(void) ));
+    QObject::connect(ui->plot,SIGNAL( splitted(void) ),this,SLOT( split(void) ));
+
+    setComp
