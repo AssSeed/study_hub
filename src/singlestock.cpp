@@ -25,4 +25,19 @@ SingleStock::SingleStock(QWidget *parent) :
     QObject::connect(ui->plot,SIGNAL( bankrupt(void) ),this,SLOT( bankrupt(void) ));
     QObject::connect(ui->plot,SIGNAL( splitted(void) ),this,SLOT( split(void) ));
 
-    setComp
+    setCompanyName();
+}
+
+void SingleStock::changeBuyStep(int n)
+{
+    buy_step = n;
+
+    return;
+}
+
+void SingleStock::buyStock(void)
+{
+    double current_price = ui->plot->company.getPrice();
+    double order_volume = buy_step * current_price;
+
+    i
