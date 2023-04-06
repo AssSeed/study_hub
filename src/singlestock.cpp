@@ -40,4 +40,11 @@ void SingleStock::buyStock(void)
     double current_price = ui->plot->company.getPrice();
     double order_volume = buy_step * current_price;
 
-    i
+    if (ui->plot->company.is_bankrupt || ! main_timer.isActive() || deposit.getMoney() - order_volume < 0)
+        return;
+
+    deposit.changeMoney(deposit.getMoney()-order_volume);
+
+    ui->plot->company.buy(buy_step);
+
+    ui->lcdStocks->display(ui->plo
