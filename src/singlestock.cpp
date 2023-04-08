@@ -58,4 +58,11 @@ void SingleStock::sellStock(void)
     if (ui->plot->company.is_bankrupt || ! main_timer.isActive() || ui->plot->company.shares_in_depot - buy_step < 0)
         return;
 
-    double current_price = ui->
+    double current_price = ui->plot->company.getPrice();
+    double order_volume = buy_step * current_price;
+
+    deposit.changeMoney(deposit.getMoney()+order_volume);
+
+    ui->plot->company.sell(buy_step);
+
+    ui->lcdStocks->display(ui->plot->company.shares_
