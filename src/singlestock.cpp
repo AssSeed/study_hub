@@ -65,4 +65,15 @@ void SingleStock::sellStock(void)
 
     ui->plot->company.sell(buy_step);
 
-    ui->lcdStocks->display(ui->plot->company.shares_
+    ui->lcdStocks->display(ui->plot->company.shares_in_depot);
+
+    return;
+}
+
+// Only updates the LCD displays
+void SingleStock::split(void)
+{
+    QPalette Pal;
+    Pal.setColor(QPalette::Background,Qt::green);
+    ui->lcdPrice->setAutoFillBackground(true);
+    ui->lcdPrice->setPalette(
