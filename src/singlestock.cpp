@@ -76,4 +76,16 @@ void SingleStock::split(void)
     QPalette Pal;
     Pal.setColor(QPalette::Background,Qt::green);
     ui->lcdPrice->setAutoFillBackground(true);
-    ui->lcdPrice->setPalette(
+    ui->lcdPrice->setPalette(Pal);
+
+    QTimer::singleShot(60*main_timer_interval,this,SLOT( clearPriceBG() ));
+
+    ui->lcdStocks->display(ui->plot->company.shares_in_depot);
+
+    return;
+}
+
+void SingleStock::bankrupt(void)
+{
+    ui->lcdStocks->display(0);
+    ui->lcdPrice->display(0)
