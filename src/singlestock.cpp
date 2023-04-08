@@ -47,4 +47,15 @@ void SingleStock::buyStock(void)
 
     ui->plot->company.buy(buy_step);
 
-    ui->lcdStocks->display(ui->plo
+    ui->lcdStocks->display(ui->plot->company.shares_in_depot);
+
+    return;
+}
+
+void SingleStock::sellStock(void)
+{
+
+    if (ui->plot->company.is_bankrupt || ! main_timer.isActive() || ui->plot->company.shares_in_depot - buy_step < 0)
+        return;
+
+    double current_price = ui->
