@@ -88,4 +88,12 @@ void SingleStock::split(void)
 void SingleStock::bankrupt(void)
 {
     ui->lcdStocks->display(0);
-    ui->lcdPrice->display(0)
+    ui->lcdPrice->display(0);
+    ui->lcdPrice->setAutoFillBackground(true);
+
+    QObject::disconnect(&main_timer,SIGNAL( timeout() ),ui->plot,SLOT( setData()));
+
+    QPalette Pal;
+    Pal.setColor(QPalette::Background,Qt::red);
+    ui->lcdPrice->setAutoFillBackground(true);
+    ui->
