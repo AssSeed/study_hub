@@ -96,4 +96,10 @@ void SingleStock::bankrupt(void)
     QPalette Pal;
     Pal.setColor(QPalette::Background,Qt::red);
     ui->lcdPrice->setAutoFillBackground(true);
-    ui->
+    ui->lcdPrice->setPalette(Pal);
+
+    // A QTimer object would be destructed before firing!
+    // Time to wait before placing a new company on this stock position
+    QTimer::singleShot(60*main_timer_interval,this,SLOT( reInit()));
+
+    return
