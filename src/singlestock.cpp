@@ -102,4 +102,21 @@ void SingleStock::bankrupt(void)
     // Time to wait before placing a new company on this stock position
     QTimer::singleShot(60*main_timer_interval,this,SLOT( reInit()));
 
-    return
+    return;
+}
+
+void SingleStock::reInit(void)
+{
+    ui->plot->initCompanyPlot(xmax,100);
+    setCompanyName();
+
+    clearPriceBG();
+
+    QObject::connect(&main_timer,SIGNAL( timeout() ),ui->plot,SLOT( setData()));
+
+    return;
+}
+
+void SingleStock::clearPriceBG(void)
+{
+    ui->lcdP
