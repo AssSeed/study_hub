@@ -119,4 +119,20 @@ void SingleStock::reInit(void)
 
 void SingleStock::clearPriceBG(void)
 {
-    ui->lcdP
+    ui->lcdPrice->setAutoFillBackground(false);
+
+    return;
+}
+
+void SingleStock::setCompanyName(void)
+{
+    QString pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    QString name = "___";
+
+
+    for ( int i = 0; i < 3; i++ )
+    {
+        name[i] = pool[qrand()%25];
+    }
+
+    
