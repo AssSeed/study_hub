@@ -135,4 +135,12 @@ void SingleStock::setCompanyName(void)
         name[i] = pool[qrand()%25];
     }
 
-    
+    ui->stockNameLbl->setText(name);
+
+    return;
+}
+
+SingleStock::~SingleStock()
+{
+    delete ui;
+}
